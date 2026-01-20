@@ -1,0 +1,50 @@
+# ===============================================
+# CUENTAS DE USUARIO - MOMENTUS / CLARITY
+# Actualizado: 2026-01-12
+# ===============================================
+
+## 📌 CUENTA PRINCIPAL (Admin)
+```
+Nombre:     GUSTAVO ADOLFO LIRA SALAZAR
+Correo:     gustavo.lira@claro.com.ni
+Contraseña: 123456
+Rol:        Admin
+ID Usuario: 899
+```
+
+## 📌 OTROS USUARIOS CON TAREAS (para pruebas)
+```
+ERVIN DANILO MARTINEZ CHAVARRIA
+- Correo: ervind.martinez@claro.com.ni
+- Tareas: 6
+
+EDDY MARTIN MENA GALEANO
+- Correo: eddy.mena2@claro.com.ni
+- Tareas: 1
+```
+
+## 👔 ROLES DISPONIBLES
+| ID | Nombre      | Descripción                          |
+|----|-------------|--------------------------------------|
+| 1  | Admin       | Acceso total al sistema              |
+| 2  | Gerente     | Visibilidad de reportes y gestión    |
+| 3  | Coordinador | Gestión de equipos y asignación      |
+| 4  | Empleado    | Rol base para colaboradores          |
+| 5  | Colaborador | Personal base                        |
+
+## 📊 ESTADÍSTICAS DE LA BD
+- Usuarios activos: 1,911
+- Proyectos: 3
+- Tareas: 7
+- Check-ins: 1
+- Bloqueos: 1
+- Nodos de organización: 361
+
+## 🏢 ORGANIZACIÓN
+- Raíz: Claro Nicaragua (idNodo: 40)
+- Tipos: Dirección, Gerencia, Equipo
+
+## 🔗 URLs
+- Frontend: http://localhost:5173 o http://localhost:5174
+- Backend API: http://localhost:3000/api
+- Swagger Docs: http://localhost:3000/api/docs

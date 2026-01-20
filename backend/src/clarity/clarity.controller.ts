@@ -311,6 +311,18 @@ export class ClarityController {
         return this.tasksService.confirmarProyecto(id, req.user.userId);
     }
 
+    @Get('planning/approvals')
+    @ApiOperation({ summary: 'Obtener solicitudes de cambio pendientes' })
+    async getSolicitudesPendientes(@Request() req) {
+        return this.tasksService.getSolicitudesPendientes(req.user.userId);
+    }
+
+    @Post('planning/approvals/:id/resolve')
+    @ApiOperation({ summary: 'Aprobar o rechazar solicitud de cambio' })
+    async resolverSolicitud(@Param('id', ParseIntPipe) id: number, @Body() body: { accion: 'Aprobar' | 'Rechazar', comentario?: string }, @Request() req) {
+        return this.tasksService.resolverSolicitud(id, body.accion, req.user.userId, body.comentario);
+    }
+
 
 
     @Get('proyectos/:id/tareas')

@@ -118,7 +118,7 @@ async function simulate() {
     // Gerente aprueba la solicitud
     solicitud.estado = 'Aprobado';
     solicitud.idAprobador = gerente.idUsuario;
-    solicitud.fechaResolucion = new Date();
+    solicitud.fechaRespuesta = new Date();
     await solicitudRepo.save(solicitud);
 
     // Sistema aplica el cambio AUTOMÁTICAMENTE (Simulado aquí, en real lo hace el Service)

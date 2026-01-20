@@ -1,0 +1,30 @@
+MANUAL DE USUARIO Y TÉCNICO - FRONTEND (MOMENTUS)
+===================================================
+
+STACK:
+- React 18 + Vite
+- TailwindCSS (Estilos)
+- dnd-kit (Arrastrar y soltar)
+- Framer Motion (Animaciones)
+- Lucide React (Iconos)
+
+FLUJOS PRINCIPALES:
+1. EMPLEADO:
+   - "Mi Día": Vista de foco. Solo ve lo asignado para hoy + Rutinas.
+   - Rutinas: Persistencia local + Sincronización backend (crea tarea al completar).
+   - Notas: Bloc de notas con capacidad de crear Tareas vinculadas (Actionable Notes).
+
+2. GERENTE:
+   - Dashboard Equipo: Vista rápida de quién está bloqueado.
+   - Planificación: Tablero Kanban (Drag & Drop) para asignar trabajo.
+   - Command Palette (Ctrl+K): Navegación rápida teclado.
+
+LIMITACIONES Y ERRORES CONOCIDOS:
+- Persistencia Local: Notas y configuración de Rutinas se guardan en localStorage. Si cambias de PC, se pierden.
+- Refrescos: Al mover una tarea en el tablero, la actualización visual a veces salta (flicker) por re-fetch completo.
+- Modales: La UI depende mucho de modales, aunque se mitiga con creación inline.
+
+GUÍA DE DESPLIEGUE:
+1. Instalar dep: `npm install`
+2. Correr local: `npm run dev` (Puerto 5173)
+3. Build prod: `npm run build` (Genera carpeta `dist`)

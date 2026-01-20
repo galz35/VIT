@@ -1,0 +1,159 @@
+# ANÁLISIS DE LIDERAZGO Y JERARQUÍA
+## Fecha: 12/1/2026, 9:09:54 p. m.
+
+---
+
+## 📊 RESUMEN EJECUTIVO
+
+| Métrica | Cantidad |
+|---------|----------|
+| Total Empleados Activos | 1911 |
+| **Líderes Reales** (con subordinados) | 1205 |
+| Colaboradores (sin subordinados) | 600 |
+| Anomalías/Casos Especiales | 1128 |
+
+---
+
+## 👔 LÍDERES REALES (Top 50)
+*Empleados que tienen subordinados a cargo*
+
+| # | Nombre | Área | Tipo | Subordinados | Ejemplos |
+|---|--------|------|------|--------------|----------|
+| 1 | MARTHA LORENA INCER MENDEZ | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 2 | MILTON JOSE JIMENEZ TORRES | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 3 | VICTOR ROBERTO MIRANDA HERRERA | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 4 | DOMINGO ALEXANDER ABURTO TORREZ | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 5 | EDUARDO FRANCISCO JARQUIN  VILLALOBOS | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 6 | CRISTOPHER  ANGEL  RAMOS  RIVAS | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 7 | YULIAN HARRISON MEJIA FAJARDO | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 8 | ALEXANDER  GABRIEL  RIOS  FLORES | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 9 | YENIA MAGALY URCUYO FLORES | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 10 | CARLOS ENRIQUE MEJIA CARRAZCO | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 11 | FRANCIS PAMELA NARVAEZ SELVA | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 12 | ANGELICA MARIA DOMINGUEZ ORTIZ | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 13 | IVONNE ALEXANDRA MERCADO SALMERON | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 14 | SARA ABIGAIL MIRANDA DUARTE | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 15 | YARITZA JOHANNA CANALES MENDOZA | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 16 | PABLO ANTONIO GOMEZ SANCHEZ | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 17 | ARLE JOSE CARRION HERNANDEZ | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 18 | ARLEN PATRICIA ALTAMIRANO SANCHEZ | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 19 | SCARLETH ASUNCION UNDERWOOD GUTIERREZ | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 20 | LUIS ALBERTO LOPEZ | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 21 | REGINA MARIA VARGAS GARCIA | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 22 | INGRIS FRANCHESKA RIVERA RIVERA | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 23 | MANUEL ANTONIO REYES | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 24 | TATIANA DEL CARMEN RUBIO PALACIOS | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 25 | MILTON ANTONIO OBANDO TORRES | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 26 | ISRAEL ANTONIO TREMINIO RUIZ | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 27 | MARBELLY DEL SOCORRO ACUÑA MENDEZ | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 28 | ARLEN RENEE PAZ BLANCO | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 29 | ROBERTO CARLOS BRAVO SOLIS | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 30 | MAYRA SALVADORA HODGSON AGUILAR | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 31 | MARIA ALEXANDRA VILCHEZ DIAZ | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 32 | GABRIELA CASTELLON LIRA | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 33 | MIGUEL  ANGEL  CUADRA  MARTINEZ | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 34 | TOMAS DE JESUS ALTAMIRANO ORTEGA | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 35 | KEHANI WALQUIRIA BELTRAN GUTIERREZ | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 36 | MARIA ESPERANZA MENDOZA MORALES | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 37 | WENDDY TATIANA MARTINEZ SANCHEZ | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 38 | DIEGO ANTONIO ZUNIGA RUIZ | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 39 | MAYRA SOBEIDA HERNANDEZ DAVILA | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 40 | LUIS HUMBERTO CASTELLON GONZALEZ | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 41 | FRANCISCO LORENZO RODRIGUEZ MIRANDA | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 42 | BRENDA LEE KANDLER DOWNS | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 43 | MAURICIO SIEZAR ALVAREZ | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 44 | ARLIN VIDELIA LARIOS | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 45 | BERTHA DEL CARMEN MAIRENA MORALES | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 46 | RAFAEL DE JESUS GODINEZ FLORES | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 47 | REYNALDO JOSE GRANERA | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 48 | JULIO CESAR RODRIGUEZ ARIAS | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 49 | SANDRA PATRICIA ROA ROMERO | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+| 50 | TALIA DANELIA MARTINEZ VALVERDE | Claro Nicaragua | Dirección | 946 | KENER MARTIN VARGAS HUETE, BRANDON JOAO AGUILAR BRICEÑO |
+
+---
+
+## ⚠️ ANOMALÍAS Y CASOS ESPECIALES
+*Empleados con rol de liderazgo pero sin subordinados, o viceversa*
+
+| Nombre | Área | Razón |
+|--------|------|-------|
+| LENIN ERNESTO GONZALEZ MORALES | 0 | Rol Lider pero sin subordinados (posible área vacía) |
+| ROMMEL JAVIER CORTEZ NAVARRO | 0 | Rol Lider pero sin subordinados (posible área vacía) |
+| MARTHA LORENA INCER MENDEZ | Claro Nicaragua | Tiene 946 subordinados aunque rol es Colaborador |
+| MILTON JOSE JIMENEZ TORRES | Claro Nicaragua | Tiene 946 subordinados aunque rol es Colaborador |
+| HEYDI JOSE GUEVARA VILLALOBOS | 0 | Rol Lider pero sin subordinados (posible área vacía) |
+| ANA YANCI RIVERA CASTELLANO | NI GERENCIA CENTRO DE ATENCION AL C | Tiene 76 subordinados aunque rol es Colaborador |
+| DOMINGO ALEXANDER ABURTO TORREZ | Claro Nicaragua | Tiene 946 subordinados aunque rol es Colaborador |
+| WESLEY  BALDINYS PINEDA  ARIAS | NI GERENCIA CENTRO DE ATENCION AL C | Tiene 76 subordinados aunque rol es Colaborador |
+| JOSUE ENMANUEL CAMPOS  AYALA | NI GERENCIA CENTRO DE ATENCION AL C | Tiene 76 subordinados aunque rol es Colaborador |
+| EDUARDO FRANCISCO JARQUIN  VILLALOBOS | Claro Nicaragua | Tiene 946 subordinados aunque rol es Colaborador |
+| CRISTOPHER  ANGEL  RAMOS  RIVAS | Claro Nicaragua | Tiene 946 subordinados aunque rol es Colaborador |
+| YULIAN HARRISON MEJIA FAJARDO | Claro Nicaragua | Tiene 946 subordinados aunque rol es Colaborador |
+| SCARLETT ARELIS RODRIGUEZ GONZALEZ | NI GERENCIA CENTRO DE ATENCION AL C | Tiene 76 subordinados aunque rol es Colaborador |
+| ALEXANDER  GABRIEL  RIOS  FLORES | Claro Nicaragua | Tiene 946 subordinados aunque rol es Colaborador |
+| YENIA MAGALY URCUYO FLORES | Claro Nicaragua | Tiene 946 subordinados aunque rol es Colaborador |
+| CARLOS ENRIQUE MEJIA CARRAZCO | Claro Nicaragua | Tiene 946 subordinados aunque rol es Colaborador |
+| FRANCIS PAMELA NARVAEZ SELVA | Claro Nicaragua | Tiene 946 subordinados aunque rol es Colaborador |
+| HECTOR DANILO FUENTES AGUIRRE | NI GERENCIA CENTRO DE ATENCION AL C | Tiene 76 subordinados aunque rol es Colaborador |
+| LIEVIN YUVIELKA AVILES PONCE | NI GERENCIA CENTRO DE ATENCION AL C | Tiene 76 subordinados aunque rol es Colaborador |
+| ANGELICA MARIA DOMINGUEZ ORTIZ | Claro Nicaragua | Tiene 946 subordinados aunque rol es Colaborador |
+| IVONNE ALEXANDRA MERCADO SALMERON | Claro Nicaragua | Tiene 946 subordinados aunque rol es Colaborador |
+| MARTIN ENRIQUE DUARTE MEMBREÑO | NI GERENCIA CENTRO DE ATENCION AL C | Tiene 76 subordinados aunque rol es Colaborador |
+| JAVIERA NAZARET LEIVA GARCIA | NI GERENCIA CENTRO DE ATENCION AL C | Tiene 76 subordinados aunque rol es Colaborador |
+| SARA ABIGAIL MIRANDA DUARTE | Claro Nicaragua | Tiene 946 subordinados aunque rol es Colaborador |
+| MEYLING MATILDE CHAVEZ CHAVEZ | NI GERENCIA CENTRO DE ATENCION AL C | Tiene 76 subordinados aunque rol es Colaborador |
+| YARITZA JOHANNA CANALES MENDOZA | Claro Nicaragua | Tiene 946 subordinados aunque rol es Colaborador |
+| PABLO ANTONIO GOMEZ SANCHEZ | Claro Nicaragua | Tiene 946 subordinados aunque rol es Colaborador |
+| MARIO MARTIN GONZALEZ JARQUIN | NI GERENCIA OPERACIONES PLANTA INTE | Rol Lider pero sin subordinados (posible área vacía) |
+| NORMAN OMAR SELVA RUIZ | 0 | Rol Lider pero sin subordinados (posible área vacía) |
+| ARLEN PATRICIA ALTAMIRANO SANCHEZ | Claro Nicaragua | Tiene 946 subordinados aunque rol es Colaborador |
+
+---
+
+## 📈 DISTRIBUCIÓN POR TIPO DE NODO
+
+| Tipo Nodo | Empleados | Líderes | % Liderazgo |
+|-----------|-----------|---------|-------------|
+| Equipo | 664 | 0 | 0% |
+| Dirección | 965 | 965 | 100% |
+| Gerencia | 218 | 218 | 100% |
+| Subgerencia | 64 | 22 | 34% |
+
+---
+
+## 🔍 NODOS ESPECIALES
+
+### Nodos vacíos (sin empleados): 219
+- NI SUPERV.  OBRAS CIVILES (Gerencia)
+- NI GERENCIA DE IMPLANTACION (Subgerencia)
+- 0 (Equipo)
+- NI SUPERV. DISEÑO Y OPTIMIZACION RF -ZONA MANAGUA Y SUR (Gerencia)
+- NI GERENCIA TECNICA (Subgerencia)
+- 0 (Equipo)
+- NI COORD. ING. DE PROYECTOS DATOS (Gerencia)
+- NI GERENCIA TECNICA (Subgerencia)
+- 0 (Equipo)
+- NI SUPERV. INTERNET/DATOS SOPORTE PI (Gerencia)
+- ... y 209 más
+
+### Nodos con 1 solo empleado (sin hijos): 58
+- NI INTERNET/DATOS CHINANDEGA: LESLIE ILICH TORRES ABURTO
+- NI INTERNET/DATOS LEON: LORENZO BOSCO TELLEZ RUEDA
+- NI INTERNET/DATOS JUIGALPA: GABRIEL ALEXANDER MARTINEZ ALVAREZ
+- NI PLANTA INTERNA JINOTEGA: ELVIS ASSAEL PICADO ESTRADA
+- NI SUPERV. ZONA CENTRAL / RSJ PI: GUILLERMO ANTONIO FERNANDEZ
+- NI SUPERV. ZONA OCCIDENTE PI: MAURICIO JOSE HERNANDEZ PAREDES
+- NI SUPERV. ZONA NORTE PI: REYNALDO GONGORA NAVARRETE
+- NI INTERNET/DATOS RAAS: DENIS EDGARDO SCHWARTZ GOMEZ
+- NI INTERNET/DATOS RAAN: FRESLY HIPOLITO ESCOBAR HOWARD
+- NI SUPERV. ZONA RAAS RAAN PI: FELICITO RENE MEJIA GONZALEZ
+- ... y 48 más
+
+---
+
+## 💡 RECOMENDACIONES
+
+1. **Líderes detectados automáticamente**: 1205 empleados tienen subordinados reales.
+2. **Revisar anomalías**: 1128 casos requieren validación manual.
+3. **Nodos vacíos**: Considerar desactivar o asignar personal a 219 nodos.
+4. **Para casos especiales** (secretarias, permisos especiales): Crear tabla de permisos personalizados.

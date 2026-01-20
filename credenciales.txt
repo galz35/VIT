@@ -1,0 +1,13 @@
+Credenciales de Acceso - Clarity PWA
+======================================
+
+Usuario (Empleado):gustavo@claro.com.ni
+Contraseña: password123
+
+Otros usuarios de prueba:
+- nuevo@claro.com.ni (Sin tareas, bajo Cándida)
+- franklin@claro.com.ni (Director) General): franklin@claro.com.ni
+- Juan Carlos (Gerente): juancarlos@claro.com.ni
+- Cándida (Jefa): candida@claro.com.ni
+
+Contraseña para todos: password123

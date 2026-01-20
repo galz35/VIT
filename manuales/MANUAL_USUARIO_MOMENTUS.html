@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Momentus</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+            background-color: #f9f9f9;
+        }
+
+        .container {
+            background-color: white;
+            padding: 50px;
+            border-radius: 8px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            color: #2563eb;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #1e40af;
+            margin-top: 40px;
+            border-left: 4px solid #3b82f6;
+            padding-left: 15px;
+        }
+
+        h3 {
+            color: #4b5563;
+            margin-top: 25px;
+            font-weight: 600;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .note {
+            background-color: #eff6ff;
+            border-left: 4px solid #2563eb;
+            padding: 15px;
+            margin: 20px 0;
+            font-style: italic;
+            color: #1e3a8a;
+        }
+
+        code {
+            background-color: #f3f4f6;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #e11d48;
+        }
+
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #9ca3af;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 20px;
+        }
+
+        @media print {
+            body {
+                background-color: white;
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>📘 Manual de Usuario: Sistema Momentus</h1>
+        <p><strong>Versión 1.0 - Guía para Usuario Final</strong></p>
+
+        <p>Bienvenido a **Momentus**, tu nueva plataforma centralizada para la gestión de tareas, equipos y proyectos.
+            Este manual está diseñado para ayudarte a navegar y aprovechar al máximo las herramientas disponibles sin
+            complicaciones técnicas.</p>
+
+        <h2>🚀 1. Conceptos Básicos</h2>
+        <p>Momentus conecta tres pilares fundamentales de tu trabajo:</p>
+        <ol>
+            <li><strong>Tu Gestión Personal:</strong> Lo que tú tienes que hacer.</li>
+            <li><strong>Tu Equipo:</strong> Con quién trabajas y cómo están.</li>
+            <li><strong>Tus Proyectos:</strong> El progreso de las iniciativas a largo plazo.</li>
+        </ol>
+        <p>Todo esto accesible desde la <strong>Barra Lateral (Menú)</strong> a la izquierda de tu pantalla.</p>
+
+        <h2>🌟 2. Módulos Principales</h2>
+
+        <h3>☀️ A. Mi Día (Inicio)</h3>
+        <p>Es lo primero que ves al entrar. Está diseñado para responder: <em>"¿Qué es lo más importante hoy?"</em></p>
+        <ul>
+            <li><strong>Matriz de Prioridades:</strong> Un cuadrante visual que organiza tus tareas en:
+                <ul>
+                    <li>🚨 <em>Urgente / Importante</em> (Hacer ya)</li>
+                    <li>📅 <em>No Urgente / Importante</em> (Planificar)</li>
+                </ul>
+            </li>
+            <li><strong>Resumen Diario:</strong> Contadores rápidos de tareas pendientes y completadas.</li>
+        </ul>
+
+        <h3>📝 B. Mis Tareas</h3>
+        <p>Tu lista de pendientes personales. Aquí registras todo lo operativo.</p>
+        <ul>
+            <li><strong>Crear Tarea:</strong> Escribe el nombre en el campo superior y pulsa <code>Enter</code> o el
+                botón <code>+</code>.</li>
+            <li><strong>Gestión Rápida:</strong> Marca tareas como completadas haciendo clic en su estado o descártalas
+                si ya no son necesarias.</li>
+            <li><strong>Filtros:</strong> Usa las pestañas para ver solo lo Pendiente o revisar tu historial de
+                Completadas.</li>
+        </ul>
+
+        <h3>👥 C. Supervisión de Equipo</h3>
+        <p>Para líderes y coordinadores. Te permite saber qué está pasando con tu gente sin necesidad de preguntar
+            constantemente.</p>
+        <ul>
+            <li><strong>Clima del Equipo:</strong> Tres caritas (Feliz, Neutro, Triste) te indican el estado de ánimo
+                general del equipo hoy.</li>
+            <li><strong>Lista de Miembros:</strong> Ves a cada persona, su rol y si ya completaron su reporte diario.
+            </li>
+            <li><strong>Dashboard Personal:</strong> Si haces clic en "Ver Tablero" de un empleado, verás sus tareas
+                específicas.</li>
+        </ul>
+
+        <h3>📊 D. Gestión de Proyectos ("Transformación Digital")</h3>
+        <p>Aquí administras las grandes iniciativas de la empresa. Tienes 3 formas de ver el trabajo:</p>
+        <ul>
+            <li><strong>Vista Tabla:</strong> Ideal para editar detalles y ver mucha información a la vez (Responsables,
+                Fechas, Prioridad).</li>
+            <li><strong>Vista Tablero (Kanban):</strong> Tarjetas visuales organizadas por columnas (<em>Por Hacer</em>,
+                <em>En Progreso</em>, <em>Completado</em>). ¡Perfecto para reuniones de estatus!</li>
+            <li><strong>Vista Cronograma (Gantt):</strong> Un diagrama de tiempo para entender qué tareas bloquean a
+                otras y cuánto falta para terminar.</li>
+        </ul>
+        <div class="note">
+            💡 <strong>Nota:</strong> El sistema te avisará automáticamente si intentas empezar una tarea que está
+            bloqueada por otra no terminada (bloqueo de dependencias).
+        </div>
+
+        <h2>💡 3. Flujo de Trabajo Recomendado</h2>
+        <p>Para aprovechar Momentus al máximo, te sugerimos esta rutina diaria de 5 minutos:</p>
+        <ol>
+            <li><strong>Por la mañana:</strong> Entra a <strong>Mi Día</strong>. Revisa qué urge.</li>
+            <li><strong>Planificación:</strong> Ve a <strong>Proyectos</strong>. Verifica si tienes tareas asignadas en
+                el tablero Kanban y muévelas a "En Curso".</li>
+            <li><strong>Durante el día:</strong> Trabaja en tus <strong>Mis Tareas</strong>. Marca lo completado.</li>
+            <li><strong>Al final del día:</strong> Revisa el <strong>Equipo</strong> si eres líder, para asegurar que no
+                haya bloqueos graves.</li>
+        </ol>
+
+        <h2>❓ Preguntas Frecuentes</h2>
+
+        <h3>¿Necesito guardar mis cambios?</h3>
+        <p>No. Momentus guarda automáticamente cada acción que realizas (crear tarea, cambiar estado, etc.).</p>
+
+        <h3>¿Qué hago si me equivoco al crear una tarea?</h3>
+        <p>Puedes editarla haciendo clic en ella o borrarla/descartarla desde el menú de opciones (tres puntos
+            <code>...</code>).</p>
+
+        <h3>¿Cómo desbloqueo una tarea en rojo (Bloqueada)?</h3>
+        <p>Generalmente, una tarea está bloqueada porque otra debe terminar antes. Busca la tarea predecesora,
+            complétala, y el sistema te preguntará si quieres desbloquear la siguiente automáticamente.</p>
+
+        <div class="footer">
+            Momentus - Simplificando tu gestión diaria.
+        </div>
+    </div>
+</body>
+
+</html>

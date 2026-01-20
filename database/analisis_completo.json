@@ -1,0 +1,6074 @@
+{
+  "fecha": "2026-01-13T03:18:28.036Z",
+  "estadisticas": {
+    "statsPorTipo": [
+      {
+        "tipo": "Dirección",
+        "nodos": "1",
+        "empleados": "966"
+      },
+      {
+        "tipo": "Gerencia",
+        "nodos": "67",
+        "empleados": "218"
+      },
+      {
+        "tipo": "Subgerencia",
+        "nodos": "73",
+        "empleados": "64"
+      },
+      {
+        "tipo": "Equipo",
+        "nodos": "220",
+        "empleados": "664"
+      }
+    ],
+    "statsRoles": [
+      {
+        "rol": "Colaborador",
+        "cantidad": "1622"
+      },
+      {
+        "rol": "Lider",
+        "cantidad": "290"
+      }
+    ],
+    "topNodos": [
+      {
+        "nombre": "Claro Nicaragua",
+        "tipo": "Dirección",
+        "empleados": "966"
+      },
+      {
+        "nombre": "0",
+        "tipo": "Equipo",
+        "empleados": "342"
+      },
+      {
+        "nombre": "NI GERENCIA CENTRO DE ATENCION AL CLIENTE",
+        "tipo": "Gerencia",
+        "empleados": "216"
+      },
+      {
+        "nombre": "NI GERENCIA OPERACIONES PLANTA INTERNA",
+        "tipo": "Subgerencia",
+        "empleados": "34"
+      },
+      {
+        "nombre": "NI AREA NORESTE (SMRE)",
+        "tipo": "Equipo",
+        "empleados": "18"
+      },
+      {
+        "nombre": "NI COORD. DE NOC CENTRO DE MANDO OPERACIONES",
+        "tipo": "Equipo",
+        "empleados": "14"
+      },
+      {
+        "nombre": "NI SUPERV.  CONMUTACION",
+        "tipo": "Equipo",
+        "empleados": "9"
+      },
+      {
+        "nombre": "NI GERENCIA COMERCIAL MOVIL Y SERVICIOS FIJOS",
+        "tipo": "Subgerencia",
+        "empleados": "8"
+      },
+      {
+        "nombre": "NI PLANTA EXTERNA LEON",
+        "tipo": "Equipo",
+        "empleados": "8"
+      },
+      {
+        "nombre": "NI CAC CIUDAD JARDIN",
+        "tipo": "Equipo",
+        "empleados": "7"
+      },
+      {
+        "nombre": "NI ALMACEN CARRETERA MASAYA",
+        "tipo": "Equipo",
+        "empleados": "7"
+      },
+      {
+        "nombre": "NI PLANTA EXTERNA ESTELI-2",
+        "tipo": "Equipo",
+        "empleados": "7"
+      },
+      {
+        "nombre": "NI TECNICA HFC CHINANDEGA",
+        "tipo": "Equipo",
+        "empleados": "7"
+      },
+      {
+        "nombre": "NI TECNICA HFC CARAZO",
+        "tipo": "Equipo",
+        "empleados": "6"
+      },
+      {
+        "nombre": "NI COORD. COMERCIAL MOVIL Z-OCCIDENTE-2",
+        "tipo": "Equipo",
+        "empleados": "5"
+      },
+      {
+        "nombre": "NI CAC BELLO HORIZONTE",
+        "tipo": "Equipo",
+        "empleados": "5"
+      },
+      {
+        "nombre": "NI TECNICA HFC  MATAGALPA",
+        "tipo": "Equipo",
+        "empleados": "5"
+      },
+      {
+        "nombre": "NI R-SVA",
+        "tipo": "Equipo",
+        "empleados": "5"
+      },
+      {
+        "nombre": "NI SUBGCIA DE RELACIONES LABORALES Y SEGURIDAD INDUSTRIAL",
+        "tipo": "Subgerencia",
+        "empleados": "5"
+      },
+      {
+        "nombre": "NI CAC MONSEÑOR LEZCANO",
+        "tipo": "Equipo",
+        "empleados": "5"
+      }
+    ]
+  },
+  "problemas": [
+    "⚠️ 966 empleados asignados directamente a la Dirección (debería ser ~2-5 max)",
+    "⚠️ 63 nodos con nombre vacío o \"0\" (datos corruptos)",
+    "⚠️ 342 empleados asignados a nodos con nombre \"0\" o vacío"
+  ],
+  "usuariosSinNodo": [],
+  "nodosVacios": [
+    {
+      "idNodo": 351,
+      "nombre": "NI CAC EL RAMA",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 273,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 51,
+      "nombre": "NI GERENCIA OPERACIONES PLANTA INTERNA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 272,
+      "nombre": "NI GERENCIA TECNICA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 190,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 350,
+      "nombre": "NI CAC NUEVA GUINEA",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 314,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 278,
+      "nombre": "NI GERENCIA TECNICA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 176,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 299,
+      "nombre": "NI SUBGERENCIA PLANTA INTERNA SITIOS MOVIL",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 309,
+      "nombre": "NI SUBGERENCIA PROYECTO MOVIL",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 292,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 236,
+      "nombre": "NI GERENCIA COMERCIAL MOVIL Y SERVICIOS FIJOS",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 263,
+      "nombre": "NI SUPERV.  RBS Y TX NOR OCCIDENTAL",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 271,
+      "nombre": "NI COORDINACION DE ACEPTACION DE PROYECTOS",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 197,
+      "nombre": "NI COORD. CADENAS",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 227,
+      "nombre": "NI GERENCIA OPERACIONES PLANTA EXTERNA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 282,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 173,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 149,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 311,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 269,
+      "nombre": "NI GERENCIA TECNICA",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 261,
+      "nombre": "NI GERENCIA TECNICA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 280,
+      "nombre": "NI SUPERV. INTERNET/DATOS INSTALACIONES PX",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 42,
+      "nombre": "NI GERENCIA DE IMPLANTACION",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 189,
+      "nombre": "NI GERENCIA OPERACIONES PLANTA EXTERNA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 161,
+      "nombre": "NI GERENCIA DE IMPLANTACION",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 239,
+      "nombre": "NI GERENCIA OPERACIONES PLANTA INTERNA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 188,
+      "nombre": "NI SUPERV.  ASIGNACIONES",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 257,
+      "nombre": "NI SUBG. COMERCIAL SF MGA. ESTE",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 113,
+      "nombre": "NI SUBGERENCIA PX COBRE FIBRA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 125,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 43,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 196,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 291,
+      "nombre": "NI GERENCIA COMERCIAL CADENAS Y MULTIMARCAS",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 210,
+      "nombre": "NI GERENCIA OPERACIONES PLANTA EXTERNA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 226,
+      "nombre": "NI SUPERV. INTERNET/DATOS SOPORTE PX",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 48,
+      "nombre": "NI GERENCIA TECNICA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 187,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 298,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 57,
+      "nombre": "NI GERENCIA OPERACIONES PLANTA INTERNA",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 244,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 160,
+      "nombre": "NI SUBGERENCIA CONSTRUCCION PLANTA EXTERNA",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 242,
+      "nombre": "NI SUPERV. INSTALACION POT",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 357,
+      "nombre": "NI COORD. COMERCIAL SF-NORTE-1",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 251,
+      "nombre": "NI SUPERVISION REDES ACCESO",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 204,
+      "nombre": "NI GERENCIA TECNICA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 266,
+      "nombre": "NI COORDINACION DE PLANIFICACION (I&O)",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 171,
+      "nombre": "NI SUPERVISION INFRAESTRUCTURA",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 315,
+      "nombre": "NI SUPERV. CALIDAD",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 283,
+      "nombre": "NI VIDEO Y CMTS´S",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 54,
+      "nombre": "NI GERENCIA COMERCIAL CADENAS Y MULTIMARCAS",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 305,
+      "nombre": "NI GERENCIA COMERCIAL CADENAS Y MULTIMARCAS",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 297,
+      "nombre": "NI GERENCIA TECNICA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 96,
+      "nombre": "NI GERENCIA DE IMPLANTACION",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 361,
+      "nombre": "NI CAC EL JICARO",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 321,
+      "nombre": "NI SUBGERENCIA CONSTRUCCION PLANTA INTERNA",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 201,
+      "nombre": "NI GERENCIA COMERCIAL MOVIL Y SERVICIOS FIJOS",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 303,
+      "nombre": "NI GERENCIA OPERACIONES PLANTA EXTERNA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 233,
+      "nombre": "NI GERENCIA DE IMPLANTACION",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 220,
+      "nombre": "NI SUPERV.  PROTECCION Y CLIMA",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 219,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 175,
+      "nombre": "NI GERENCIA OPERACIONES PLANTA INTERNA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 241,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 252,
+      "nombre": "NI GERENCIA DE IMPLANTACION",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 363,
+      "nombre": "NI CAC RIO BLANCO",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 285,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 327,
+      "nombre": "NI CAC DIRIOMO",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 50,
+      "nombre": "NI SUPERV. INTERNET/DATOS SOPORTE PI",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 253,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 231,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 340,
+      "nombre": "NI CAC ACOYAPA",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 356,
+      "nombre": "NI CAC CHICHIGALPA",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 391,
+      "nombre": "NI CAC ZONA CENTRO - NORTE",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 195,
+      "nombre": "NI GERENCIA TECNICA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 199,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 368,
+      "nombre": "NI CAC CORN ISLANDS",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 246,
+      "nombre": "NI GERENCIA COMERCIAL CADENAS Y MULTIMARCAS",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 369,
+      "nombre": "NI R-CORE",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 128,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 243,
+      "nombre": "NI GERENCIA OPERACIONES PLANTA EXTERNA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 344,
+      "nombre": "NI CAC CAMOAPA",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 152,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 355,
+      "nombre": "NI R-NOC TRANSMISION",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 383,
+      "nombre": "NI SUPERV. MANTO. BIENES Y OBRAS CIVIL_ZONA NORTE",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 230,
+      "nombre": "NI GERENCIA OPERACIONES PLANTA EXTERNA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 301,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 222,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 381,
+      "nombre": "NI CAC YALI",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 193,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 254,
+      "nombre": "NI COORD. ING. DE CLIENTES Y ACCESO",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 377,
+      "nombre": "NI CAC LA TRINIDAD",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 217,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 159,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 186,
+      "nombre": "NI GERENCIA OPERACIONES PLANTA INTERNA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 250,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 47,
+      "nombre": "NI COORD. ING. DE PROYECTOS DATOS",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 177,
+      "nombre": "NI GERENCIA ADMINISTRACION Y FINANZAS",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 319,
+      "nombre": "NI GERENCIA DE IMPLANTACION",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 178,
+      "nombre": "NI SUBGERENCIA DE ALMACENES",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 145,
+      "nombre": "NI COORD. COMERCIAL SF MGA. ESTE-1",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 129,
+      "nombre": "NI GERENCIA COMERCIAL MOVIL Y SERVICIOS FIJOS",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 203,
+      "nombre": "NI SUPERV. DISEÑO Y OPTIMIZACION RF -ZONA OCC.CENTRO Y RAAS",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 228,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 294,
+      "nombre": "NI GERENCIA OPERACIONES PLANTA INTERNA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 229,
+      "nombre": "NI SUBGERENCIA PX COBRE FIBRA",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 267,
+      "nombre": "NI GERENCIA TECNICA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 304,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 52,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 146,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 382,
+      "nombre": "NI SUPERV. MANTO. BIENES Y OBRAS CIVIL_ZONA NOROCCIDENTE",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 162,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 341,
+      "nombre": "NI CAC EL VIEJO",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 84,
+      "nombre": "NI SUBGERENCIA PLANTA INTERNA SITIOS MOVIL",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 192,
+      "nombre": "NI GERENCIA OPERACIONES PLANTA INTERNA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 276,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 237,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 101,
+      "nombre": "NI GERENCIA OPERACIONES PLANTA EXTERNA",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 262,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 320,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 97,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 238,
+      "nombre": "NI SUPERV. INTERNET/DATOS INSTALACIONES PI",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 268,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 127,
+      "nombre": "NI GERENCIA DE IMPLANTACION",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 98,
+      "nombre": "NI SUPERVISION DE FIBRA OPTICA",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 200,
+      "nombre": "NI COORD. COMERCIAL SF MGA. ESTE-2",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 329,
+      "nombre": "NI R-CONFIGURACIONES",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 44,
+      "nombre": "NI SUPERV. DISEÑO Y OPTIMIZACION RF -ZONA MANAGUA Y SUR",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 235,
+      "nombre": "NI COORD. COMERCIAL SF MGA. OESTE-1",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 306,
+      "nombre": "NI SUBGERENCIA CADENAS Y MULTIMARCAS",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 286,
+      "nombre": "NI SUPERV. INGENIERIA VAS",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 147,
+      "nombre": "NI SUPERV. DE  INSTALACIONES",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 279,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 214,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 338,
+      "nombre": "NI CAC ACHUAPA",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 202,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 95,
+      "nombre": "NI SUPERV. CONSTRUCCION PLANTA EXTERNA",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 281,
+      "nombre": "NI GERENCIA OPERACIONES PLANTA EXTERNA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 259,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 232,
+      "nombre": "NI SUBGERENCIA INGENIERIA PX FIJO Y COBRE",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 302,
+      "nombre": "NI SUPERVISION MANTENIMIENTO RED EXTERNA",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 172,
+      "nombre": "NI GERENCIA DE IMPLANTACION",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 288,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 198,
+      "nombre": "NI GERENCIA COMERCIAL CADENAS Y MULTIMARCAS",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 324,
+      "nombre": "NI CAC ZONA NOROCCIDENTE",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 212,
+      "nombre": "NI SUPERV.  RBS Y TX SUR CENTRAL",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 310,
+      "nombre": "NI GERENCIA DE IMPLANTACION",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 249,
+      "nombre": "NI GERENCIA OPERACIONES PLANTA EXTERNA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 255,
+      "nombre": "NI GERENCIA TECNICA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 388,
+      "nombre": "NI CAC PUEBLO NUEVO",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 151,
+      "nombre": "NI GERENCIA OPERACIONES PLANTA EXTERNA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 296,
+      "nombre": "NI SUPERV. DISEÑO Y OPTIMIZACIÓN RF-ZONA NORTE Y RAAN",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 209,
+      "nombre": "NI AREA SURESTE  (SMRE)",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 225,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 245,
+      "nombre": "NI COORD. MULTIMARCAS",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 205,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 83,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 63,
+      "nombre": "NI SUBGERENCIA PLANTA INTERNA RED FIJA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 45,
+      "nombre": "NI GERENCIA TECNICA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 174,
+      "nombre": "NI SUPERV. RED  TRANSPORTE",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 216,
+      "nombre": "NI GERENCIA TECNICA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 295,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 213,
+      "nombre": "NI GERENCIA OPERACIONES PLANTA INTERNA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 274,
+      "nombre": "NI SUPERVISION REDES TRONCALES",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 223,
+      "nombre": "NI SUPERV. INGENIERIA CORE",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 352,
+      "nombre": "NI SUPERV. MANTO. BIENES Y OBRAS CIVIL_ZONA CENTRO Y ESPEC.",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 287,
+      "nombre": "NI GERENCIA TECNICA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 221,
+      "nombre": "NI GERENCIA OPERACIONES PLANTA INTERNA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 102,
+      "nombre": "NI SUBGERENCIA PX HFC",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 312,
+      "nombre": "NI SUPERV. MANTENIMIENTO DE INFRAESTRUCTURA MOVIL",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 158,
+      "nombre": "NI GERENCIA COMERCIAL MOVIL Y SERVICIOS FIJOS",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 277,
+      "nombre": "NI SUBGERENCIA DE SOPORTE Y GESTION",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 290,
+      "nombre": "NI SUBGERENCIA CADENAS Y MULTIMARCAS",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 300,
+      "nombre": "NI GERENCIA OPERACIONES PLANTA INTERNA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 317,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 284,
+      "nombre": "NI GERENCIA OPERACIONES PLANTA INTERNA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 265,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 342,
+      "nombre": "NI CAC NAGAROTE",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 207,
+      "nombre": "NI GERENCIA TECNICA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 126,
+      "nombre": "NI SUPERV. CONSTRUCCION PLANTA INTERNA",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 194,
+      "nombre": "NI SUBGERENCIA INGENIERIA FIJA",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 360,
+      "nombre": "NI CAC TEUSTEPE",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 371,
+      "nombre": "NI CAC PALACAGUINA",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 99,
+      "nombre": "NI GERENCIA OPERACIONES PLANTA EXTERNA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 367,
+      "nombre": "NI COORD. COMERCIAL SF-NORTE-2",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 374,
+      "nombre": "NI CAC EL BLUFF",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 41,
+      "nombre": "NI SUPERV.  OBRAS CIVILES",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 206,
+      "nombre": "NI COORDINACION GESTION DE PROYECTOS",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 46,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 365,
+      "nombre": "NI R-CORE - ACCESOS",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 224,
+      "nombre": "NI GERENCIA TECNICA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 157,
+      "nombre": "NI SUBG. COMERCIAL SF MGA. OESTE",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 53,
+      "nombre": "NI COORD. ZONAL",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 318,
+      "nombre": "NI PX FO CORPORATIVO VIP",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 275,
+      "nombre": "NI GERENCIA DE IMPLANTACION",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 247,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 260,
+      "nombre": "NI SUBGCIA INGENIERIA Y CALIDAD MOVIL",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 308,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 100,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 150,
+      "nombre": "NI CLIENTES VIP PX",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 248,
+      "nombre": "NI REPARACIONES-CLARO TECH",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 208,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 293,
+      "nombre": "NI SUBGERENCIA PLANTA INTERNA RED FIJA",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 191,
+      "nombre": "NI SUPERV. DE VSAT/TP",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 141,
+      "nombre": "NI SUBG.COMERCIAL MOVIL ZONA SUR ORIENTE",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 218,
+      "nombre": "NI GERENCIA DE IMPLANTACION",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 49,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 234,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 316,
+      "nombre": "NI GERENCIA TECNICA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 211,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 256,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 332,
+      "nombre": "NI R-CNOC.",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 185,
+      "nombre": "NI SUPERV.  ENERGIA E INFRAESTRUCTURA",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 264,
+      "nombre": "NI GERENCIA OPERACIONES PLANTA INTERNA",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 380,
+      "nombre": "NI CAC ALTAGRACIA",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 215,
+      "nombre": "NI COORDINACION DE SOPORTE A LA OPERACION",
+      "tipo": "Gerencia"
+    },
+    {
+      "idNodo": 55,
+      "nombre": "0",
+      "tipo": "Equipo"
+    },
+    {
+      "idNodo": 148,
+      "nombre": "NI GERENCIA DE IMPLANTACION",
+      "tipo": "Subgerencia"
+    },
+    {
+      "idNodo": 270,
+      "nombre": "0",
+      "tipo": "Equipo"
+    }
+  ],
+  "empleadosEnDireccion": [
+    {
+      "nombre": "AARON ISMAEL SANDOVAL CHAVEZ",
+      "rol": "Colaborador",
+      "correo": "aaron.sandoval@claro.com.ni"
+    },
+    {
+      "nombre": "AARON MURILLO VEGA",
+      "rol": "Colaborador",
+      "correo": "aaron.murillo@claro.com.ni"
+    },
+    {
+      "nombre": "ADAN GABRIEL ESPINOZA SILVA",
+      "rol": "Colaborador",
+      "correo": "adan.espinoza@claro.com.ni"
+    },
+    {
+      "nombre": "ADAN JOSE MORALES FLORES",
+      "rol": "Colaborador",
+      "correo": "morales.adan@claro.com.ni"
+    },
+    {
+      "nombre": "ADILIA ISABEL LATINO SANCHEZ",
+      "rol": "Colaborador",
+      "correo": "adilia.latino@claro.com.ni"
+    },
+    {
+      "nombre": "ADOLFO JOSE VELASQUEZ",
+      "rol": "Colaborador",
+      "correo": "adolfo.velasquez@claro.com.ni"
+    },
+    {
+      "nombre": "ADRIANA ALEJANDRA GONZALEZ MORENO",
+      "rol": "Colaborador",
+      "correo": "adriana.gonzalez@claro.com.ni"
+    },
+    {
+      "nombre": "ADRIANA RAQUEL SALAZAR MEDINA",
+      "rol": "Colaborador",
+      "correo": "adrianar.salazar@claro.com.ni"
+    },
+    {
+      "nombre": "ALBERTO ANTONIO CASTILLO MAYORGA",
+      "rol": "Colaborador",
+      "correo": "albertoa.castillo@claro.com.ni"
+    },
+    {
+      "nombre": "ALBERTO JOSE MOLINA TAPIA",
+      "rol": "Colaborador",
+      "correo": "alberto.molina1@claro.com.ni"
+    },
+    {
+      "nombre": "ALBERTO NAPOLEON GONZALEZ LEIVA",
+      "rol": "Colaborador",
+      "correo": "alberto.gonzalez@claro.com.ni"
+    },
+    {
+      "nombre": "ALEJANDRA DE LOS ANGELES ABURTO LOPEZ",
+      "rol": "Colaborador",
+      "correo": "alejandra.aburto@claro.com.ni"
+    },
+    {
+      "nombre": "ALEJANDRA EUNISE PICADO HERNANDEZ",
+      "rol": "Colaborador",
+      "correo": "alejandra.picado@claro.com.ni"
+    },
+    {
+      "nombre": "ALEJANDRA VANESSA MATUS MEDRANO",
+      "rol": "Colaborador",
+      "correo": "alejandra.matus@claro.com.ni"
+    },
+    {
+      "nombre": "ALEJANDRO JESUS MEDRANO MEJIA",
+      "rol": "Colaborador",
+      "correo": "alejandro.medrano@claro.com.ni"
+    },
+    {
+      "nombre": "ALEJANDRO SALOMON MORALES GARCIA",
+      "rol": "Colaborador",
+      "correo": "morales.alejandro@claro.com.ni"
+    },
+    {
+      "nombre": "ALEX FRANCISCO FERNANDEZ GARCIA",
+      "rol": "Colaborador",
+      "correo": "alex.fernandez@claro.com.ni"
+    },
+    {
+      "nombre": "ALEXANDER  GABRIEL  RIOS  FLORES",
+      "rol": "Colaborador",
+      "correo": "alexanderg.rios@claro.com.ni"
+    },
+    {
+      "nombre": "ALEXANDER ALBERTO OROZCO MONTES",
+      "rol": "Colaborador",
+      "correo": "alexander.orozco@claro.com.ni"
+    },
+    {
+      "nombre": "ALEXANDER ISAAC AREAS ROBELO",
+      "rol": "Colaborador",
+      "correo": "alexander.areas@claro.com.ni"
+    },
+    {
+      "nombre": "ALEXIS ALEJANDRO MOLINARES LANUZA",
+      "rol": "Colaborador",
+      "correo": "alexis.molinares@claro.com.ni"
+    },
+    {
+      "nombre": "ALEXIS RIVERA SALGADO",
+      "rol": "Colaborador",
+      "correo": "alexis.rivera@claro.com.ni"
+    },
+    {
+      "nombre": "ALEYDA MARGARITA FLORES BRENES",
+      "rol": "Colaborador",
+      "correo": "aleyda.flores@claro.com.ni"
+    },
+    {
+      "nombre": "ALFONSO ANGEL HERNANDEZ VALLECILLO",
+      "rol": "Colaborador",
+      "correo": "alfonso.hernandez@claro.com.ni"
+    },
+    {
+      "nombre": "ALFREDO ISAEL POVEDA BARBOZA",
+      "rol": "Colaborador",
+      "correo": "alfredo.poveda@claro.com.ni"
+    },
+    {
+      "nombre": "ALLAN MAURICIO HERNANDEZ",
+      "rol": "Colaborador",
+      "correo": "allanm.hernandez@claro.com.ni"
+    },
+    {
+      "nombre": "ALLISON PAOLA RODRIGUEZ MENDOZA",
+      "rol": "Colaborador",
+      "correo": "allisonpa.rodriguez@claro.com.ni"
+    },
+    {
+      "nombre": "ALONDRA ESTEFANIA VALDIVIA BETANCO",
+      "rol": "Colaborador",
+      "correo": "alondra.valdivia@claro.com.ni"
+    },
+    {
+      "nombre": "ALVARO ANTONIO RUGAMA BOJORGE",
+      "rol": "Colaborador",
+      "correo": "alvaro.rugama@claro.com.ni"
+    },
+    {
+      "nombre": "ALVARO EMANUEL SEQUEIRA HERNANDEZ",
+      "rol": "Colaborador",
+      "correo": "alvaro.sequeira@claro.com.ni"
+    },
+    {
+      "nombre": "ALVARO RAMON LEIVA MENA",
+      "rol": "Colaborador",
+      "correo": "alvaro.leiva@claro.com.ni"
+    },
+    {
+      "nombre": "ANA CLEMENTINA JIMENEZ RIOS",
+      "rol": "Colaborador",
+      "correo": "ana.jimenez@claro.com.ni"
+    },
+    {
+      "nombre": "ANA GABRIELA MEDAl HERNANDEZ",
+      "rol": "Colaborador",
+      "correo": "anag.medal@claro.com.ni"
+    },
+    {
+      "nombre": "ANA JULIA ALVARADO GARCIA",
+      "rol": "Colaborador",
+      "correo": "ana.alvarado@claro.com.ni"
+    },
+    {
+      "nombre": "ANA KARINA DIAZ AGUIRRE",
+      "rol": "Colaborador",
+      "correo": "anak.diaz@claro.com.ni"
+    },
+    {
+      "nombre": "ANA LUZ PEREZ RIVAS",
+      "rol": "Colaborador",
+      "correo": "ana.perezr@claro.com.ni"
+    },
+    {
+      "nombre": "ANA MERCEDES MUÑOZ GAITAN",
+      "rol": "Colaborador",
+      "correo": "ana.munoz@claro.com.ni"
+    },
+    {
+      "nombre": "ANA VICTORIA TAPIA URBINA",
+      "rol": "Colaborador",
+      "correo": "ana.tapia@claro.com.ni"
+    },
+    {
+      "nombre": "ANAYANSI HERNANDEZ  BRIONES",
+      "rol": "Colaborador",
+      "correo": "anayansi.hernandez@claro.com.ni"
+    },
+    {
+      "nombre": "ANDERSON WILFREDO NAVARRO CORONADO",
+      "rol": "Colaborador",
+      "correo": "anderson.navarro@claro.com.ni"
+    },
+    {
+      "nombre": "ANDREA DEL CARMEN VALDIVIA",
+      "rol": "Colaborador",
+      "correo": "andrea.valdivia@claro.com.ni"
+    },
+    {
+      "nombre": "ANDRES ALEJANDRO HENRIQUEZ FLORES",
+      "rol": "Colaborador",
+      "correo": "andres.henriquez@claro.com.ni"
+    },
+    {
+      "nombre": "ANDY MAVERICK ROMERO JIRON",
+      "rol": "Colaborador",
+      "correo": "andym.romero@claro.com.ni"
+    },
+    {
+      "nombre": "ANEYLIN CAROLINA MORA RAMIREZ",
+      "rol": "Colaborador",
+      "correo": "aneylin.mora@claro.com.ni"
+    },
+    {
+      "nombre": "ANGELICA MARIA DOMINGUEZ ORTIZ",
+      "rol": "Colaborador",
+      "correo": "angelicam.dominguez@claro.com.ni"
+    },
+    {
+      "nombre": "ANGELICA MARIA VALLEJOS SOLANO",
+      "rol": "Colaborador",
+      "correo": "angelica.vallejos@claro.com.ni"
+    },
+    {
+      "nombre": "ANGIE YOSELEE GUILLEN ROBINSON",
+      "rol": "Colaborador",
+      "correo": "angie.guillen@claro.com.ni"
+    },
+    {
+      "nombre": "ANIBAL ANTONIO PASTORA CRUZ",
+      "rol": "Colaborador",
+      "correo": "anibal.pastora@claro.com.ni"
+    },
+    {
+      "nombre": "ANIELCKA PAOLA SOZA JUAREZ",
+      "rol": "Colaborador",
+      "correo": "anielka.soza@claro.com.ni"
+    },
+    {
+      "nombre": "ANIELKA ELENA MENDEZ MORA",
+      "rol": "Colaborador",
+      "correo": "anielka.mendez@claro.com.ni"
+    },
+    {
+      "nombre": "ANIETH VALKIRIA ESPINOZA ARAGON",
+      "rol": "Colaborador",
+      "correo": "anieth.espinoza@claro.com.ni"
+    },
+    {
+      "nombre": "ANIWSKA SULEE PLUMMER REYES",
+      "rol": "Colaborador",
+      "correo": "aniwska.plummer@claro.com.ni"
+    },
+    {
+      "nombre": "ANNA CARINA OROZCO JIMENEZ",
+      "rol": "Colaborador",
+      "correo": "anna.orozco@claro.com.ni"
+    },
+    {
+      "nombre": "ANNY KARELIA DUARTE PAYAN",
+      "rol": "Colaborador",
+      "correo": "anny.duarte@claro.com.ni"
+    },
+    {
+      "nombre": "ANTHONY HARDAWAY BALDELOMAR GARMENDIA",
+      "rol": "Colaborador",
+      "correo": "anthony.baldelomar@claro.com.ni"
+    },
+    {
+      "nombre": "ANTONIO DE JESUS MARTINEZ OROZCO",
+      "rol": "Colaborador",
+      "correo": "antonioj.martinez@claro.com.ni"
+    },
+    {
+      "nombre": "ANYULI MASSIEL VALLE ALTAMIRANO",
+      "rol": "Colaborador",
+      "correo": "anyuli.valle@claro.com.ni"
+    },
+    {
+      "nombre": "ARIADNA MICHELLE RODRIGUEZ BLANCO",
+      "rol": "Colaborador",
+      "correo": "ariadna.rodriguez@claro.com.ni"
+    },
+    {
+      "nombre": "ARIEL ESTEBAN GARCIA LOPEZ",
+      "rol": "Colaborador",
+      "correo": "aesteban.garcia@claro.com.ni"
+    },
+    {
+      "nombre": "ARJUNA JOSUE OBREGON PEREZ",
+      "rol": "Colaborador",
+      "correo": "arjuna.obregon@claro.com.ni"
+    },
+    {
+      "nombre": "ARLEN PATRICIA ALTAMIRANO SANCHEZ",
+      "rol": "Colaborador",
+      "correo": "arlen.altamirano@claro.com.ni"
+    },
+    {
+      "nombre": "ARLEN RENEE PAZ BLANCO",
+      "rol": "Colaborador",
+      "correo": "arlen.paz@claro.com.ni"
+    },
+    {
+      "nombre": "ARLIN VIDELIA LARIOS",
+      "rol": "Colaborador",
+      "correo": "arlin.larios@claro.com.ni"
+    },
+    {
+      "nombre": "ARMANDO JOSE BARQUERO HERRERA",
+      "rol": "Colaborador",
+      "correo": "armando.barquero@claro.com.ni"
+    },
+    {
+      "nombre": "ARNOLDO KUAN MONTOYA",
+      "rol": "Colaborador",
+      "correo": "arnoldo.kuan@claro.com.ni"
+    },
+    {
+      "nombre": "ASLHEY ELIETH RUBY SUAREZ",
+      "rol": "Colaborador",
+      "correo": "aslheye.ruby@claro.com.ni"
+    },
+    {
+      "nombre": "AUNER ALI GUERRERO HERNANDEZ",
+      "rol": "Colaborador",
+      "correo": "auner.guerreroh@claro.com.ni"
+    },
+    {
+      "nombre": "AURORA DE LOS ANGELES SOTELO PICADO",
+      "rol": "Colaborador",
+      "correo": "aurora.sotelo@claro.com.ni"
+    },
+    {
+      "nombre": "AXEL STEVENS JIMENEZ ANDINO",
+      "rol": "Colaborador",
+      "correo": "axel.jimenez@claro.com.ni"
+    },
+    {
+      "nombre": "AZUCENA KIMBERLY HOMPRIS WILFRED",
+      "rol": "Colaborador",
+      "correo": "azucenak.hompris@claro.com.ni"
+    },
+    {
+      "nombre": "BACNER DE JESUS SANCHEZ MERCADO",
+      "rol": "Colaborador",
+      "correo": "bacner.sanchez@claro.com.ni"
+    },
+    {
+      "nombre": "BARNEY NUÑEZ GUTIERREZ",
+      "rol": "Colaborador",
+      "correo": "barney.nunez@claro.com.ni"
+    },
+    {
+      "nombre": "BAYRON JOSE RAMIREZ ALEMAN",
+      "rol": "Colaborador",
+      "correo": "bayron.ramirez@claro.com.ni"
+    },
+    {
+      "nombre": "BAYRON YAMIL HERNANDEZ ESPINOZA",
+      "rol": "Colaborador",
+      "correo": "bayron.hernandez@claro.com.ni"
+    },
+    {
+      "nombre": "BENITA RAMONA QUEZADA",
+      "rol": "Colaborador",
+      "correo": "benita.quezada@claro.com.ni"
+    },
+    {
+      "nombre": "BENJAMIN FRANKLIN VANEGAS MONTIEL",
+      "rol": "Colaborador",
+      "correo": "benjamin.vanegas@claro.com.ni"
+    },
+    {
+      "nombre": "BERTHA DEL CARMEN MAIRENA MORALES",
+      "rol": "Colaborador",
+      "correo": "bmairena@claro.com.ni"
+    },
+    {
+      "nombre": "BEYMAR ALEXANDER ROBLETO LOPEZ",
+      "rol": "Colaborador",
+      "correo": "beymar.robleto@claro.com.ni"
+    },
+    {
+      "nombre": "BISMARCK ALEJANDRO MUÑOZ GAITAN",
+      "rol": "Colaborador",
+      "correo": "bismark.munoz@claro.com.ni"
+    },
+    {
+      "nombre": "BLANCA ROSA SOLANO BENAVENTE",
+      "rol": "Colaborador",
+      "correo": "blanca.solano@claro.com.ni"
+    },
+    {
+      "nombre": "BRAYAN ANTONIO CASTILLO GAMEZ",
+      "rol": "Colaborador",
+      "correo": "brayan.castillo@claro.com.ni"
+    },
+    {
+      "nombre": "BRENDA LEE GUADAMUZ ZAPATA",
+      "rol": "Colaborador",
+      "correo": "brenda.guadamuz@claro.com.ni"
+    },
+    {
+      "nombre": "BRENDA LEE KANDLER DOWNS",
+      "rol": "Colaborador",
+      "correo": "brenda.kandlers@claro.com.ni"
+    },
+    {
+      "nombre": "BRENDA PATRICIA LOPEZ JARQUIN",
+      "rol": "Colaborador",
+      "correo": "brendap.lopez@claro.com.ni"
+    },
+    {
+      "nombre": "BRONDO  LEE  PADILLA",
+      "rol": "Colaborador",
+      "correo": "brondo.lee@claro.com.ni"
+    },
+    {
+      "nombre": "BRYAM RICARDO MARTINEZ PRADO",
+      "rol": "Colaborador",
+      "correo": "bryam.martinez@claro.com.ni"
+    },
+    {
+      "nombre": "BRYAN ALEXANDER GONZALEZ CABEZAS",
+      "rol": "Colaborador",
+      "correo": "bryan.gonzalezc@claro.com.ni"
+    },
+    {
+      "nombre": "BRYAN JOSUE OROZCO GUTIERREZ",
+      "rol": "Colaborador",
+      "correo": "bryan.orozcog@claro.com.ni"
+    },
+    {
+      "nombre": "BYRON ISAAC JARQUIN HERRERA",
+      "rol": "Colaborador",
+      "correo": "byron.jarquin@claro.com.ni"
+    },
+    {
+      "nombre": "CANDELARIA DEL CARMEN GUEVARA ZELEDON",
+      "rol": "Colaborador",
+      "correo": "candelaria.guevara@claro.com.ni"
+    },
+    {
+      "nombre": "CANDIDA ELOISA REYES PEREZ",
+      "rol": "Colaborador",
+      "correo": "candida.reyes@claro.com.ni"
+    },
+    {
+      "nombre": "CANDIDA RASHELL MEZA ALTAMIRANO",
+      "rol": "Colaborador",
+      "correo": "candida.meza@claro.com.ni"
+    },
+    {
+      "nombre": "CARLOS ALBERTO BARRERA",
+      "rol": "Colaborador",
+      "correo": "carlos.barrera@claro.com.ni"
+    },
+    {
+      "nombre": "CARLOS ALBERTO ESPINOZA CABALLERO",
+      "rol": "Colaborador",
+      "correo": "carlos.espinoza@claro.com.ni"
+    },
+    {
+      "nombre": "CARLOS ANDRES ALTAMIRANO ESPINOZA",
+      "rol": "Colaborador",
+      "correo": "carlosa.altamirano@claro.com.ni"
+    },
+    {
+      "nombre": "CARLOS ANTONIO ZEPEDA RIVERA",
+      "rol": "Colaborador",
+      "correo": "carlos.zepeda@claro.com.ni"
+    },
+    {
+      "nombre": "CARLOS CALEB CORDOBA TAYLOR",
+      "rol": "Colaborador",
+      "correo": "carlos.cordobat@claro.com.ni"
+    },
+    {
+      "nombre": "CARLOS ELIEZER FLORES HERNANDEZ",
+      "rol": "Colaborador",
+      "correo": "carloseliezer.flores@claro.com.ni"
+    },
+    {
+      "nombre": "CARLOS ENRIQUE MEJIA CARRAZCO",
+      "rol": "Colaborador",
+      "correo": "carlosenr.mejia@claro.com.ni"
+    },
+    {
+      "nombre": "CARLOS HANIEL MEJIA CANALES",
+      "rol": "Colaborador",
+      "correo": "carlosh.mejia@claro.com.ni"
+    },
+    {
+      "nombre": "CARLOS JAVIER BALLADARES CRUZ",
+      "rol": "Colaborador",
+      "correo": "carlos.balladares@claro.com.ni"
+    },
+    {
+      "nombre": "CARLOS JOSE DAVILA MEZA",
+      "rol": "Colaborador",
+      "correo": "carlos.davilam@claro.com.ni"
+    },
+    {
+      "nombre": "CARLOS JOSE MORALES",
+      "rol": "Colaborador",
+      "correo": "carlos.morales@claro.com.ni"
+    },
+    {
+      "nombre": "CARLOS MANUEL VELASQUEZ VALLECILLO",
+      "rol": "Colaborador",
+      "correo": "carlos.velasquez@claro.com.ni"
+    },
+    {
+      "nombre": "CARLOS RAFAEL RAMIREZ LUNA",
+      "rol": "Colaborador",
+      "correo": "carlosr.ramirez@claro.com.ni"
+    },
+    {
+      "nombre": "CELIA JENNY RODRIGUEZ HERNANDEZ",
+      "rol": "Colaborador",
+      "correo": "celia.rodriguez@claro.com.ni"
+    },
+    {
+      "nombre": "CESAR AUGUSTO JIRON CANDA",
+      "rol": "Colaborador",
+      "correo": "cesar.jiron@claro.com.ni"
+    },
+    {
+      "nombre": "CESAR GABRIEL FLORES ZELAYA",
+      "rol": "Colaborador",
+      "correo": "cesarg.flores@claro.com.ni"
+    },
+    {
+      "nombre": "CESAR OFILIO RAMOS CASTILLO",
+      "rol": "Colaborador",
+      "correo": "cesar.ramosc@claro.com.ni"
+    },
+    {
+      "nombre": "CESAR ULISES CHAVARRIA HERNANDEZ",
+      "rol": "Colaborador",
+      "correo": "cesar.chavarria@claro.com.ni"
+    },
+    {
+      "nombre": "CHEYSA JOSSELIM OCANO URBINA",
+      "rol": "Colaborador",
+      "correo": "cheysa.ocano@claro.com.ni"
+    },
+    {
+      "nombre": "CHRISTIAN ERNESTO MENDOZA BEJARANO",
+      "rol": "Colaborador",
+      "correo": "christian.mendoza@claro.com.ni"
+    },
+    {
+      "nombre": "CHRISTOPHER ALEXANDER RUGAMA CARAZO",
+      "rol": "Colaborador",
+      "correo": "christopher.rugama@claro.com.ni"
+    },
+    {
+      "nombre": "CINTHIA CAROLINA AGUILAR AQUINO",
+      "rol": "Colaborador",
+      "correo": "cinthia.aguilar@claro.com.ni"
+    },
+    {
+      "nombre": "CINTHYA PAOLA VIDEA LOPEZ",
+      "rol": "Colaborador",
+      "correo": "cinthya.videa@claro.com.ni"
+    },
+    {
+      "nombre": "CLARA ENCARNACION QUINTERO POMARES",
+      "rol": "Colaborador",
+      "correo": "clara.quintero@claro.com.ni"
+    },
+    {
+      "nombre": "CLAUDIA DEL SOCORRO RUIZ NAVARRETE",
+      "rol": "Colaborador",
+      "correo": "claudia.ruiz@claro.com.ni"
+    },
+    {
+      "nombre": "CLAUDIA INES BALTODANO ROMERO",
+      "rol": "Colaborador",
+      "correo": "claudia.baltodano@claro.com.ni"
+    },
+    {
+      "nombre": "CLAUDIA LORENA HENRIQUEZ SANCHEZ",
+      "rol": "Colaborador",
+      "correo": "claudia.henriquez@claro.com.ni"
+    },
+    {
+      "nombre": "CLAUDIA MARIA CRUZ MAIRENA",
+      "rol": "Colaborador",
+      "correo": "claudiama.cruz@claro.com.ni"
+    },
+    {
+      "nombre": "CLAUDIA MAYELA SANDOVAL CALDERON",
+      "rol": "Colaborador",
+      "correo": "claudiam.sandoval@claro.com.ni"
+    },
+    {
+      "nombre": "CLAUDIO RICARDO MENDOZA GARCIA",
+      "rol": "Colaborador",
+      "correo": "claudio.mendoza@claro.com.ni"
+    },
+    {
+      "nombre": "CONCEPCION DE FATIMA RODRIGUEZ SANCHEZ",
+      "rol": "Colaborador",
+      "correo": "concepcion.rodriguez@claro.com.ni"
+    },
+    {
+      "nombre": "CONSUELO IVANIA ORDOÑEZ ORTIZ",
+      "rol": "Colaborador",
+      "correo": "consuelo.ordonez@claro.com.ni"
+    },
+    {
+      "nombre": "CRISTABELL BEATRIZ MOREIRA TIJERINO",
+      "rol": "Colaborador",
+      "correo": "cristabell.moreira@claro.com.ni"
+    },
+    {
+      "nombre": "CRISTHIAN ELIAN GARCIA ESTEBAN",
+      "rol": "Colaborador",
+      "correo": "cristhian.garciae@claro.com.ni"
+    },
+    {
+      "nombre": "CRISTOFER ELEASER CARBALLO SANCHEZ",
+      "rol": "Colaborador",
+      "correo": "eleaser.carballo@claro.com.ni"
+    },
+    {
+      "nombre": "CRISTOFER MOISES TELLEZ SOLIS",
+      "rol": "Colaborador",
+      "correo": "cristofer.tellez@claro.com.ni"
+    },
+    {
+      "nombre": "CRISTOPHER  ANGEL  RAMOS  RIVAS",
+      "rol": "Colaborador",
+      "correo": "cristopher.ramos@claro.com.ni"
+    },
+    {
+      "nombre": "CYNTIA IBETH TINOCO NAVARRETE",
+      "rol": "Colaborador",
+      "correo": "cyntia.tinoco@claro.com.ni"
+    },
+    {
+      "nombre": "CYNTIA SKARLET LEIVA ZEPEDA",
+      "rol": "Colaborador",
+      "correo": "cyntia.leiva@claro.com.ni"
+    },
+    {
+      "nombre": "DAFNE FRINE MEDINA OSORNO",
+      "rol": "Colaborador",
+      "correo": "dafne.medina@claro.com.ni"
+    },
+    {
+      "nombre": "DAMARIS DEL SOCORRO PEREZ FIGUEROA",
+      "rol": "Colaborador",
+      "correo": "damaris.perez@claro.com.ni"
+    },
+    {
+      "nombre": "DANIELA NATHANAEL BODAN BUSTAMANTE",
+      "rol": "Colaborador",
+      "correo": "daniela.bodan@claro.com.ni"
+    },
+    {
+      "nombre": "DANIELA XIOMARA RAYOS ROCHA",
+      "rol": "Colaborador",
+      "correo": "daniela.rayos@claro.com.ni"
+    },
+    {
+      "nombre": "DANILO JOSE ACEVEDO FLORES",
+      "rol": "Colaborador",
+      "correo": "danilo.acevedo@claro.com.ni"
+    },
+    {
+      "nombre": "DANNY ISMAEL LARA MORALES",
+      "rol": "Colaborador",
+      "correo": "danny.lara@claro.com.ni"
+    },
+    {
+      "nombre": "DANNY JASMIL CRUZ MOLINA",
+      "rol": "Colaborador",
+      "correo": "danny.cruz@claro.com.ni"
+    },
+    {
+      "nombre": "DARLING AUXILIADORA PALACIOS ALMANZA",
+      "rol": "Colaborador",
+      "correo": "darling.palacios@claro.com.ni"
+    },
+    {
+      "nombre": "DARLING DANIELA REYES QUEZADA",
+      "rol": "Colaborador",
+      "correo": "darling.reyes@claro.com.ni"
+    },
+    {
+      "nombre": "DARLING DEL SOCORRO ANGULO SOLORZANO",
+      "rol": "Colaborador",
+      "correo": "darling.angulo@claro.com.ni"
+    },
+    {
+      "nombre": "DARWIN JOSE TORREZ UBEDA",
+      "rol": "Colaborador",
+      "correo": "darwin.torrez@claro.com.ni"
+    },
+    {
+      "nombre": "DAVID ANTONIO COREA GUTIERREZ",
+      "rol": "Colaborador",
+      "correo": "david.corea@claro.com.ni"
+    },
+    {
+      "nombre": "DAVID NICOLAS SANCHEZ DOMINGUEZ",
+      "rol": "Colaborador",
+      "correo": "davidn.sanchez@claro.com.ni"
+    },
+    {
+      "nombre": "DAYANARA ODILI CERDA TREJOS",
+      "rol": "Colaborador",
+      "correo": "dayanarao.cerda@claro.com.ni"
+    },
+    {
+      "nombre": "DAYANNA CAROLINA MARTINEZ GAITAN",
+      "rol": "Colaborador",
+      "correo": "dayanna.martinez@claro.com.ni"
+    },
+    {
+      "nombre": "DAYANNA MARCELA GOMEZ JIMENEZ",
+      "rol": "Colaborador",
+      "correo": "dayanna.gomez@claro.com.ni"
+    },
+    {
+      "nombre": "DAYRA PATRICIA OROZCO SALAZAR",
+      "rol": "Colaborador",
+      "correo": "dayra.orozco@claro.com.ni"
+    },
+    {
+      "nombre": "DAYSI ALESKA VELASQUEZ PEREZ",
+      "rol": "Colaborador",
+      "correo": "daysi.velasquez@claro.com.ni"
+    },
+    {
+      "nombre": "DENIA DEL CARMEN AYALA MELENDEZ",
+      "rol": "Colaborador",
+      "correo": "denia.ayala@claro.com.ni"
+    },
+    {
+      "nombre": "DENIER ANDRE CENTENO SILES",
+      "rol": "Colaborador",
+      "correo": "denier.centenos@claro.com.ni"
+    },
+    {
+      "nombre": "DENIS ALBERTO VELASQUEZ ESPINOZA",
+      "rol": "Colaborador",
+      "correo": "denis.velasquez@claro.com.ni"
+    },
+    {
+      "nombre": "DENIS ANTONIO VARGAS RIVAS",
+      "rol": "Colaborador",
+      "correo": "denis.vargas@claro.com.ni"
+    },
+    {
+      "nombre": "DENIS ISMAEL DELGADILLO GONZALEZ",
+      "rol": "Colaborador",
+      "correo": "denis.delgadillo@claro.com.ni"
+    },
+    {
+      "nombre": "DERLING JAVIER NICARAGUA LOPEZ",
+      "rol": "Colaborador",
+      "correo": "derling.nicaragua@claro.com.ni"
+    },
+    {
+      "nombre": "DEVIS YENYFER MORENO GUTIERREZ",
+      "rol": "Colaborador",
+      "correo": "devis.moreno@claro.com.ni"
+    },
+    {
+      "nombre": "DEYSILIA MASSIELL MIRANDA RUIZ",
+      "rol": "Colaborador",
+      "correo": "deysilia.miranda@claro.com.ni"
+    },
+    {
+      "nombre": "DEYVIN ANTONIO CRUZ PAUTH",
+      "rol": "Colaborador",
+      "correo": "deyvin.cruz@claro.com.ni"
+    },
+    {
+      "nombre": "DIANA LAURA CHAMORRO VEGA",
+      "rol": "Colaborador",
+      "correo": "dianal.chamorro@claro.com.ni"
+    },
+    {
+      "nombre": "DICKSON ORESTE LUQUEZ TORRES",
+      "rol": "Colaborador",
+      "correo": "dickson.luquez@claro.com.ni"
+    },
+    {
+      "nombre": "DIEGO ANTONIO ZUNIGA RUIZ",
+      "rol": "Colaborador",
+      "correo": "diego.zuniga@claro.com.ni"
+    },
+    {
+      "nombre": "DIEGO FERNANDO ORTEGA URROZ",
+      "rol": "Colaborador",
+      "correo": "diegofe.ortega@claro.com.ni"
+    },
+    {
+      "nombre": "DINA ADELA ARAGON TELLEZ",
+      "rol": "Colaborador",
+      "correo": "dina.aragon1@claro.com.ni"
+    },
+    {
+      "nombre": "DOMINGO ALEXANDER ABURTO TORREZ",
+      "rol": "Colaborador",
+      "correo": "domingo.aburto@claro.com.ni"
+    },
+    {
+      "nombre": "DONALD ALFONSO QUINTERO CAJINA",
+      "rol": "Colaborador",
+      "correo": "donald.quintero@claro.com.ni"
+    },
+    {
+      "nombre": "DREWUEL ENRIQUE ESPINOZA RAYO",
+      "rol": "Colaborador",
+      "correo": "drewuel.espinoza@claro.com.ni"
+    },
+    {
+      "nombre": "DULCE MARIA SOMARRIBA SILVA",
+      "rol": "Colaborador",
+      "correo": "dulce.somarriba@claro.com.ni"
+    },
+    {
+      "nombre": "EDGAR JOSE CASTILLO",
+      "rol": "Colaborador",
+      "correo": "edgard.castillo@claro.com.ni"
+    },
+    {
+      "nombre": "EDGAR RAMIRO TORUÑO DIAZ",
+      "rol": "Colaborador",
+      "correo": "edgar.toruno@claro.com.ni"
+    },
+    {
+      "nombre": "EDGARD DAVID MORALES BALLADARES",
+      "rol": "Colaborador",
+      "correo": "edgard.morales@claro.com.ni"
+    },
+    {
+      "nombre": "EDGARD JOSE CERNA GONZALEZ",
+      "rol": "Colaborador",
+      "correo": "edgardj.cerna@claro.com.ni"
+    },
+    {
+      "nombre": "EDGARDO JOSE SABALLOS VELAZQUEZ",
+      "rol": "Colaborador",
+      "correo": "edgardo.saballos@claro.com.ni"
+    },
+    {
+      "nombre": "EDITH ARNALDO BELLO GRANADOS",
+      "rol": "Colaborador",
+      "correo": "edith.bello@claro.com.ni"
+    },
+    {
+      "nombre": "EDITH DEL ROSARIO RODRIGUEZ DELGADILLO",
+      "rol": "Colaborador",
+      "correo": "edith.rodriguez@claro.com.ni"
+    },
+    {
+      "nombre": "EDUARDO ANIBAL HERNANDEZ BONILLA",
+      "rol": "Colaborador",
+      "correo": "eduardo.hernandez@claro.com.ni"
+    },
+    {
+      "nombre": "EDUARDO FRANCISCO JARQUIN  VILLALOBOS",
+      "rol": "Colaborador",
+      "correo": "eduardof.jarquin@claro.com.ni"
+    },
+    {
+      "nombre": "EDUARDO JOSE ROMERO MALDONADO",
+      "rol": "Colaborador",
+      "correo": "eduardo.romero@claro.com.ni"
+    },
+    {
+      "nombre": "EDWIN ALEJANDRO MADRIZ LOPEZ",
+      "rol": "Colaborador",
+      "correo": "edwin.madriz@claro.com.ni"
+    },
+    {
+      "nombre": "EDWIN ANDRES CASTILLO ALFARO",
+      "rol": "Colaborador",
+      "correo": "edwin.castillo@claro.com.ni"
+    },
+    {
+      "nombre": "EDWIN JOSE BRAVO LOPEZ",
+      "rol": "Colaborador",
+      "correo": "edwin.bravo@claro.com.ni"
+    },
+    {
+      "nombre": "EDWIN MOISES GONZALEZ MENDOZA",
+      "rol": "Colaborador",
+      "correo": "edwinm.gonzalez@claro.com.ni"
+    },
+    {
+      "nombre": "EDWING RICARDO HENRRIQUEZ ORTIZ",
+      "rol": "Colaborador",
+      "correo": "edwing.henrriquez@claro.com.ni"
+    },
+    {
+      "nombre": "EFER JOSUE MALTEZ LARGAESPADA",
+      "rol": "Colaborador",
+      "correo": "efer.maltez@claro.com.ni"
+    },
+    {
+      "nombre": "EFRAIN RIGOBERTO VASQUEZ SUAREZ",
+      "rol": "Colaborador",
+      "correo": "efrain.vasquez@claro.com.ni"
+    },
+    {
+      "nombre": "EINERD JOSE RIOS GUEVARA",
+      "rol": "Colaborador",
+      "correo": "einerd.riosg@claro.com.ni"
+    },
+    {
+      "nombre": "EITHER VANESSA SAAVEDRA VILLALTA",
+      "rol": "Colaborador",
+      "correo": "either.saavedra@claro.com.ni"
+    },
+    {
+      "nombre": "ELBA DANELIA JIRON",
+      "rol": "Colaborador",
+      "correo": "elba.jiron@claro.com.ni"
+    },
+    {
+      "nombre": "ELIAS IVAN LOPEZ GARCIA",
+      "rol": "Colaborador",
+      "correo": "elias.lopez@claro.com.ni"
+    },
+    {
+      "nombre": "ELIAZAR GIOVANNY OROZCO JARQUIN",
+      "rol": "Colaborador",
+      "correo": "eliazar.orozco@claro.com.ni"
+    },
+    {
+      "nombre": "ELIESER ANTONIO FAJARDO MEZA",
+      "rol": "Colaborador",
+      "correo": "eliezer.fajardo@claro.com.ni"
+    },
+    {
+      "nombre": "ELIETH DEL CARMEN TERCERO MENDIETA",
+      "rol": "Colaborador",
+      "correo": "elieth.tercero@claro.com.ni"
+    },
+    {
+      "nombre": "ELIEZER ALEXANDER TORREZ MENDOZA",
+      "rol": "Colaborador",
+      "correo": "eliezer.torrez@claro.com.ni"
+    },
+    {
+      "nombre": "ELIEZER JOSUE DAVILA SERRANO",
+      "rol": "Colaborador",
+      "correo": "eliezerj.davila@claro.com.ni"
+    },
+    {
+      "nombre": "ELIZABETH BLANDON OCHOA",
+      "rol": "Colaborador",
+      "correo": "elizabeth.blandonoc@claro.com.ni"
+    },
+    {
+      "nombre": "ELIZABETH DEL CARMEN MENDEZ",
+      "rol": "Colaborador",
+      "correo": "elizabeth.mendez@claro.com.ni"
+    },
+    {
+      "nombre": "ELMER JOSE LOPEZ LOPEZ",
+      "rol": "Colaborador",
+      "correo": "elmer.lopezl@claro.com.ni"
+    },
+    {
+      "nombre": "EMELY CARELY TORREZ AGUIRRE",
+      "rol": "Colaborador",
+      "correo": "emely.torrez@claro.com.ni"
+    },
+    {
+      "nombre": "EMILIO JOSE RAMIREZ NICARAGUA",
+      "rol": "Colaborador",
+      "correo": "emilioj.ramirez@claro.com.ni"
+    },
+    {
+      "nombre": "ENGEL NOSSOMY BRIZUELA POVEDA",
+      "rol": "Colaborador",
+      "correo": "engel.brizuela@claro.com.ni"
+    },
+    {
+      "nombre": "ENIA CAROLINA SEQUEIRA MORALES",
+      "rol": "Colaborador",
+      "correo": "enia.sequeiram@claro.com.ni"
+    },
+    {
+      "nombre": "ENJEL FELIPE GUEVARA CASTILLO",
+      "rol": "Colaborador",
+      "correo": "enjel.guevara@claro.com.ni"
+    },
+    {
+      "nombre": "ENMANUEL JOSUE GUTIERREZ CASTRILLO",
+      "rol": "Colaborador",
+      "correo": "enmanuelj.gutierrez@claro.com.ni"
+    },
+    {
+      "nombre": "ENRIQUE ANTONIO BOJORGE GARCIA",
+      "rol": "Colaborador",
+      "correo": "enrique.bojorge@claro.com.ni"
+    },
+    {
+      "nombre": "ERICK ANTONIO DIAZ CRUZ",
+      "rol": "Colaborador",
+      "correo": "erick.diaz@claro.com.ni"
+    },
+    {
+      "nombre": "ERICK MANUEL CENTENO PEREZ",
+      "rol": "Colaborador",
+      "correo": "erick.centeno@claro.com.ni"
+    },
+    {
+      "nombre": "ERICK RAMON BORJAS OLIVERA",
+      "rol": "Colaborador",
+      "correo": "erick.borjas@claro.com.ni"
+    },
+    {
+      "nombre": "ERICKA DEL CARMEN MONTENEGRO ALGUERA",
+      "rol": "Colaborador",
+      "correo": "ericka.montenegro@claro.com.ni"
+    },
+    {
+      "nombre": "ERICKA MARIA ÑURINDA TROZ",
+      "rol": "Colaborador",
+      "correo": "ericka.nurinda@claro.com.ni"
+    },
+    {
+      "nombre": "ERICKA PATRICIA GARCÍA CRUZ",
+      "rol": "Colaborador",
+      "correo": "ericka.garcia@claro.com.ni"
+    },
+    {
+      "nombre": "ERIEL NEIL PASTORA CASTILLO",
+      "rol": "Colaborador",
+      "correo": "eriel.pastora@claro.com.ni"
+    },
+    {
+      "nombre": "ERIKA DEL SOCORRO MENA LOPEZ",
+      "rol": "Colaborador",
+      "correo": "ericka.mena@claro.com.ni"
+    },
+    {
+      "nombre": "ERIKA ISABEL ROMERO LOPEZ",
+      "rol": "Colaborador",
+      "correo": "erika.romero@claro.com.ni"
+    },
+    {
+      "nombre": "ERIKA JOHANA DIAZ ESPINOZA",
+      "rol": "Colaborador",
+      "correo": "ericka.dias@claro.com.ni"
+    },
+    {
+      "nombre": "ERLIN JOSE CRUZ ESTRADA",
+      "rol": "Colaborador",
+      "correo": "erlin.cruz@claro.com.ni"
+    },
+    {
+      "nombre": "ERLING  ELIZABETH  LOZA  CALDERON",
+      "rol": "Colaborador",
+      "correo": "erling.loza@claro.com.ni"
+    },
+    {
+      "nombre": "ERNESTO ANTONIO MEDINA GUIDO",
+      "rol": "Colaborador",
+      "correo": "ernestoa.medina@claro.com.ni"
+    },
+    {
+      "nombre": "ERVIN ADRIAN CAMPOS DAVILA",
+      "rol": "Colaborador",
+      "correo": "ervin.campos@claro.com.ni"
+    },
+    {
+      "nombre": "ERVIN BENITO PEREZ BENARD",
+      "rol": "Colaborador",
+      "correo": "ervin.perez@claro.com.ni"
+    },
+    {
+      "nombre": "ESDRAS DANIEL LOPEZ GUTIERREZ",
+      "rol": "Colaborador",
+      "correo": "esdras.lopez@claro.com.ni"
+    },
+    {
+      "nombre": "ESTHER BETZABETH JUAREZ CANALES",
+      "rol": "Colaborador",
+      "correo": "esther.juarez@claro.com.ni"
+    },
+    {
+      "nombre": "ESTHER MIREYA DARCE LOPEZ",
+      "rol": "Colaborador",
+      "correo": "esther.darce@claro.com.ni"
+    },
+    {
+      "nombre": "EUGENIO ALI GARCIA HERNANDEZ",
+      "rol": "Colaborador",
+      "correo": "eugenio.garcia@claro.com.ni"
+    },
+    {
+      "nombre": "EVELIN DAMIANA ORTIZ PEREZ",
+      "rol": "Colaborador",
+      "correo": "evelin.ortiz@claro.com.ni"
+    },
+    {
+      "nombre": "EXBY GABRIEL DAVILA ALEJOS",
+      "rol": "Colaborador",
+      "correo": "exby.davila@claro.com.ni"
+    },
+    {
+      "nombre": "EXEQUIEL AMADEO ESPINOZA PERALTA",
+      "rol": "Colaborador",
+      "correo": "exequiel.espinoza@claro.com.ni"
+    },
+    {
+      "nombre": "EYMI JUNIETT PERALTA PALACIOS",
+      "rol": "Colaborador",
+      "correo": "eymij.peralta@claro.com.ni"
+    },
+    {
+      "nombre": "FELIX ADAN RAMOS RAMIREZ",
+      "rol": "Colaborador",
+      "correo": "felix.ramos@claro.com.ni"
+    },
+    {
+      "nombre": "FELIX HUMBERTO RUIZ HERNANDEZ",
+      "rol": "Colaborador",
+      "correo": "felix.ruizh@claro.com.ni"
+    },
+    {
+      "nombre": "FERNANDO JOSE DUARTE MEJIA",
+      "rol": "Colaborador",
+      "correo": "fernandoj.duarte@claro.com.ni"
+    },
+    {
+      "nombre": "FLOR DE MARIA DAVILA RUIZ",
+      "rol": "Colaborador",
+      "correo": "flor.davila@claro.com.ni"
+    },
+    {
+      "nombre": "FRANCELLA ALEXANDRA MARTINEZ ROJAS",
+      "rol": "Colaborador",
+      "correo": "francella.martinez@claro.com.ni"
+    },
+    {
+      "nombre": "FRANCIS LORENA CANTILLANO SANCHEZ",
+      "rol": "Colaborador",
+      "correo": "francis.cantillano@claro.com.ni"
+    },
+    {
+      "nombre": "FRANCIS PAMELA NARVAEZ SELVA",
+      "rol": "Colaborador",
+      "correo": "francis.narvaez@claro.com.ni"
+    },
+    {
+      "nombre": "FRANCISCO ADOLFO MARQUEZ TELLEZ",
+      "rol": "Colaborador",
+      "correo": "francisco.marquez@claro.com.ni"
+    },
+    {
+      "nombre": "FRANCISCO JAVIER ESPINOZA SANCHEZ",
+      "rol": "Colaborador",
+      "correo": "franciscoj.espinoza@claro.com.ni"
+    },
+    {
+      "nombre": "FRANCISCO JAVIER MORA JIRON",
+      "rol": "Colaborador",
+      "correo": "francisco.jmora@claro.com.ni"
+    },
+    {
+      "nombre": "FRANCISCO JOSE SEQUEIRA MARIN",
+      "rol": "Colaborador",
+      "correo": "francisco.sequeira@claro.com.ni"
+    },
+    {
+      "nombre": "FRANCISCO LORENZO RODRIGUEZ MIRANDA",
+      "rol": "Colaborador",
+      "correo": "francisco.rodriguez@claro.com.ni"
+    },
+    {
+      "nombre": "FRANK OTONIEL ARDON CENTENO",
+      "rol": "Colaborador",
+      "correo": "frank.ardon@claro.com.ni"
+    },
+    {
+      "nombre": "FRANKLIN ANTONIO MEJIA BENAVIDES",
+      "rol": "Colaborador",
+      "correo": "franklin.mejia@claro.com.ni"
+    },
+    {
+      "nombre": "FRANKLIN DANIEL SOLIS TERCERO",
+      "rol": "Colaborador",
+      "correo": "franklin.solis@claro.com.ni"
+    },
+    {
+      "nombre": "FRANKLIN GIOVANNY BERMUDEZ MORALES",
+      "rol": "Colaborador",
+      "correo": "franklin.bermudez@claro.com.ni"
+    },
+    {
+      "nombre": "FRANKLING MARIANO JUNEZ VILCHEZ",
+      "rol": "Colaborador",
+      "correo": "frankling.junez@claro.com.ni"
+    },
+    {
+      "nombre": "FREDDY WILSON MARTINEZ FLORES",
+      "rol": "Colaborador",
+      "correo": "freddy.martinez@claro.com.ni"
+    },
+    {
+      "nombre": "GABRIEL ANDRES RUIZ GARCIA",
+      "rol": "Colaborador",
+      "correo": "gabriel.ruiz@claro.com.ni"
+    },
+    {
+      "nombre": "GABRIEL ANTONIO ROMERO GAITAN",
+      "rol": "Colaborador",
+      "correo": "gabriel.romerog@claro.com.ni"
+    },
+    {
+      "nombre": "GABRIELA ALEXANDRA URIARTE ABURTO",
+      "rol": "Colaborador",
+      "correo": "gabriela.uriarte@claro.com.ni"
+    },
+    {
+      "nombre": "GABRIELA CASTELLON LIRA",
+      "rol": "Colaborador",
+      "correo": "gabriela.castellonl@claro.com.ni"
+    },
+    {
+      "nombre": "GABRIELA RAQUEL MENDIETA HERNANDEZ",
+      "rol": "Colaborador",
+      "correo": "Gabriela.Mendieta@claro.com.ni"
+    },
+    {
+      "nombre": "GEMA GABRIELA AYERDIS  PEREZ",
+      "rol": "Colaborador",
+      "correo": "gemag.ayerdis@claro.com.ni"
+    },
+    {
+      "nombre": "GEMA WALESKA MONTENEGRO HERRERA",
+      "rol": "Colaborador",
+      "correo": "gema.herrera@claro.com.ni"
+    },
+    {
+      "nombre": "GENESIS GABRIELA TELLERIA ESPINOZA",
+      "rol": "Colaborador",
+      "correo": "genesis.telleria@claro.com.ni"
+    },
+    {
+      "nombre": "GENESSIS DE LOS ANGELES SARRIA MARENCO",
+      "rol": "Colaborador",
+      "correo": "genessis.sarria@claro.com.ni"
+    },
+    {
+      "nombre": "GENGNY SAMIRA GONZALEZ FEDRICK",
+      "rol": "Colaborador",
+      "correo": "gengny.gonzalez@claro.com.ni"
+    },
+    {
+      "nombre": "GERALD ALEXANDER VASQUEZ MORENO",
+      "rol": "Colaborador",
+      "correo": "gerald.vasquez@claro.com.ni"
+    },
+    {
+      "nombre": "GERARDO ANTONIO VANEGAS BEJARANO",
+      "rol": "Colaborador",
+      "correo": "gerardo.vanegas@claro.com.ni"
+    },
+    {
+      "nombre": "GERMAN ALI OBANDO MEDRANO",
+      "rol": "Colaborador",
+      "correo": "german.obando@claro.com.ni"
+    },
+    {
+      "nombre": "GERMAN ENRIQUE BOJORGE ARRECHAVALA",
+      "rol": "Colaborador",
+      "correo": "german.bojorge@claro.com.ni"
+    },
+    {
+      "nombre": "GERMAN GABRIEL DAVILA FONSECA",
+      "rol": "Colaborador",
+      "correo": "german.davila@claro.com.ni"
+    },
+    {
+      "nombre": "GERMAN LENIN TRAÑA YESCAS",
+      "rol": "Colaborador",
+      "correo": "german.trana@claro.com.ni"
+    },
+    {
+      "nombre": "GETZABEL ALEXANDRA ESPINOZA SALINAS",
+      "rol": "Colaborador",
+      "correo": "getzabel.espinoza@claro.com.ni"
+    },
+    {
+      "nombre": "GEYLIN CAROLINA POTOY ORTIZ",
+      "rol": "Colaborador",
+      "correo": "geylin.potoy@claro.com.ni"
+    },
+    {
+      "nombre": "GILBERTO JOSE CASTILLO CASTILLO",
+      "rol": "Colaborador",
+      "correo": "gilberto.castillo@claro.com.ni"
+    },
+    {
+      "nombre": "GINA ELIZABETH MEJIA SIRIAS",
+      "rol": "Colaborador",
+      "correo": "gina.mejia@claro.com.ni"
+    },
+    {
+      "nombre": "GISELA ARGENTINA MEJIA MARIN",
+      "rol": "Colaborador",
+      "correo": "gisela.mejia@claro.com.ni"
+    },
+    {
+      "nombre": "GISELL CAROLINA GARCIA  DELGADILLO",
+      "rol": "Colaborador",
+      "correo": "gisell.garcia@claro.com.ni"
+    },
+    {
+      "nombre": "GISELLE DE LOS ANGELES ALTAMIRANO ESPINOZA",
+      "rol": "Colaborador",
+      "correo": "guiselle.altamirano@claro.com.ni"
+    },
+    {
+      "nombre": "GISSELA DEL CARMEN MORA LOPEZ",
+      "rol": "Colaborador",
+      "correo": "gmora1@claro.com.ni"
+    },
+    {
+      "nombre": "GISSELL CAROLINA RODRIGUEZ RODRIGUEZ",
+      "rol": "Colaborador",
+      "correo": "gissellc.rodriguez@claro.com.ni"
+    },
+    {
+      "nombre": "GLENDA PATRICIA VIALES ESPINOZA",
+      "rol": "Colaborador",
+      "correo": "glendap.viales@claro.com.ni"
+    },
+    {
+      "nombre": "GLORIA ISABEL ZAPATA MARTINEZ",
+      "rol": "Colaborador",
+      "correo": "gloria.zapata@claro.com.ni"
+    },
+    {
+      "nombre": "GRETHEL MASSIEL SANDINO URBINA",
+      "rol": "Colaborador",
+      "correo": "grethel.sandino@claro.com.ni"
+    },
+    {
+      "nombre": "GRICELD DEL SOCORRO ESPINOZA AGUIRRE",
+      "rol": "Colaborador",
+      "correo": "griceld.espinoza@claro.com.ni"
+    },
+    {
+      "nombre": "GRISELDA MARIELA VALLECILLO GONZALEZ",
+      "rol": "Colaborador",
+      "correo": "griselda.vallecillo@claro.com.ni"
+    },
+    {
+      "nombre": "GRISSELDA DEL CARMEN DOÑA LEE",
+      "rol": "Colaborador",
+      "correo": "grisselda.dona@claro.com.ni"
+    },
+    {
+      "nombre": "GUADALUPE ELIZABETH JIMENEZ MAYORGA",
+      "rol": "Colaborador",
+      "correo": "guadalupe.jimenez@claro.com.ni"
+    },
+    {
+      "nombre": "GUILLERMO ANTONIO SALINAS ROJAS",
+      "rol": "Colaborador",
+      "correo": "guillermo.salinas@claro.com.ni"
+    },
+    {
+      "nombre": "GUILLERMO ISAIAS ACOSTA RAMIREZ",
+      "rol": "Colaborador",
+      "correo": "guillermo.acostar@claro.com.ni"
+    },
+    {
+      "nombre": "GUSTAVO DAVID CASTRILLO RAMIREZ",
+      "rol": "Colaborador",
+      "correo": "gustavo.castrillo@claro.com.ni"
+    },
+    {
+      "nombre": "HANDDLY EDUARDO BARAHONA SILVA",
+      "rol": "Colaborador",
+      "correo": "handdly.barahona@claro.com.ni"
+    },
+    {
+      "nombre": "HANSELL FRANCISCO OCHOA ORTIZ",
+      "rol": "Colaborador",
+      "correo": "hansell.ochoa@claro.com.ni"
+    },
+    {
+      "nombre": "HAROLD MANUEL BARBERENA CAMPOS",
+      "rol": "Colaborador",
+      "correo": "harold.barberena@claro.com.ni"
+    },
+    {
+      "nombre": "HARRY ALEXANDER GUEVARA ALEMAN",
+      "rol": "Colaborador",
+      "correo": "harry.guevara@claro.com.ni"
+    },
+    {
+      "nombre": "HARVY ADOLFO ESQUIVEL MERCADO",
+      "rol": "Colaborador",
+      "correo": "harvy.esquivel@claro.com.ni"
+    },
+    {
+      "nombre": "HAYDEE DE MARIA RODRIGUEZ MEJIA",
+      "rol": "Colaborador",
+      "correo": "haydee.rodriguez@claro.com.ni"
+    },
+    {
+      "nombre": "HAZEL AZUCENA MARTINEZ ESPINOZA",
+      "rol": "Colaborador",
+      "correo": "hazel.espinoza@claro.com.ni"
+    },
+    {
+      "nombre": "HAZIEL ANTONIO MENDIETA  CORRALES",
+      "rol": "Colaborador",
+      "correo": "haziel.mendieta@claro.com.ni"
+    },
+    {
+      "nombre": "HELEN  LUCIA  REYES  ANTON",
+      "rol": "Colaborador",
+      "correo": "helen.reyes@claro.com.ni"
+    },
+    {
+      "nombre": "HENDER DAVID DIXON CANALES",
+      "rol": "Colaborador",
+      "correo": "hender.dixon@claro.com.ni"
+    },
+    {
+      "nombre": "HENLLEL FRANCISCO HERNANDEZ LARIOS",
+      "rol": "Colaborador",
+      "correo": "henllel.hernandez@claro.com.ni"
+    },
+    {
+      "nombre": "HENRRY  ARIEL  HERRERA  ARAUZ",
+      "rol": "Colaborador",
+      "correo": "henry.herrera@claro.com.ni"
+    },
+    {
+      "nombre": "HENRRY RADULAB GARCIA  GOMEZ",
+      "rol": "Colaborador",
+      "correo": "henrry.garcia@claro.com.ni"
+    },
+    {
+      "nombre": "HENRY ALBERTO BARRETO NARVAEZ",
+      "rol": "Colaborador",
+      "correo": "henry.barreto@claro.com.ni"
+    },
+    {
+      "nombre": "HENRY JOSE LOPEZ MONDOY",
+      "rol": "Colaborador",
+      "correo": "henryj.lopez@claro.com.ni"
+    },
+    {
+      "nombre": "HERNAN ERNESTO MALDONADO ROCHA",
+      "rol": "Colaborador",
+      "correo": "hernane.maldonado@claro.com.ni"
+    },
+    {
+      "nombre": "HEYDI CRISTINA SANCHEZ FUENTES",
+      "rol": "Colaborador",
+      "correo": "heydic.sanchez@claro.com.ni"
+    },
+    {
+      "nombre": "HEYDI JASOHARA SOMOZA VALLE",
+      "rol": "Colaborador",
+      "correo": "heydi.somoza@claro.com.ni"
+    },
+    {
+      "nombre": "HEYDI MASSIEL  ULLOA  COREA",
+      "rol": "Colaborador",
+      "correo": "heydi.ulloa@claro.com.ni"
+    },
+    {
+      "nombre": "HEYDI VANESSA ALTAMIRANO URBINA",
+      "rol": "Colaborador",
+      "correo": "heydi.altamirano@claro.com.ni"
+    },
+    {
+      "nombre": "HILDINEL ZAMBRANA ALVAREZ",
+      "rol": "Colaborador",
+      "correo": "hildinel.zambrana@claro.com.ni"
+    },
+    {
+      "nombre": "HILLARY ALEJANDRA CRUZ PORTOCARRERO",
+      "rol": "Colaborador",
+      "correo": "hillary.cruz@claro.com.ni"
+    },
+    {
+      "nombre": "HOLLMAN ARIEL FONSECA ARAGÓN",
+      "rol": "Colaborador",
+      "correo": "jolman.fonseca@claro.com.ni"
+    },
+    {
+      "nombre": "HOSMAN ARIEL TREMINIO RUIZ",
+      "rol": "Colaborador",
+      "correo": "hariel.treminio@claro.com.ni"
+    },
+    {
+      "nombre": "HOWAR JARED CERNA VELASQUEZ",
+      "rol": "Colaborador",
+      "correo": "howar.cerna@claro.com.ni"
+    },
+    {
+      "nombre": "HUGO RAFAEL ROCHA CASTRO",
+      "rol": "Colaborador",
+      "correo": "hugo.rocha@claro.com.ni"
+    },
+    {
+      "nombre": "HYACINTH JEANNINE LAZO SEQUEIRA",
+      "rol": "Colaborador",
+      "correo": "hiacinth.lazo@claro.com.ni"
+    },
+    {
+      "nombre": "INGRIS FRANCHESKA RIVERA RIVERA",
+      "rol": "Colaborador",
+      "correo": "ingris.rivera@claro.com.ni"
+    },
+    {
+      "nombre": "IRENE LISBETH LOPEZ SANCHEZ",
+      "rol": "Colaborador",
+      "correo": "irene.lopez@claro.com.ni"
+    },
+    {
+      "nombre": "IRMA MARIANA ENRIQUEZ DIAZ",
+      "rol": "Colaborador",
+      "correo": "irma.enriquez@claro.com.ni"
+    },
+    {
+      "nombre": "IRVING ANTONIO AGUIRRE GAGO",
+      "rol": "Colaborador",
+      "correo": "irving.aguirre@claro.com.ni"
+    },
+    {
+      "nombre": "ISAAC ABRAHAM PEREZ SANCHEZ",
+      "rol": "Colaborador",
+      "correo": "isaac.perez@claro.com.ni"
+    },
+    {
+      "nombre": "ISAAC HAZAEL ALVAREZ RODRIGUEZ",
+      "rol": "Colaborador",
+      "correo": "isaac.alvarez@claro.com.ni"
+    },
+    {
+      "nombre": "ISAMAR DE LOS ANGELES ZUNIGA RAMOS",
+      "rol": "Colaborador",
+      "correo": "isamar.zuniga@claro.com.ni"
+    },
+    {
+      "nombre": "ISAYANA GUADALUPE ESTRELLA PARRALES",
+      "rol": "Colaborador",
+      "correo": "isayana.estrella@claro.com.ni"
+    },
+    {
+      "nombre": "ISAYANA ISABEC VASQUEZ",
+      "rol": "Colaborador",
+      "correo": "isayana.vasquez@claro.com.ni"
+    },
+    {
+      "nombre": "ISRAEL SANTIAGO NICARAGUA PARAMO",
+      "rol": "Colaborador",
+      "correo": "israel.nicaragua@claro.com.ni"
+    },
+    {
+      "nombre": "ITZAMARIA DE LOS ANGELES BERMUDEZ MENA",
+      "rol": "Colaborador",
+      "correo": "itzamaria.bermudez@claro.com.ni"
+    },
+    {
+      "nombre": "IVETTE ISABEL JIMENEZ GARCIA",
+      "rol": "Colaborador",
+      "correo": "ivette.jimenez@claro.com.ni"
+    },
+    {
+      "nombre": "IVONNE ALEXANDRA MERCADO SALMERON",
+      "rol": "Colaborador",
+      "correo": "ivonnea.mercado@claro.com.ni"
+    },
+    {
+      "nombre": "IVONNE MARBELY ESPINOZA FUENTES",
+      "rol": "Colaborador",
+      "correo": "ivonne.espinoza@claro.com.ni"
+    },
+    {
+      "nombre": "IXCHEL ALEJANDRA FLORES CERDA",
+      "rol": "Colaborador",
+      "correo": "ixchel.flores@claro.com.ni"
+    },
+    {
+      "nombre": "IZAMARA ALEJANDRA RIOS LOPEZ",
+      "rol": "Colaborador",
+      "correo": "izamara.rios@claro.com.ni"
+    },
+    {
+      "nombre": "JACKSEL WILFREDO CRUZ CABALLERO",
+      "rol": "Colaborador",
+      "correo": "jacksel.cruz@claro.com.ni"
+    },
+    {
+      "nombre": "JAIME ENRRIQUE LOPEZ JARQUIN",
+      "rol": "Colaborador",
+      "correo": "jaimee.lopez@claro.com.ni"
+    },
+    {
+      "nombre": "JAIRO JOSE GOMEZ CASTILLO",
+      "rol": "Colaborador",
+      "correo": "jairo.gomez@claro.com.ni"
+    },
+    {
+      "nombre": "JAIRO JOSE VADO VANEGAS",
+      "rol": "Colaborador",
+      "correo": "jairo.vado@claro.com.ni"
+    },
+    {
+      "nombre": "JANITH MIQUEAS CASTILLO MEJIA",
+      "rol": "Colaborador",
+      "correo": "janith.castillo@claro.com.ni"
+    },
+    {
+      "nombre": "JANNELLE ADRIANA BLANDINO ORTIZ",
+      "rol": "Colaborador",
+      "correo": "jannelle.blandino@claro.com.ni"
+    },
+    {
+      "nombre": "JANNIE AUXILIADORA GUTIERREZ BALMACEDA",
+      "rol": "Colaborador",
+      "correo": "jannie.gutierrezb@claro.com.ni"
+    },
+    {
+      "nombre": "JANUSCA BAPTIS MAXWELL",
+      "rol": "Colaborador",
+      "correo": "janusca.baptis@claro.com.ni"
+    },
+    {
+      "nombre": "JANY ELIZABETH GONZALEZ RIVERA",
+      "rol": "Colaborador",
+      "correo": "jany.gonzalez@claro.com.ni"
+    },
+    {
+      "nombre": "JASMIN EDUARDA CORRALES MORENO",
+      "rol": "Colaborador",
+      "correo": "jasmin.corrales@claro.com.ni"
+    },
+    {
+      "nombre": "JAVIER ALEMAN SANCHEZ",
+      "rol": "Colaborador",
+      "correo": "javier.alemans@claro.com.ni"
+    },
+    {
+      "nombre": "JAVIER SALVADOR MARTINEZ SANCHEZ",
+      "rol": "Colaborador",
+      "correo": "javiers.martinez@claro.com.ni"
+    },
+    {
+      "nombre": "JAVIERA GIOVANIA JUAREZ PEREZ",
+      "rol": "Colaborador",
+      "correo": "javierag.juarez@claro.com.ni"
+    },
+    {
+      "nombre": "JEDRIS SANTIAGO RAMIREZ SUAREZ",
+      "rol": "Colaborador",
+      "correo": "jedris.ramirez@claro.com.ni"
+    },
+    {
+      "nombre": "JEFERSON ALEXANDER ROSALES GAITAN",
+      "rol": "Colaborador",
+      "correo": "jeferson.rosales@claro.com.ni"
+    },
+    {
+      "nombre": "JEFFER ANTONIO MELENDEZ RIVERA",
+      "rol": "Colaborador",
+      "correo": "jeffera.melendez@claro.com.ni"
+    },
+    {
+      "nombre": "JEFFERSON ALEJANDRO CASTILLO",
+      "rol": "Colaborador",
+      "correo": "castillo.alejandro@claro.com.ni"
+    },
+    {
+      "nombre": "JEFFERSON ALEXANDERS SANTANA VILLACHICA",
+      "rol": "Colaborador",
+      "correo": "jefferson.santana@claro.com.ni"
+    },
+    {
+      "nombre": "JEFFERSSON ALI ALTAMIRANO OLIVARES",
+      "rol": "Colaborador",
+      "correo": "jali.altamirano@claro.com.ni"
+    },
+    {
+      "nombre": "JEFFRY ALEXANDER GARCIA ALEMAN",
+      "rol": "Colaborador",
+      "correo": "jeffry.garcia@claro.com.ni"
+    },
+    {
+      "nombre": "JENESKI DE JESUS MARENCO MARTINEZ",
+      "rol": "Colaborador",
+      "correo": "jeneski.marenco@claro.com.ni"
+    },
+    {
+      "nombre": "JENIFFER FABIOLA REYES IRIGOYEN",
+      "rol": "Colaborador",
+      "correo": "jeniffer.reyes@claro.com.ni"
+    },
+    {
+      "nombre": "JENNIFER DEL SOCORRO PEREZ ARAICA",
+      "rol": "Colaborador",
+      "correo": "jenniferd.perez@claro.com.ni"
+    },
+    {
+      "nombre": "JENNIFER TATIANA TRIANA GOMEZ",
+      "rol": "Colaborador",
+      "correo": "jennifer.triana@claro.com.ni"
+    },
+    {
+      "nombre": "JENNY ARACELY GUTIERREZ CASTILLO",
+      "rol": "Colaborador",
+      "correo": "aracely.gutierrez@claro.com.ni"
+    },
+    {
+      "nombre": "JENNY LISSETH ABURTO RODRIGUEZ",
+      "rol": "Colaborador",
+      "correo": "jennyl.aburto@claro.com.ni"
+    },
+    {
+      "nombre": "JEREMY EDGARDO FLORES GARCIA",
+      "rol": "Colaborador",
+      "correo": "jeremy.flores@claro.com.ni"
+    },
+    {
+      "nombre": "JERRY MOISES MELENDEZ GARCIA",
+      "rol": "Colaborador",
+      "correo": "jerry.melendez@claro.com.ni"
+    },
+    {
+      "nombre": "JERSON JAVIER PRAVIA PEREZ",
+      "rol": "Colaborador",
+      "correo": "jerson.pravia@claro.com.ni"
+    },
+    {
+      "nombre": "JESSICA ALEXANDRA ALVARADO VADO",
+      "rol": "Colaborador",
+      "correo": "jessicaa.alvarado@claro.com.ni"
+    },
+    {
+      "nombre": "JESSICA DE LOS ANGELES DELGADO GUEVARA",
+      "rol": "Colaborador",
+      "correo": "jessica.delgado@claro.com.ni"
+    },
+    {
+      "nombre": "JESSICA LISINIA TORRES CASTELLON",
+      "rol": "Colaborador",
+      "correo": "jessica.torres@claro.com.ni"
+    },
+    {
+      "nombre": "JHONNY FRANCISCO GUTIERREZ GOMEZ",
+      "rol": "Colaborador",
+      "correo": "jhonny.gutierrez@claro.com.ni"
+    },
+    {
+      "nombre": "JHONNY JOSE MAYORGA GOMEZ",
+      "rol": "Colaborador",
+      "correo": "jhonny.mayorga@claro.com.ni"
+    },
+    {
+      "nombre": "JHONY JOSE BLAS AGUIRRE",
+      "rol": "Colaborador",
+      "correo": "jhony.blas@claro.com.ni"
+    },
+    {
+      "nombre": "JHOSADACK LENIN GAITAN GONGORA",
+      "rol": "Colaborador",
+      "correo": "jhosadack.gaitan@claro.com.ni"
+    },
+    {
+      "nombre": "JILMA CAROLINA ZELAYA GARCIA",
+      "rol": "Colaborador",
+      "correo": "jilma.zelaya@claro.com.ni"
+    },
+    {
+      "nombre": "JIMY OSSITH BLANDON ESTRADA",
+      "rol": "Colaborador",
+      "correo": "jimy.blandon@claro.com.ni"
+    },
+    {
+      "nombre": "JOCELYN ANIELKA RIVERA PEREZ",
+      "rol": "Colaborador",
+      "correo": "jocelyn.rivera@claro.com.ni"
+    },
+    {
+      "nombre": "JOEL ADRIAN ARANA AGUIRRE",
+      "rol": "Colaborador",
+      "correo": "joel.arana@claro.com.ni"
+    },
+    {
+      "nombre": "JOEL AMOS TEMPLE JOSEPH",
+      "rol": "Colaborador",
+      "correo": "joel.temple@claro.com.ni"
+    },
+    {
+      "nombre": "JOEL DAVID LACAYO SEQUEIRA",
+      "rol": "Colaborador",
+      "correo": "joeld.lacayo@claro.com.ni"
+    },
+    {
+      "nombre": "JOHN MICHAEL VALLEJOS MIDENCE",
+      "rol": "Colaborador",
+      "correo": "john.vallejos@claro.com.ni"
+    },
+    {
+      "nombre": "JOHNNY EMMANUEL FLORES MORENO",
+      "rol": "Colaborador",
+      "correo": "johny.flores@claro.com.ni"
+    },
+    {
+      "nombre": "JOHNNY MARTIN MEMBREÑO",
+      "rol": "Colaborador",
+      "correo": "jhonny.membreno@claro.com.ni"
+    },
+    {
+      "nombre": "JONATHAN DAVID LOPEZ LOPEZ",
+      "rol": "Colaborador",
+      "correo": "jonathan.lopezl@claro.com.ni"
+    },
+    {
+      "nombre": "JONATHAN DAVID PEREZ ACEVEDO",
+      "rol": "Colaborador",
+      "correo": "jonathand.perez@claro.com.ni"
+    },
+    {
+      "nombre": "JONATHAN ELIAS BONILLA SUAZO",
+      "rol": "Colaborador",
+      "correo": "jonathan.bonilla@claro.com.ni"
+    },
+    {
+      "nombre": "JONATHAN HUMBERTO VALLEJOS RIVAS",
+      "rol": "Colaborador",
+      "correo": "jonathan.vallejos@claro.com.ni"
+    },
+    {
+      "nombre": "JONATHAN JOSUE ARROLIGA REYES",
+      "rol": "Colaborador",
+      "correo": "jonathan.arroliga@claro.com.ni"
+    },
+    {
+      "nombre": "JONATHAN MANUEL ROBLETO MORA",
+      "rol": "Colaborador",
+      "correo": "manuelr.mora@claro.com.ni"
+    },
+    {
+      "nombre": "JONNY FRANCISCO ROBLETO GOMEZ",
+      "rol": "Colaborador",
+      "correo": "jonny.robleto@claro.com.ni"
+    },
+    {
+      "nombre": "JORGE ALAN LARGAESPADA CRUZ",
+      "rol": "Colaborador",
+      "correo": "jorge.largaespada@claro.com.ni"
+    },
+    {
+      "nombre": "JORGE ALEXANDER FLORES CABALLERO",
+      "rol": "Colaborador",
+      "correo": "jorge.flores@claro.com.ni"
+    },
+    {
+      "nombre": "JORGE ANTONIO ALONSO LOPEZ",
+      "rol": "Colaborador",
+      "correo": "jorge.alonso@claro.com.ni"
+    },
+    {
+      "nombre": "JORGE ANTONIO FUENTES GUTIERREZ",
+      "rol": "Colaborador",
+      "correo": "jorge.fuentes@claro.com.ni"
+    },
+    {
+      "nombre": "JORGE EFRAIN GONZALEZ CASTRILLO",
+      "rol": "Colaborador",
+      "correo": "jorge.gonzalezc@claro.com.ni"
+    },
+    {
+      "nombre": "JORGE LUIS DELGADILLO MENDEZ",
+      "rol": "Colaborador",
+      "correo": "jorge.delgadillo@claro.com.ni"
+    },
+    {
+      "nombre": "JORGE LUIS QUIROZ ZARATE",
+      "rol": "Colaborador",
+      "correo": "jorge.quiroz@claro.com.ni"
+    },
+    {
+      "nombre": "JORGE LUIS RAMIREZ GUTIERREZ",
+      "rol": "Colaborador",
+      "correo": "jorgel.ramirez@claro.com.ni"
+    },
+    {
+      "nombre": "JORGE LUIS SOZA VALLE",
+      "rol": "Colaborador",
+      "correo": "jorge.soza@claro.com.ni"
+    },
+    {
+      "nombre": "JORGE MANUEL RODRIGUEZ TERCERO",
+      "rol": "Colaborador",
+      "correo": "jorgema.rodriguez@claro.com.ni"
+    },
+    {
+      "nombre": "JORGE WILLIAM KNAGGS RODRIGUEZ",
+      "rol": "Colaborador",
+      "correo": "jorge.knaggs@claro.com.ni"
+    },
+    {
+      "nombre": "JOSE ALEJANDRO LEIVA",
+      "rol": "Colaborador",
+      "correo": "josea.leiva@claro.com.ni"
+    },
+    {
+      "nombre": "JOSE ANGEL CAJINA ESCOBAR",
+      "rol": "Colaborador",
+      "correo": "jose.cajina@claro.com.ni"
+    },
+    {
+      "nombre": "JOSE ANTONIO BONILLA ARGUELLO",
+      "rol": "Colaborador",
+      "correo": "josea.bonilla@claro.com.ni"
+    },
+    {
+      "nombre": "JOSE AUGUSTO FLORES SANCHEZ",
+      "rol": "Colaborador",
+      "correo": "augusto.sanchez@claro.com.ni"
+    },
+    {
+      "nombre": "JOSE CALAZAN MONCADA PEREZ",
+      "rol": "Colaborador",
+      "correo": "jose.moncada@claro.com.ni"
+    },
+    {
+      "nombre": "JOSE DANIEL MEZA GARCIA",
+      "rol": "Colaborador",
+      "correo": "josed.meza@claro.com.ni"
+    },
+    {
+      "nombre": "JOSE DANILO CALDERA SABALLOS",
+      "rol": "Colaborador",
+      "correo": "jose.caldera@claro.com.ni"
+    },
+    {
+      "nombre": "JOSE ENMANUEL URBINA FIERRO",
+      "rol": "Colaborador",
+      "correo": "josee.urbina@claro.com.ni"
+    },
+    {
+      "nombre": "JOSE FERNANDO ARGUELLO SERRANO",
+      "rol": "Colaborador",
+      "correo": "jose.arguellos@claro.com.ni"
+    },
+    {
+      "nombre": "JOSE FRANCISCO BONILLA REYES",
+      "rol": "Colaborador",
+      "correo": "jose.bonilla@claro.com.ni"
+    },
+    {
+      "nombre": "JOSE GABRIEL MEJIA REYES",
+      "rol": "Colaborador",
+      "correo": "joseg.mejia@claro.com.ni"
+    },
+    {
+      "nombre": "JOSE LUIS TORREZ AGUIRREZ",
+      "rol": "Colaborador",
+      "correo": "jose.torrez@claro.com.ni"
+    },
+    {
+      "nombre": "JOSE MANUEL AGUIRRE CARDOZA",
+      "rol": "Colaborador",
+      "correo": "josem.aguirre@claro.com.ni"
+    },
+    {
+      "nombre": "JOSE MIGUEL ARCEDA FLORES",
+      "rol": "Colaborador",
+      "correo": "josem.arceda@claro.com.ni"
+    },
+    {
+      "nombre": "JOSE ORLANDO LUMBI CASTRO",
+      "rol": "Colaborador",
+      "correo": "jose.lumbi@claro.com.ni"
+    },
+    {
+      "nombre": "JOSE PALAVICCINI",
+      "rol": "Colaborador",
+      "correo": "jose.pallaviccini@claro.com.ni"
+    },
+    {
+      "nombre": "JOSE PEDRO ROBLES LOPEZ",
+      "rol": "Colaborador",
+      "correo": "jose.robles@claro.com.ni"
+    },
+    {
+      "nombre": "JOSE ROBERTO BENAVIDES ROCHA",
+      "rol": "Colaborador",
+      "correo": "jose.benavidez@claro.com.ni"
+    },
+    {
+      "nombre": "JOSE RUBEN ZELEDON ANDURAY",
+      "rol": "Colaborador",
+      "correo": "jose.zeledon@claro.com.ni"
+    },
+    {
+      "nombre": "JOSE YASIR RUGAMA ESPINOZA",
+      "rol": "Colaborador",
+      "correo": "jose.rugama@claro.com.ni"
+    },
+    {
+      "nombre": "JOSELINE DEL CARMEN MENDOZA GALEANO",
+      "rol": "Colaborador",
+      "correo": "joseline.mendoza@claro.com.ni"
+    },
+    {
+      "nombre": "JOSELLY LOAMMI PAVON TELLEZ",
+      "rol": "Colaborador",
+      "correo": "joselly.pavon@claro.com.ni"
+    },
+    {
+      "nombre": "JOSEPHLING ANDREA GARCIA OROZCO",
+      "rol": "Colaborador",
+      "correo": "josephling.garcia@claro.com.ni"
+    },
+    {
+      "nombre": "JOSHUA EMMANUEL FLORES GOMEZ",
+      "rol": "Colaborador",
+      "correo": "joshua.flores@claro.com.ni"
+    },
+    {
+      "nombre": "JOSSELING DE LOS ANGELES REYES ORTIZ",
+      "rol": "Colaborador",
+      "correo": "josseling.reyes@claro.com.ni"
+    },
+    {
+      "nombre": "JOSSELING TATIANA RODRIGUEZ MEJIA",
+      "rol": "Colaborador",
+      "correo": "josselingt.rodriguez@claro.com.ni"
+    },
+    {
+      "nombre": "JOSUE ARIEL GUZMAN ESPINOZA",
+      "rol": "Colaborador",
+      "correo": "josuea.guzman@claro.com.ni"
+    },
+    {
+      "nombre": "JOSUE EMMANUEL NAVARRETE NAVARRETE",
+      "rol": "Colaborador",
+      "correo": "josue.navarrete@claro.com.ni"
+    },
+    {
+      "nombre": "JOUGLI JOSE COREA LAGUNA",
+      "rol": "Colaborador",
+      "correo": "jougli.corea@claro.com.ni"
+    },
+    {
+      "nombre": "JUAN BAUTISTA ESPINAL BENAVIDEZ",
+      "rol": "Colaborador",
+      "correo": "juan.espinal@claro.com.ni"
+    },
+    {
+      "nombre": "JUAN BOSCO CARCACHE ACEVEDO",
+      "rol": "Colaborador",
+      "correo": "juan.carcache@claro.com.ni"
+    },
+    {
+      "nombre": "JUAN CARLOS GUERRERO",
+      "rol": "Colaborador",
+      "correo": "juan.guerrero2@claro.com.ni"
+    },
+    {
+      "nombre": "JUAN CARLOS HERNANDEZ ROJAS",
+      "rol": "Colaborador",
+      "correo": "juanc.hernandezr@claro.com.ni"
+    },
+    {
+      "nombre": "JUAN CARLOS LOPEZ OSEJO",
+      "rol": "Colaborador",
+      "correo": "juanca.lopez@claro.com.ni"
+    },
+    {
+      "nombre": "JUAN CARLOS SANDINO DIAZ",
+      "rol": "Colaborador",
+      "correo": "juan.sandino@claro.com.ni"
+    },
+    {
+      "nombre": "JUAN JOSE ADONAY BERDUGO MOREIRA",
+      "rol": "Colaborador",
+      "correo": "juanj.berdugo@claro.com.ni"
+    },
+    {
+      "nombre": "JUAN JOSE BELTRAN MARTINEZ",
+      "rol": "Colaborador",
+      "correo": "juan.beltran@claro.com.ni"
+    },
+    {
+      "nombre": "JUAN JOSE HERNANDEZ HERNANDEZ",
+      "rol": "Colaborador",
+      "correo": "juanjos.hernandez@claro.com.ni"
+    },
+    {
+      "nombre": "JUAN PABLO RAYO GONZALEZ",
+      "rol": "Colaborador",
+      "correo": "juan.rayo@claro.com.ni"
+    },
+    {
+      "nombre": "JUAN RAMON CENTENO RIOS",
+      "rol": "Colaborador",
+      "correo": "juanr.centeno@claro.com.ni"
+    },
+    {
+      "nombre": "JUAN SIMON PADILLA CASCO",
+      "rol": "Colaborador",
+      "correo": "juan.padilla@claro.com.ni"
+    },
+    {
+      "nombre": "JUAN VLADIMIR ESTRADA BALLADARES",
+      "rol": "Colaborador",
+      "correo": "juanv.estradab@claro.com.ni"
+    },
+    {
+      "nombre": "JUDDYT ELIZABETH VARGAS ASTACIO",
+      "rol": "Colaborador",
+      "correo": "juddyt.vargas@claro.com.ni"
+    },
+    {
+      "nombre": "JULIO CESAR GARAY LOPEZ",
+      "rol": "Colaborador",
+      "correo": "julio.garayl@claro.com.ni"
+    },
+    {
+      "nombre": "JULIO CESAR REYES PALAVICINI",
+      "rol": "Colaborador",
+      "correo": "julioc.reyesp@claro.com.ni"
+    },
+    {
+      "nombre": "JULIO CESAR RODRIGUEZ ARIAS",
+      "rol": "Colaborador",
+      "correo": "julio.rodriguez@claro.com.ni"
+    },
+    {
+      "nombre": "JULIO ENRIQUE PEREZ FERRUFINO",
+      "rol": "Colaborador",
+      "correo": "julioe.perez@claro.com.ni"
+    },
+    {
+      "nombre": "JULIO ISMAEL CERVANTES MORALES",
+      "rol": "Colaborador",
+      "correo": "jismael.cervantes@claro.com.ni"
+    },
+    {
+      "nombre": "JULISSA DAMARA BENAVIDES",
+      "rol": "Colaborador",
+      "correo": "julissa.benavides@claro.com.ni"
+    },
+    {
+      "nombre": "JULISSA SUJEY RIOS ZAMORA",
+      "rol": "Colaborador",
+      "correo": "julissasu.rios@claro.com.ni"
+    },
+    {
+      "nombre": "JUNNIETH JACARELY CASTRO LOPEZ",
+      "rol": "Colaborador",
+      "correo": "junnieth.castro@claro.com.ni"
+    },
+    {
+      "nombre": "KAREL TATIANA SAAVEDRA BERRIOS",
+      "rol": "Colaborador",
+      "correo": "karel.saavedra@claro.com.ni"
+    },
+    {
+      "nombre": "KARELIA JUDITH DIAZ ARGUELLO",
+      "rol": "Colaborador",
+      "correo": "kareliaj.diaz@claro.com.ni"
+    },
+    {
+      "nombre": "KAREN AZALEA GUEVARA ROCHA",
+      "rol": "Colaborador",
+      "correo": "karena.guevara@claro.com.ni"
+    },
+    {
+      "nombre": "KAREN JESEL PALACIOS CASTRO",
+      "rol": "Colaborador",
+      "correo": "karenj.palacios@claro.com.ni"
+    },
+    {
+      "nombre": "KAREN YAEL VANEGAS BERRIOS",
+      "rol": "Colaborador",
+      "correo": "karen.vanegas@claro.com.ni"
+    },
+    {
+      "nombre": "KAREN YAHOSKA AGUINAGA ZAMBRANA",
+      "rol": "Colaborador",
+      "correo": "karen.aguinaga@claro.com.ni"
+    },
+    {
+      "nombre": "KAREN ZAFIRA VANEGAS FERNANDEZ",
+      "rol": "Colaborador",
+      "correo": "karenz.vanegas@claro.com.ni"
+    },
+    {
+      "nombre": "KARINA ISAMAR SEQUEIRA PEREZ",
+      "rol": "Colaborador",
+      "correo": "karina.sequeira@claro.com.ni"
+    },
+    {
+      "nombre": "KARLA ISABEL MADRIGAL GARCIA",
+      "rol": "Colaborador",
+      "correo": "karla.madrigal@claro.com.ni"
+    },
+    {
+      "nombre": "KARLA PATRICIA PERALTA LARIOS",
+      "rol": "Colaborador",
+      "correo": "karla.peraltal@claro.com.ni"
+    },
+    {
+      "nombre": "KARLA VANESSA GONZALEZ CORTEZ",
+      "rol": "Colaborador",
+      "correo": "karlav.gonzalezc@claro.com.ni"
+    },
+    {
+      "nombre": "KARLA VANESSA MATUS LOPEZ",
+      "rol": "Colaborador",
+      "correo": "karla.matus@claro.com.ni"
+    },
+    {
+      "nombre": "KARLA VANESSA PEÑA URRUTIA",
+      "rol": "Colaborador",
+      "correo": "karla.pena@claro.com.ni"
+    },
+    {
+      "nombre": "KAROLAIS ISAYANA OBANDO JIRON",
+      "rol": "Colaborador",
+      "correo": "karolais.obando@claro.com.ni"
+    },
+    {
+      "nombre": "KATHERIN ILEANA PORRAS FLORES",
+      "rol": "Colaborador",
+      "correo": "katherin.porras@claro.com.ni"
+    },
+    {
+      "nombre": "KATHERIN JULIETH ALBIZUA MONTENEGRO",
+      "rol": "Colaborador",
+      "correo": "katherin.albizua@claro.com.ni"
+    },
+    {
+      "nombre": "KATHERINE CRISTINA HERNANDEZ SILVA",
+      "rol": "Colaborador",
+      "correo": "katherine.hernandezs@claro.com.ni"
+    },
+    {
+      "nombre": "KATHERINE DE LOS ANGELES ALFARO CONTRERAS",
+      "rol": "Colaborador",
+      "correo": "katherine.alfaro@claro.com.ni"
+    },
+    {
+      "nombre": "KATHERINE ELOISA TELLEZ AGUILAR",
+      "rol": "Colaborador",
+      "correo": "katherine.tellez@claro.com.ni"
+    },
+    {
+      "nombre": "KATHERINE MICHELLE ABEA PALACIOS",
+      "rol": "Colaborador",
+      "correo": "katherine.abea@claro.com.ni"
+    },
+    {
+      "nombre": "KATIA YAOSKA CARRION CARCACHE",
+      "rol": "Colaborador",
+      "correo": "katia.carrion@claro.com.ni"
+    },
+    {
+      "nombre": "KATIUSKA PAOLA VARGAS LOZANO",
+      "rol": "Colaborador",
+      "correo": "katiuska.vargas@claro.com.ni"
+    },
+    {
+      "nombre": "KATTHERINNE PONCE RIZO",
+      "rol": "Colaborador",
+      "correo": "kattherinne.ponce@claro.com.ni"
+    },
+    {
+      "nombre": "KEHANI WALQUIRIA BELTRAN GUTIERREZ",
+      "rol": "Colaborador",
+      "correo": "kehani.beltran@claro.com.ni"
+    },
+    {
+      "nombre": "KELLY JURIELL RODRIGUEZ MEMBREÑO",
+      "rol": "Colaborador",
+      "correo": "kelly.rodriguez@claro.com.ni"
+    },
+    {
+      "nombre": "KELLY MILAGRO ARIAS GUTIERREZ",
+      "rol": "Colaborador",
+      "correo": "kelly.arias@claro.com.ni"
+    },
+    {
+      "nombre": "KELZEN GAMALIEL JARQUIN HERNANDEZ",
+      "rol": "Colaborador",
+      "correo": "kelzen.jarquin@claro.com.ni"
+    },
+    {
+      "nombre": "KENNEDY STEVENS ALVAREZ LAZO",
+      "rol": "Colaborador",
+      "correo": "kennedy.alvarez@claro.com.ni"
+    },
+    {
+      "nombre": "KENNETH JOSE GUZMAN NOVOA",
+      "rol": "Colaborador",
+      "correo": "kennethj.guzman@claro.com.ni"
+    },
+    {
+      "nombre": "KENNETH RICARDO ESTRADA BERMUDEZ",
+      "rol": "Colaborador",
+      "correo": "kenneth.estrada@claro.com.ni"
+    },
+    {
+      "nombre": "KENYA WALESKA BLANDON ROSTRAN",
+      "rol": "Colaborador",
+      "correo": "kenia.blandon@claro.com.ni"
+    },
+    {
+      "nombre": "KERVIN ADOLFO BLANDON CHAVARRIA",
+      "rol": "Colaborador",
+      "correo": "kervin.blandon@claro.com.ni"
+    },
+    {
+      "nombre": "KEVIN ALEJANDRO ORDOÑEZ BERMUDEZ",
+      "rol": "Colaborador",
+      "correo": "kevin.ordonezb@claro.com.ni"
+    },
+    {
+      "nombre": "KEVIN ANGEL BERRIOS SELVA",
+      "rol": "Colaborador",
+      "correo": "kevin.berrios@claro.com.ni"
+    },
+    {
+      "nombre": "KEVIN ANTONIO JIRON GONZALEZ",
+      "rol": "Colaborador",
+      "correo": "kevin.jiron@claro.com.ni"
+    },
+    {
+      "nombre": "KEVIN DAVID REYES CARCAMO",
+      "rol": "Colaborador",
+      "correo": "kevind.reyes@claro.com.ni"
+    },
+    {
+      "nombre": "KEVIN EZEQUIEL TORREZ PEREZ",
+      "rol": "Colaborador",
+      "correo": "kevin.torrez@claro.com.ni"
+    },
+    {
+      "nombre": "KEVIN JOSE CERDA CALERO",
+      "rol": "Colaborador",
+      "correo": "kevin.cerda@claro.com.ni"
+    },
+    {
+      "nombre": "KEVIN JOSUE RAMOS",
+      "rol": "Colaborador",
+      "correo": "kevinjo.ramos@claro.com.ni"
+    },
+    {
+      "nombre": "KEVIN JOVANY ESTRADA RAMOS",
+      "rol": "Colaborador",
+      "correo": "kevin.estraram@claro.com.ni"
+    },
+    {
+      "nombre": "KEYLA BELEN DAVILA",
+      "rol": "Colaborador",
+      "correo": "keyla.davila1@claro.com.ni"
+    },
+    {
+      "nombre": "KEYLA FERNANDA GADEA GRANADOS",
+      "rol": "Colaborador",
+      "correo": "keylaf.gadea@claro.com.ni"
+    },
+    {
+      "nombre": "KEYNER ALBERTO ROBLES VALLE",
+      "rol": "Colaborador",
+      "correo": "keynera.robles@claro.com.ni"
+    },
+    {
+      "nombre": "KIMBERLY AUXILIADORA VILLALOBOS GRADIZ",
+      "rol": "Colaborador",
+      "correo": "kimberly.villalobos@claro.com.ni"
+    },
+    {
+      "nombre": "KRUPSKAYA DE LOS ANGELES DUARTE ALEMAN",
+      "rol": "Colaborador",
+      "correo": "krupskaya.duarte@claro.com.ni"
+    },
+    {
+      "nombre": "LARISSA NAZARETH CALDERA LOPEZ",
+      "rol": "Colaborador",
+      "correo": "larissa.caldera@claro.com.ni"
+    },
+    {
+      "nombre": "LARRY VITERBO PERALTA SILVA",
+      "rol": "Colaborador",
+      "correo": "larry.peralta@claro.com.ni"
+    },
+    {
+      "nombre": "LAURA DE LA CONCEPCIÓN ESPINALES OBANDO",
+      "rol": "Colaborador",
+      "correo": "laura.espiales@claro.com.ni"
+    },
+    {
+      "nombre": "LAWDEL MARIA CASTILLO SEQUEIRA",
+      "rol": "Colaborador",
+      "correo": "lawdel.castillo@claro.com.ni"
+    },
+    {
+      "nombre": "LEA RAQUEL SILVA LOPEZ",
+      "rol": "Colaborador",
+      "correo": "lea.silva@claro.com.ni"
+    },
+    {
+      "nombre": "LEANDRO MARCELL PARAMO RIVAS",
+      "rol": "Colaborador",
+      "correo": "leandro.paramo@claro.com.ni"
+    },
+    {
+      "nombre": "LEDA MARCELA NARVAEZ NIETO",
+      "rol": "Colaborador",
+      "correo": "leda.narvaezn@claro.com.ni"
+    },
+    {
+      "nombre": "LEE GERALD RUIZ LOPEZ",
+      "rol": "Colaborador",
+      "correo": "lee.ruiz@claro.com.ni"
+    },
+    {
+      "nombre": "LEE HAULAN PADILLA COLLINS",
+      "rol": "Colaborador",
+      "correo": "lee.padilla@claro.com.ni"
+    },
+    {
+      "nombre": "LEINI KAAREL URBINA MATAMOROS",
+      "rol": "Colaborador",
+      "correo": "leini.urbina@claro.com.ni"
+    },
+    {
+      "nombre": "LEONARDO JOSUE QUIROZ AYERDIS",
+      "rol": "Colaborador",
+      "correo": "leonardo.quiroz@claro.com.ni"
+    },
+    {
+      "nombre": "LEONARDO SANTO CANO ESPINALES",
+      "rol": "Colaborador",
+      "correo": "leonardo.cano@claro.com.ni"
+    },
+    {
+      "nombre": "LESQUIER ISRAEL GARCIA GONZALEZ",
+      "rol": "Colaborador",
+      "correo": "lesquier.garcia@claro.com.ni"
+    },
+    {
+      "nombre": "LESTER ENMANUEL COLOMER JALINAS",
+      "rol": "Colaborador",
+      "correo": "lester.colomer@claro.com.ni"
+    },
+    {
+      "nombre": "LEXMARK ALEXANDER PALACIOS MARTINEZ",
+      "rol": "Colaborador",
+      "correo": "lexmark.palacios@claro.com.ni"
+    },
+    {
+      "nombre": "LIAM ALEJANDRO RUGAMA FOX",
+      "rol": "Colaborador",
+      "correo": "liam.rugama@claro.com.ni"
+    },
+    {
+      "nombre": "LIDIA JINESKA BONILLA ARCE",
+      "rol": "Colaborador",
+      "correo": "lidia.bonilla@claro.com.ni"
+    },
+    {
+      "nombre": "LIGDANIA MARICELA HERNANDEZ GUEVARA",
+      "rol": "Colaborador",
+      "correo": "ligdania.hernandez@claro.com.ni"
+    },
+    {
+      "nombre": "LINDA ASENAT ALVAREZ AVILES",
+      "rol": "Colaborador",
+      "correo": "linda.alvarez@claro.com.ni"
+    },
+    {
+      "nombre": "LISANIA DE LOS ANGELES MENDEZ CALERO",
+      "rol": "Colaborador",
+      "correo": "lisaniad.mendez@claro.com.ni"
+    },
+    {
+      "nombre": "LORNA ELENA LIRA GUIDO",
+      "rol": "Colaborador",
+      "correo": "lornael.lira@claro.com.ni"
+    },
+    {
+      "nombre": "LORNA IRELA GUTIERREZ SANCHEZ",
+      "rol": "Colaborador",
+      "correo": "lorna.gutierrez@claro.com.ni"
+    },
+    {
+      "nombre": "LUCIA  DE FATIMA TORRES  SOLORZANO",
+      "rol": "Colaborador",
+      "correo": "lucia.torres@claro.com.ni"
+    },
+    {
+      "nombre": "LUCRECIA DEL CARMEN GONZALEZ LOPEZ",
+      "rol": "Colaborador",
+      "correo": "lucrecia.gonzalez@claro.com.ni"
+    },
+    {
+      "nombre": "LUIS  LOVELL ARROLIGA  LANUZA",
+      "rol": "Colaborador",
+      "correo": "luisl.arroliga@claro.com.ni"
+    },
+    {
+      "nombre": "LUIS ADONIS LOPEZ PEREZ",
+      "rol": "Colaborador",
+      "correo": "luis.lopez@claro.com.ni"
+    },
+    {
+      "nombre": "LUIS ALBERTO TELICA CUADRA",
+      "rol": "Colaborador",
+      "correo": "luis.telica@claro.com.ni"
+    },
+    {
+      "nombre": "LUIS ALBERTO URBINA TINOCO",
+      "rol": "Colaborador",
+      "correo": "luis.urbina@claro.com.ni"
+    },
+    {
+      "nombre": "LUIS ANGEL LUMBI JARQUIN",
+      "rol": "Colaborador",
+      "correo": "luis.lumbi@claro.com.ni"
+    },
+    {
+      "nombre": "LUIS EMILIO CUBAS MORALES",
+      "rol": "Colaborador",
+      "correo": "luis.cubas@claro.com.ni"
+    },
+    {
+      "nombre": "LUIS EMILIO DIAZ GUTIERREZ",
+      "rol": "Colaborador",
+      "correo": "luise.diaz@claro.com.ni"
+    },
+    {
+      "nombre": "LUIS ENRIQUE ALVARADO MCREA",
+      "rol": "Colaborador",
+      "correo": "luis.alvarado@claro.com.ni"
+    },
+    {
+      "nombre": "LUIS FERNANDO GUTIERREZ RIVAS",
+      "rol": "Colaborador",
+      "correo": "luisfe.gutierrez@claro.com.ni"
+    },
+    {
+      "nombre": "LUIS GABRIEL SANDINO MORALES",
+      "rol": "Colaborador",
+      "correo": "luis.sandino@claro.com.ni"
+    },
+    {
+      "nombre": "LUIS HUMBERTO CASTELLON GONZALEZ",
+      "rol": "Colaborador",
+      "correo": "luis.castellon@claro.com.ni"
+    },
+    {
+      "nombre": "LUIS JAVIER PAVON MADRIGAL",
+      "rol": "Colaborador",
+      "correo": "luis.pavonm@claro.com.ni"
+    },
+    {
+      "nombre": "LUIS MIGUEL OBANDO TOVAL",
+      "rol": "Colaborador",
+      "correo": "luis.obando@claro.com.ni"
+    },
+    {
+      "nombre": "LUIS ORESTE MENA CAMPO",
+      "rol": "Colaborador",
+      "correo": "luis.menac@claro.com.ni"
+    },
+    {
+      "nombre": "LUISA FERNANDA CHAVARRIA CASTRO",
+      "rol": "Colaborador",
+      "correo": "luisa.chavarria@claro.com.ni"
+    },
+    {
+      "nombre": "LUVY YUBIELKA MARTINEZ ROSALES",
+      "rol": "Colaborador",
+      "correo": "luvy.martinez@claro.com.ni"
+    },
+    {
+      "nombre": "MAGDIEL OSMAR AGUIRRES MOJICA",
+      "rol": "Colaborador",
+      "correo": "magdiel.aguirres@claro.com.ni"
+    },
+    {
+      "nombre": "MANUEL ALFREDO AGUILAR GUADAMUZ",
+      "rol": "Colaborador",
+      "correo": "manuel.aguilar@claro.com.ni"
+    },
+    {
+      "nombre": "MANUEL ANTONIO HERNANDEZ LOPEZ",
+      "rol": "Colaborador",
+      "correo": "manuel.hernandez@claro.com.ni"
+    },
+    {
+      "nombre": "MANUEL ANTONIO REYES",
+      "rol": "Colaborador",
+      "correo": "manuelan.reyes@claro.com.ni"
+    },
+    {
+      "nombre": "MANUEL SALVADOR ALFARO ARRIOLA",
+      "rol": "Colaborador",
+      "correo": "manuel.alfaro@claro.com.ni"
+    },
+    {
+      "nombre": "MANUELA LIZETH TENORIO GUIDO",
+      "rol": "Colaborador",
+      "correo": "manuela.tenorio@claro.com.ni"
+    },
+    {
+      "nombre": "MAR JUDITH FLORES HERRERA",
+      "rol": "Colaborador",
+      "correo": "marj.flores@claro.com.ni"
+    },
+    {
+      "nombre": "MARBELLY DEL SOCORRO ACUÑA MENDEZ",
+      "rol": "Colaborador",
+      "correo": "marbelly.acuna@claro.com.ni"
+    },
+    {
+      "nombre": "MARBELY ESTER ESPINOZA MENDOZA",
+      "rol": "Colaborador",
+      "correo": "marbely.espinoza@claro.com.ni"
+    },
+    {
+      "nombre": "MARCONNYS JOSE QUIROZ BLANDON",
+      "rol": "Colaborador",
+      "correo": "marconnys.quiroz@claro.com.ni"
+    },
+    {
+      "nombre": "MARCOS ANTONIO RIVAS TORREZ",
+      "rol": "Colaborador",
+      "correo": "marcos.rivas@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA ALEJANDRA SANCHEZ GONZALEZ",
+      "rol": "Colaborador",
+      "correo": "maria.sanchez@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA ALEXANDRA VILCHEZ DIAZ",
+      "rol": "Colaborador",
+      "correo": "maria.vilchez@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA AUXILIADORA CASTRO SANCHEZ",
+      "rol": "Colaborador",
+      "correo": "mariaa.castro@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA AUXILIADORA CERDA VADO",
+      "rol": "Colaborador",
+      "correo": "maria.cerda@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA CAROLINA LINCON IDEM",
+      "rol": "Colaborador",
+      "correo": "maria.lincon@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA CLARISA LEON NOGUERA",
+      "rol": "Colaborador",
+      "correo": "maria.leon@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA DE LOS ANGELES CHAVEZ SOLIS",
+      "rol": "Colaborador",
+      "correo": "maria.chavez@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA DOLORES LACAYO MACHADO",
+      "rol": "Colaborador",
+      "correo": "maria.lacayo@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA ELENA ALVAREZ CARRANZA",
+      "rol": "Colaborador",
+      "correo": "maria.alvarez@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA ESMERALDA LAZO VEGA",
+      "rol": "Colaborador",
+      "correo": "mariae.lazo@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA ESPERANZA MENDOZA MORALES",
+      "rol": "Colaborador",
+      "correo": "mariae.mendoza@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA GABRIELA BRAVO GONZALEZ",
+      "rol": "Colaborador",
+      "correo": "mariag.bravo@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA GABRIELA BRENES SOMARRIBA",
+      "rol": "Colaborador",
+      "correo": "maria.brenes@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA GABRIELA OROCHENA ROCHA",
+      "rol": "Colaborador",
+      "correo": "maria.orochena@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA GABRIELA VARGAS GUZMAN",
+      "rol": "Colaborador",
+      "correo": "maria.vargas@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA ISABEL PEREZ ACEVEDO",
+      "rol": "Colaborador",
+      "correo": "mariai.perez@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA JOSE CARVAJAL UMAÑA",
+      "rol": "Colaborador",
+      "correo": "mariaj.carvajal@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA JOSE JIMENEZ LINARTE",
+      "rol": "Colaborador",
+      "correo": "mariaj.jimenez@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA JOSE SALGADO VALLE",
+      "rol": "Colaborador",
+      "correo": "mariaj.salgado@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA LEONOR VASQUEZ MEJIA",
+      "rol": "Colaborador",
+      "correo": "marial.vasquezm@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA LUISA MENDOZA RUIZ",
+      "rol": "Colaborador",
+      "correo": "marial.mendoza@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA PAOLA LOPEZ ESPINALES",
+      "rol": "Colaborador",
+      "correo": "paola.lopez@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA REBECA ROJAS GARCIA",
+      "rol": "Colaborador",
+      "correo": "mariar.rojas@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA SALOME AGURCIA RIVAS",
+      "rol": "Colaborador",
+      "correo": "maria.agurcia@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA VERONICA VELASQUEZ LANUZA",
+      "rol": "Colaborador",
+      "correo": "mariav.velasquez@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA VICTORIA MENDIETA GAZO",
+      "rol": "Colaborador",
+      "correo": "maria.mendieta@claro.com.ni"
+    },
+    {
+      "nombre": "MARIANGELES PONCE BLANCO",
+      "rol": "Colaborador",
+      "correo": "mariangeles.ponce@claro.com.ni"
+    },
+    {
+      "nombre": "MARIBEL GUADALUPE CANO SOLIS",
+      "rol": "Colaborador",
+      "correo": "maribel.cano@claro.com.ni"
+    },
+    {
+      "nombre": "MARIO ANTONIO SAAVEDRA CONRRADO",
+      "rol": "Colaborador",
+      "correo": "mario.saavedra@claro.com.ni"
+    },
+    {
+      "nombre": "MARITZA CENTENO PALMA",
+      "rol": "Colaborador",
+      "correo": "maritza.centeno@claro.com.ni"
+    },
+    {
+      "nombre": "MARITZA DEL SOCORRO LOPEZ LOPEZ",
+      "rol": "Colaborador",
+      "correo": "maritza.lopez@claro.com.ni"
+    },
+    {
+      "nombre": "MARJORIE DEL SOCORRO CHAVARRIA MERCADO",
+      "rol": "Colaborador",
+      "correo": "marjorie.chavarria@claro.com.ni"
+    },
+    {
+      "nombre": "MARJOURIE DEL SOCORRO LOPEZ LOPEZ",
+      "rol": "Colaborador",
+      "correo": "marjourie.lopez@claro.com.ni"
+    },
+    {
+      "nombre": "MARJOURIE YAHOSCA REYES JIMENEZ",
+      "rol": "Colaborador",
+      "correo": "marjourie.reyesji@claro.com.ni"
+    },
+    {
+      "nombre": "MARLEN CECILIA SALAZAR CRUZ",
+      "rol": "Colaborador",
+      "correo": "marlen.salazar@claro.com.ni"
+    },
+    {
+      "nombre": "MARTHA ALICIA MENDOZA",
+      "rol": "Colaborador",
+      "correo": "martha.mendoza@claro.com.ni"
+    },
+    {
+      "nombre": "MARTHA DEL SOCORRO COLINDRES CORTES",
+      "rol": "Colaborador",
+      "correo": "martha.colindres@claro.com.ni"
+    },
+    {
+      "nombre": "MARTHA DEL SOCORRO DELGADO SELVA",
+      "rol": "Colaborador",
+      "correo": "martha.delgado@claro.com.ni"
+    },
+    {
+      "nombre": "MARTHA ELENA MORALES ESPINOZA",
+      "rol": "Colaborador",
+      "correo": "martha.morales@claro.com.ni"
+    },
+    {
+      "nombre": "MARTHA ELENA RODRIGUEZ MIRANDA",
+      "rol": "Colaborador",
+      "correo": "marthae.rodriguez@claro.com.ni"
+    },
+    {
+      "nombre": "MARTHA GRENETH BLANDON",
+      "rol": "Colaborador",
+      "correo": "martha.blandon@claro.com.ni"
+    },
+    {
+      "nombre": "MARTHA ISABEL ZELAYA HERRERA",
+      "rol": "Colaborador",
+      "correo": "martha.zelaya@claro.com.ni"
+    },
+    {
+      "nombre": "MARTHA LORENA INCER MENDEZ",
+      "rol": "Colaborador",
+      "correo": "martha.incer@claro.com.ni"
+    },
+    {
+      "nombre": "MARTHA MARIA PADILLA PADILLA",
+      "rol": "Colaborador",
+      "correo": "martha.padilla@claro.com.ni"
+    },
+    {
+      "nombre": "MARTIN CANALES CASCO",
+      "rol": "Colaborador",
+      "correo": "martin.canales@claro.com.ni"
+    },
+    {
+      "nombre": "MARTIN IVAN FIGUEROA VARGAS",
+      "rol": "Colaborador",
+      "correo": "martin.figuera@claro.com.ni"
+    },
+    {
+      "nombre": "MARVIN ANTONIO CENTENO SANDOVAL",
+      "rol": "Colaborador",
+      "correo": "marvina.centeno@claro.com.ni"
+    },
+    {
+      "nombre": "MARVIN ANTONIO CORREA INCER",
+      "rol": "Colaborador",
+      "correo": "marvin.correa@claro.com.ni"
+    },
+    {
+      "nombre": "MARVIN RENE CASTILLO MONTERREY",
+      "rol": "Colaborador",
+      "correo": "marvinr.castillo@claro.com.ni"
+    },
+    {
+      "nombre": "MARYURI DALILA RODRIGUEZ OBREGON",
+      "rol": "Colaborador",
+      "correo": "maryuri.rodriguez@claro.com.ni"
+    },
+    {
+      "nombre": "MARYURI ESTERLIN PAVON DINARTE",
+      "rol": "Colaborador",
+      "correo": "maryuri.pavon@claro.com.ni"
+    },
+    {
+      "nombre": "MAURICIO DAVID AVENDAÑO MARTINEZ",
+      "rol": "Colaborador",
+      "correo": "mauricio.avendano@claro.com.ni"
+    },
+    {
+      "nombre": "MAURICIO RAFAEL ESPINOZA PEREZ",
+      "rol": "Colaborador",
+      "correo": "mauricio.espinoza@claro.com.ni"
+    },
+    {
+      "nombre": "MAURICIO RAMON SANCHEZ CORTEZ",
+      "rol": "Colaborador",
+      "correo": "mauricio.sanchez@claro.com.ni"
+    },
+    {
+      "nombre": "MAVERICK RUBI VASQUEZ SALGADO",
+      "rol": "Colaborador",
+      "correo": "maverick.vasquez@claro.com.ni"
+    },
+    {
+      "nombre": "MAYKEL DANIEL MENDEZ FLORES",
+      "rol": "Colaborador",
+      "correo": "maykel.mendez@claro.com.ni"
+    },
+    {
+      "nombre": "MAYLING DE LOS ANGELES TINOCO MAIRENA",
+      "rol": "Colaborador",
+      "correo": "mayling.tinoco@claro.com.ni"
+    },
+    {
+      "nombre": "MAYRA LORENA MARTINEZ ORTIZ",
+      "rol": "Colaborador",
+      "correo": "mayral.martinez@claro.com.ni"
+    },
+    {
+      "nombre": "MAYRA SALVADORA HODGSON AGUILAR",
+      "rol": "Colaborador",
+      "correo": "mayra.hodgson@claro.com.ni"
+    },
+    {
+      "nombre": "MAYRA SOBEIDA HERNANDEZ DAVILA",
+      "rol": "Colaborador",
+      "correo": "mayra.hernandez@claro.com.ni"
+    },
+    {
+      "nombre": "MELIDA FRANCISCA MATAMOROS ROBLETO",
+      "rol": "Colaborador",
+      "correo": "melida.matamoros@claro.com.ni"
+    },
+    {
+      "nombre": "MELVIN NOEL RAMIREZ GONZALEZ",
+      "rol": "Colaborador",
+      "correo": "melvin.ramirez@claro.com.ni"
+    },
+    {
+      "nombre": "MERCEDES CAROLINA RIVAS SANCHEZ",
+      "rol": "Colaborador",
+      "correo": "mercedes.rivas@claro.com.ni"
+    },
+    {
+      "nombre": "MERCEDES DEL CARMEN UMAÑA MORALES",
+      "rol": "Colaborador",
+      "correo": "mercedes.umana@claro.com.ni"
+    },
+    {
+      "nombre": "MERCEDES RAMONA FUNEZ TERCERO",
+      "rol": "Colaborador",
+      "correo": "mercedes.funez@claro.com.ni"
+    },
+    {
+      "nombre": "MEYBELIN YOSEPH ESCOBAR OSORIO",
+      "rol": "Colaborador",
+      "correo": "meybelin.escobar@claro.com.ni"
+    },
+    {
+      "nombre": "MEYLING ELIETHE SELVA DAVILA",
+      "rol": "Colaborador",
+      "correo": "meylinge.selva@claro.com.ni"
+    },
+    {
+      "nombre": "MICHAEL JOSE FLORES GARCIA",
+      "rol": "Colaborador",
+      "correo": "michael.flores@claro.com.ni"
+    },
+    {
+      "nombre": "MICHEL ALEXANDER REYES PALACIO",
+      "rol": "Colaborador",
+      "correo": "michel.reyes@claro.com.ni"
+    },
+    {
+      "nombre": "MIGUEL  ANGEL  CUADRA  MARTINEZ",
+      "rol": "Colaborador",
+      "correo": "miguel.cuadra@claro.com.ni"
+    },
+    {
+      "nombre": "MIGUEL ANGEL BRAVO SIMONS",
+      "rol": "Colaborador",
+      "correo": "miguel.bravo@claro.com.ni"
+    },
+    {
+      "nombre": "MIGUEL ANGEL RUIZ FLORES",
+      "rol": "Colaborador",
+      "correo": "miguel.ruizf@claro.com.ni"
+    },
+    {
+      "nombre": "MILCY CAROLINA VELASQUEZ QUINTANILLA",
+      "rol": "Colaborador",
+      "correo": "milcy.velasquez@claro.com.ni"
+    },
+    {
+      "nombre": "MILTON JOSE JIMENEZ TORRES",
+      "rol": "Colaborador",
+      "correo": "milton.jimenez@claro.com.ni"
+    },
+    {
+      "nombre": "MIRIAM SUAREZ GUTIERREZ",
+      "rol": "Colaborador",
+      "correo": "miriam.suarez@claro.com.ni"
+    },
+    {
+      "nombre": "MIRIAN DE LOS ANGELES PEREZ HERNANDEZ",
+      "rol": "Colaborador",
+      "correo": "mirian.perez@claro.com.ni"
+    },
+    {
+      "nombre": "MIXI NINOSKA HONDOY SANCHEZ",
+      "rol": "Colaborador",
+      "correo": "mixin.hondoy@claro.com.ni"
+    },
+    {
+      "nombre": "MOISES ABRAHAM PEREZ BALMACEDA",
+      "rol": "Colaborador",
+      "correo": "moises.perez@claro.com.ni"
+    },
+    {
+      "nombre": "MOISES DAVID TREJOS CISNEROS",
+      "rol": "Colaborador",
+      "correo": "moises.trejos@claro.com.ni"
+    },
+    {
+      "nombre": "MOISES EZEQUIEL LOPEZ GODINEZ",
+      "rol": "Colaborador",
+      "correo": "moises.lopez@claro.com.ni"
+    },
+    {
+      "nombre": "MOISES ISMAEL LANZAS CARCAMO",
+      "rol": "Colaborador",
+      "correo": "moisesis.lanzas@claro.com.ni"
+    },
+    {
+      "nombre": "NATHALIA DE JESUS PEREZ MARTINEZ",
+      "rol": "Colaborador",
+      "correo": "nathalia.perez@claro.com.ni"
+    },
+    {
+      "nombre": "NATHALIE CRISTINA ZAMORA SEQUEIRA",
+      "rol": "Colaborador",
+      "correo": "nathaliec.zamora@claro.com.ni"
+    },
+    {
+      "nombre": "NEDERLANG ALEXANDER VASQUEZ PEREZ",
+      "rol": "Colaborador",
+      "correo": "nederlang.vasquez@claro.com.ni"
+    },
+    {
+      "nombre": "NELSON ALEXANDER  CRUZ GARCIA",
+      "rol": "Colaborador",
+      "correo": "nelsona.cruz@claro.com.ni"
+    },
+    {
+      "nombre": "NELSON ENRIQUE CONTRERAS MONTENEGRO",
+      "rol": "Colaborador",
+      "correo": "nelson.contreras@claro.com.ni"
+    },
+    {
+      "nombre": "NESTOR JOSE MONTOYA VANEGAS",
+      "rol": "Colaborador",
+      "correo": "nestor.montoya@claro.com.ni"
+    },
+    {
+      "nombre": "NESTOR REYMUNDO DAVILA SALVATIERRA",
+      "rol": "Colaborador",
+      "correo": "nestor.davila@claro.com.ni"
+    },
+    {
+      "nombre": "NESTOR SANTIAGO CHAVEZ CHAVEZ",
+      "rol": "Colaborador",
+      "correo": "nestor.chavez@claro.com.ni"
+    },
+    {
+      "nombre": "NEYLIN ANDREA MATEY BENAVIDES",
+      "rol": "Colaborador",
+      "correo": "neylin.matey@claro.com.ni"
+    },
+    {
+      "nombre": "NIDIA ESTHER HERNANDEZ SALAS",
+      "rol": "Colaborador",
+      "correo": "nidia.salas@claro.com.ni"
+    },
+    {
+      "nombre": "NILSKA JOSEFA ARANA CORTEZ",
+      "rol": "Colaborador",
+      "correo": "nilska.arana@claro.com.ni"
+    },
+    {
+      "nombre": "NOE ELIAS RUIZ TORRENTE",
+      "rol": "Colaborador",
+      "correo": "noe.ruiz@claro.com.ni"
+    },
+    {
+      "nombre": "NOEL ANTONIO GAITAN BETANCO",
+      "rol": "Colaborador",
+      "correo": "noel.gaitan@claro.com.ni"
+    },
+    {
+      "nombre": "NOEL ANTONIO LOPEZ CANALES",
+      "rol": "Colaborador",
+      "correo": "noel.lopezc@claro.com.ni"
+    },
+    {
+      "nombre": "NOEL DE JESUS MORA MUÑOZ",
+      "rol": "Colaborador",
+      "correo": "noel.mora@claro.com.ni"
+    },
+    {
+      "nombre": "NOEL EMILIO VEGA MEDRANO",
+      "rol": "Colaborador",
+      "correo": "noel.vega@claro.com.ni"
+    },
+    {
+      "nombre": "NOEL ORLANDO TORREZ MENDEZ",
+      "rol": "Colaborador",
+      "correo": "noel.torrezm@claro.com.ni"
+    },
+    {
+      "nombre": "NORLAN JOSE JIMENEZ RIVERA",
+      "rol": "Colaborador",
+      "correo": "norlan.jimenez@claro.com.ni"
+    },
+    {
+      "nombre": "NORLAN JOSE RODRIGUEZ ZAMORA",
+      "rol": "Colaborador",
+      "correo": "norlan.rodriguez@claro.com.ni"
+    },
+    {
+      "nombre": "NORMA DEL SOCORRO SANDOVAL BALLADARES",
+      "rol": "Colaborador",
+      "correo": "norma.sandoval@claro.com.ni"
+    },
+    {
+      "nombre": "NORMA LISBETH MORA CASTILLO",
+      "rol": "Colaborador",
+      "correo": "norma.mora@claro.com.ni"
+    },
+    {
+      "nombre": "NORMIN JOSE GUZMAN",
+      "rol": "Colaborador",
+      "correo": "normin.guzman@claro.com.ni"
+    },
+    {
+      "nombre": "NORVIN RAFAEL SANCHEZ RIZO",
+      "rol": "Colaborador",
+      "correo": "norvin.sanchez@claro.com.ni"
+    },
+    {
+      "nombre": "NORWIN ALBERTO GALEANO CALDERON",
+      "rol": "Colaborador",
+      "correo": "norwin.galeano@claro.com.ni"
+    },
+    {
+      "nombre": "NUBIA AMANDA GONZALEZ TORREZ",
+      "rol": "Colaborador",
+      "correo": "nubia.gonzalez@claro.com.ni"
+    },
+    {
+      "nombre": "NUBIA ELIZA PEREZ MOLINA",
+      "rol": "Colaborador",
+      "correo": "nubia.perez@claro.com.ni"
+    },
+    {
+      "nombre": "NYDIA CAROLINA HERRERA MORALES",
+      "rol": "Colaborador",
+      "correo": "nydia.herreram@claro.com.ni"
+    },
+    {
+      "nombre": "OCTAVIA FERNANDA REYES RAMIREZ",
+      "rol": "Colaborador",
+      "correo": "octavia.reyes@claro.com.ni"
+    },
+    {
+      "nombre": "ODALISKA MARIA MEDRANO ESPINOZA",
+      "rol": "Colaborador",
+      "correo": "odaliska.medrano@claro.com.ni"
+    },
+    {
+      "nombre": "OLGA MARIA REQUENE",
+      "rol": "Colaborador",
+      "correo": "olga.requene@claro.com.ni"
+    },
+    {
+      "nombre": "OLIVER ADOLFO LACAYO",
+      "rol": "Colaborador",
+      "correo": "oliver.lacayo@claro.com.ni"
+    },
+    {
+      "nombre": "OLIVER MARTIN SILVA HERNANDEZ",
+      "rol": "Colaborador",
+      "correo": "oliver.silva@claro.com.ni"
+    },
+    {
+      "nombre": "OMARALY SANCHEZ MACAREÑO",
+      "rol": "Colaborador",
+      "correo": "omaraly.sanchez@claro.com.ni"
+    },
+    {
+      "nombre": "ONEYDA MERCEDES VILCHEZ AGUILAR",
+      "rol": "Colaborador",
+      "correo": "ovilchez@claro.com.ni"
+    },
+    {
+      "nombre": "ORESTES ELIAS TELLEZ ORTIZ",
+      "rol": "Colaborador",
+      "correo": "orestes.tellez@claro.com.ni"
+    },
+    {
+      "nombre": "ORLANDO ANTONIO RIVAS CAJINA",
+      "rol": "Colaborador",
+      "correo": "orlando.rivas@claro.com.ni"
+    },
+    {
+      "nombre": "OSCAR ALBERTO MALDONADO TREMINIO",
+      "rol": "Colaborador",
+      "correo": "oscar.maldonado@claro.com.ni"
+    },
+    {
+      "nombre": "OSCAR DANILO CALLEJAS GONZALEZ",
+      "rol": "Colaborador",
+      "correo": "oscar.callejas@claro.com.ni"
+    },
+    {
+      "nombre": "OSCAR DANILO MATAMOROS RIVAS",
+      "rol": "Colaborador",
+      "correo": "oscar.matamoros@claro.com.ni"
+    },
+    {
+      "nombre": "OSCAR DANILO SOLORZANO NAVARRETE",
+      "rol": "Colaborador",
+      "correo": "oscar.solorzano@claro.com.ni"
+    },
+    {
+      "nombre": "OSCAR DAVID ROMERO TINOCO",
+      "rol": "Colaborador",
+      "correo": "oscar.romero@claro.com.ni"
+    },
+    {
+      "nombre": "OSCAR ENRIQUE MARTINEZ CHAVARRIA",
+      "rol": "Colaborador",
+      "correo": "oscare.martinez@claro.com.ni"
+    },
+    {
+      "nombre": "OSCAR ISAAC ALVARADO VALLE",
+      "rol": "Colaborador",
+      "correo": "oscar.alvarado@claro.com.ni"
+    },
+    {
+      "nombre": "OSCAR MACDIEL PADILLA CASTRO",
+      "rol": "Colaborador",
+      "correo": "oscarm.padilla@claro.com.ni"
+    },
+    {
+      "nombre": "OSMAN DAVID OBANDO SOTELO",
+      "rol": "Colaborador",
+      "correo": "osmand.obando@claro.com.ni"
+    },
+    {
+      "nombre": "OSMAN LENIN BUSTAMANTE BRENES",
+      "rol": "Colaborador",
+      "correo": "osman.bustamante@claro.com.ni"
+    },
+    {
+      "nombre": "PABLO ANTONIO GOMEZ SANCHEZ",
+      "rol": "Colaborador",
+      "correo": "pabloa.gomez@claro.com.ni"
+    },
+    {
+      "nombre": "PABLO JOSE CRUZ BERMUDEZ",
+      "rol": "Colaborador",
+      "correo": "pablo.cruz@claro.com.ni"
+    },
+    {
+      "nombre": "PABLO SEBASTIAN RIOS OROZCO",
+      "rol": "Colaborador",
+      "correo": "pablo.rios@claro.com.ni"
+    },
+    {
+      "nombre": "PATRICIA DE LOS ANGELES VELASQUEZ ROIZ",
+      "rol": "Colaborador",
+      "correo": "patricia.velasquez@claro.com.ni"
+    },
+    {
+      "nombre": "PATRICIA MARIA CAJINA PADILLA",
+      "rol": "Colaborador",
+      "correo": "patricia.cajina@claro.com.ni"
+    },
+    {
+      "nombre": "PATRICIA PILAR LACAYO CUAREZMA",
+      "rol": "Colaborador",
+      "correo": "patricia.lacayo@claro.com.ni"
+    },
+    {
+      "nombre": "PAULA ELVIRA MURILLO MAYORGA",
+      "rol": "Colaborador",
+      "correo": "paula.murillo@claro.com.ni"
+    },
+    {
+      "nombre": "PEDRO ALBERTO CONTRERAS ZUNIGA",
+      "rol": "Colaborador",
+      "correo": "pedro.contreras@claro.com.ni"
+    },
+    {
+      "nombre": "PEDRO BERARDO BRAVO",
+      "rol": "Colaborador",
+      "correo": "pedro.bravo@claro.com.ni"
+    },
+    {
+      "nombre": "PEDRO JAVIER CASTILLO MENDEZ",
+      "rol": "Colaborador",
+      "correo": "pedro.castillo@claro.com.ni"
+    },
+    {
+      "nombre": "PEDRO JOSE RAMIREZ ESPINOZA",
+      "rol": "Colaborador",
+      "correo": "pedro.ramirez@claro.com.ni"
+    },
+    {
+      "nombre": "PEDRO RAFAEL MORALES GARCIA",
+      "rol": "Colaborador",
+      "correo": "pedrof.morales@claro.com.ni"
+    },
+    {
+      "nombre": "PERFIDIA YELENIS MARTINEZ PAGUADA",
+      "rol": "Colaborador",
+      "correo": "perfidia.martinezpag@claro.com.ni"
+    },
+    {
+      "nombre": "PERLA AZUCENA AGUILERA RUIZ",
+      "rol": "Colaborador",
+      "correo": "perla.aguilera@claro.com.ni"
+    },
+    {
+      "nombre": "RAFAEL MANUEL REYES LOPEZ",
+      "rol": "Colaborador",
+      "correo": "rafaelm.reyes@claro.com.ni"
+    },
+    {
+      "nombre": "RAMON HUMBERTO RUIZ CASTILLO",
+      "rol": "Colaborador",
+      "correo": "ramon.ruizc@claro.com.ni"
+    },
+    {
+      "nombre": "RAMON IVAN DIAZ URBINA",
+      "rol": "Colaborador",
+      "correo": "ramon.diaz@claro.com.ni"
+    },
+    {
+      "nombre": "RANDY ENRIQUE LOPEZ ARIAS",
+      "rol": "Colaborador",
+      "correo": "lopez.randy@claro.com.ni"
+    },
+    {
+      "nombre": "RAUL FRANCISCO QUINTERO HERRERA",
+      "rol": "Colaborador",
+      "correo": "raulf.quintero@claro.com.ni"
+    },
+    {
+      "nombre": "RAZZOR RAMON SALGADO AYALA",
+      "rol": "Colaborador",
+      "correo": "razzor.salgado@claro.com.ni"
+    },
+    {
+      "nombre": "REGINA MARIA VARGAS GARCIA",
+      "rol": "Colaborador",
+      "correo": "regina.vargas@claro.com.ni"
+    },
+    {
+      "nombre": "REINA ISABEL CABALLERO",
+      "rol": "Colaborador",
+      "correo": "reina.caballero@claro.com.ni"
+    },
+    {
+      "nombre": "REYNA ISABEL NARVAEZ CABRERA",
+      "rol": "Colaborador",
+      "correo": "reyna.narvaez@claro.com.ni"
+    },
+    {
+      "nombre": "REYNA MARCELA GARCIA PAVON",
+      "rol": "Colaborador",
+      "correo": "reyna.garciap@claro.com.ni"
+    },
+    {
+      "nombre": "REYNALDO JOSE GARCIA CARDENAS",
+      "rol": "Colaborador",
+      "correo": "reynaldo.garcia@claro.com.ni"
+    },
+    {
+      "nombre": "REYNALDO JOSE GRANERA",
+      "rol": "Colaborador",
+      "correo": "reynaldo.granera@claro.com.ni"
+    },
+    {
+      "nombre": "RICARDO ALEXANDER  CORTEZ  GARCIA",
+      "rol": "Colaborador",
+      "correo": "ricardoa.cortez@claro.com.ni"
+    },
+    {
+      "nombre": "RICARDO LEONEL BERRIOS NAVARRO",
+      "rol": "Colaborador",
+      "correo": "ricardo.berrios@claro.com.ni"
+    },
+    {
+      "nombre": "RICHARD RAFAEL BROWNG OVIEDO",
+      "rol": "Colaborador",
+      "correo": "richard.brawng@claro.com.ni"
+    },
+    {
+      "nombre": "RICK YEN ZUNIGA SOLIS",
+      "rol": "Colaborador",
+      "correo": "rick.zuniga@claro.com.ni"
+    },
+    {
+      "nombre": "RITA ELENA GUTIERREZ MARIN",
+      "rol": "Colaborador",
+      "correo": "rita.gutierrez@claro.com.ni"
+    },
+    {
+      "nombre": "ROBERTO ALEXANDER MOLINA BRANDT",
+      "rol": "Colaborador",
+      "correo": "roberto.molina@claro.com.ni"
+    },
+    {
+      "nombre": "ROBERTO ALEXANDER RAMIREZ TORREZ",
+      "rol": "Colaborador",
+      "correo": "roberto.ramirez@claro.com.ni"
+    },
+    {
+      "nombre": "ROBERTO CARLOS BRAVO SOLIS",
+      "rol": "Colaborador",
+      "correo": "roberto.bravo@claro.com.ni"
+    },
+    {
+      "nombre": "ROBERTO CARLOS FLORES MORALES",
+      "rol": "Colaborador",
+      "correo": "roberto.flores@claro.com.ni"
+    },
+    {
+      "nombre": "RODOLFO JOSUE MELENDEZ COREA",
+      "rol": "Colaborador",
+      "correo": "rodolfoj.melendez@claro.com.ni"
+    },
+    {
+      "nombre": "RODRIGO ALEJANDRO DOMINGUEZ SEVILLA",
+      "rol": "Colaborador",
+      "correo": "rodrigo.dominguez@claro.com.ni"
+    },
+    {
+      "nombre": "ROGER DANILO VALVERDE URBINA",
+      "rol": "Colaborador",
+      "correo": "roger.valverde@claro.com.ni"
+    },
+    {
+      "nombre": "ROLANDO  JAVIER  CORTEZ  PEREZ",
+      "rol": "Colaborador",
+      "correo": "rolando.cortez@claro.com.ni"
+    },
+    {
+      "nombre": "ROLANDO ALBERTO CALDERA GOMEZ",
+      "rol": "Colaborador",
+      "correo": "rolando.caldera@claro.com.ni"
+    },
+    {
+      "nombre": "ROLANDO EUGENIO MARENCO GUTIERREZ",
+      "rol": "Colaborador",
+      "correo": "rolando.marenco@claro.com.ni"
+    },
+    {
+      "nombre": "ROLANDO MARTIN OCAMPO PEREZ",
+      "rol": "Colaborador",
+      "correo": "rolandom.ocampo@claro.com.ni"
+    },
+    {
+      "nombre": "ROMMEL ALEXANDER MALTEZ GOMEZ",
+      "rol": "Colaborador",
+      "correo": "rommel.maltez@claro.com.ni"
+    },
+    {
+      "nombre": "RONAL DE LOS SANTOS CHAVEZ UMAÑA",
+      "rol": "Colaborador",
+      "correo": "ronal.chavez@claro.com.ni"
+    },
+    {
+      "nombre": "RONALD BUSHEY BETETA",
+      "rol": "Colaborador",
+      "correo": "ronald.bushey@claro.com.ni"
+    },
+    {
+      "nombre": "RONY ARIEL ESPINOZA ALEMAN",
+      "rol": "Colaborador",
+      "correo": "rony.espinoza@claro.com.ni"
+    },
+    {
+      "nombre": "ROSELINE EMILIA PERALTA SANABRIA",
+      "rol": "Colaborador",
+      "correo": "roseline.peraltas@claro.com.ni"
+    },
+    {
+      "nombre": "ROSITA MARIA OROZCO AGUIRRE",
+      "rol": "Colaborador",
+      "correo": "rosita.orozco@claro.com.ni"
+    },
+    {
+      "nombre": "ROY MULLER CLAY",
+      "rol": "Colaborador",
+      "correo": "roy.mullerclaycla@claro.com.ni"
+    },
+    {
+      "nombre": "RUNNEL JOSE BAEZ RIVAS",
+      "rol": "Colaborador",
+      "correo": "runnel.baez@claro.com.ni"
+    },
+    {
+      "nombre": "RUTH GUADALUPE LIMA BUSTAMANTE",
+      "rol": "Colaborador",
+      "correo": "ruth.lima@claro.com.ni"
+    },
+    {
+      "nombre": "SABRINA ISAYANA ESPINOZA FITORIA",
+      "rol": "Colaborador",
+      "correo": "sabrina.espinoza@claro.com.ni"
+    },
+    {
+      "nombre": "SALVADOR ALEXANDER ARGUELLO LOPEZ",
+      "rol": "Colaborador",
+      "correo": "salvador.arguello@claro.com.ni"
+    },
+    {
+      "nombre": "SANDRA PATRICIA ROA ROMERO",
+      "rol": "Colaborador",
+      "correo": "sandra.roa@claro.com.ni"
+    },
+    {
+      "nombre": "SANTIAGO JOSE ARTOLA ESPINOZA",
+      "rol": "Colaborador",
+      "correo": "santiago.artola@claro.com.ni"
+    },
+    {
+      "nombre": "SARA ABIGAIL MIRANDA DUARTE",
+      "rol": "Colaborador",
+      "correo": "sara.miranda@claro.com.ni"
+    },
+    {
+      "nombre": "SCARLET ROXANA MEDINA SOTELO",
+      "rol": "Colaborador",
+      "correo": "scarlet.medina@claro.com.ni"
+    },
+    {
+      "nombre": "SCARLETH ASUNCION UNDERWOOD GUTIERREZ",
+      "rol": "Colaborador",
+      "correo": "scarleth.underwood@claro.com.ni"
+    },
+    {
+      "nombre": "SCARLETH MARIA MELENDEZ",
+      "rol": "Colaborador",
+      "correo": "scarleth.melendez@claro.com.ni"
+    },
+    {
+      "nombre": "SCARLETT MARIA MONTIEL TRIANA",
+      "rol": "Colaborador",
+      "correo": "scarlett.montiel@claro.com.ni"
+    },
+    {
+      "nombre": "SELFA CAROLINA MARTINEZ GUILLEN",
+      "rol": "Colaborador",
+      "correo": "selfa.martinez@claro.com.ni"
+    },
+    {
+      "nombre": "SERGIO DAVID SILVA LOPEZ",
+      "rol": "Colaborador",
+      "correo": "sergio.silva@claro.com.ni"
+    },
+    {
+      "nombre": "SERGIO FERNANDO PASQUIER TALENO",
+      "rol": "Colaborador",
+      "correo": "sergio.pasquier@claro.com.ni"
+    },
+    {
+      "nombre": "SERGIO GABRIEL LEIVA MARTINEZ",
+      "rol": "Colaborador",
+      "correo": "sergio.leiva@claro.com.ni"
+    },
+    {
+      "nombre": "SERGIO MARCELO ZEPEDA IRIGOYEN",
+      "rol": "Colaborador",
+      "correo": "sergio.zepeda@claro.com.ni"
+    },
+    {
+      "nombre": "SERGIO ULISES GUEVARA RUGAMA",
+      "rol": "Colaborador",
+      "correo": "sergio.guevara@claro.com.ni"
+    },
+    {
+      "nombre": "SEYDI DANIELA CARDOZA OSORIO",
+      "rol": "Colaborador",
+      "correo": "seydi.cardoza@claro.com.ni"
+    },
+    {
+      "nombre": "SHARON ELIETTE AGUILAR LOPEZ",
+      "rol": "Colaborador",
+      "correo": "sharon.aguilar@claro.com.ni"
+    },
+    {
+      "nombre": "SHARON KATHERINE ALEXANDRA BERMUDEZ BERMUDEZ",
+      "rol": "Colaborador",
+      "correo": "sharon.bermudez@claro.com.ni"
+    },
+    {
+      "nombre": "SINDY VALERIA PAVON MORAGA",
+      "rol": "Colaborador",
+      "correo": "sindy.pavon@claro.com.ni"
+    },
+    {
+      "nombre": "SOBEYDA ELIZABETH HERNANDEZ",
+      "rol": "Colaborador",
+      "correo": "sobeyda.hernandez@claro.com.ni"
+    },
+    {
+      "nombre": "SOLANGE GUISSELL MORALES TREJOS",
+      "rol": "Colaborador",
+      "correo": "solange.morales@claro.com.ni"
+    },
+    {
+      "nombre": "STALIN EDUARDO LOPEZ MARTINEZ",
+      "rol": "Colaborador",
+      "correo": "stalin.lopez@claro.com.ni"
+    },
+    {
+      "nombre": "STEFANI DE LOS ANGELES PEREZ RODRIGUEZ",
+      "rol": "Colaborador",
+      "correo": "stefani.perez@claro.com.ni"
+    },
+    {
+      "nombre": "STEFANY NICOLE SOLIS ZAMURIA",
+      "rol": "Colaborador",
+      "correo": "stefany.solis@claro.com.ni"
+    },
+    {
+      "nombre": "STEVEN ISAAC SEQUEIRA ROMERO",
+      "rol": "Colaborador",
+      "correo": "steven.sequeira@claro.com.ni"
+    },
+    {
+      "nombre": "STEVENS RENE GUTIERREZ COREA",
+      "rol": "Colaborador",
+      "correo": "stevens.gutierrez@claro.com.ni"
+    },
+    {
+      "nombre": "SUYEN DEL CARMEN NARVAEZ DELGADO",
+      "rol": "Colaborador",
+      "correo": "suyen.narvaez@claro.com.ni"
+    },
+    {
+      "nombre": "TANIA ARGENTINA VASQUEZ CARMONA",
+      "rol": "Colaborador",
+      "correo": "tania.vasquez@claro.com.ni"
+    },
+    {
+      "nombre": "TANIA DE LOS ANGELES CANALES ARANA",
+      "rol": "Colaborador",
+      "correo": "tania.canales@claro.com.ni"
+    },
+    {
+      "nombre": "TANIA DEL SOCORRO MUÑOZ JIMENEZ",
+      "rol": "Colaborador",
+      "correo": "tania.munoz@claro.com.ni"
+    },
+    {
+      "nombre": "TANIA VALENTY LOPEZ LOPEZ",
+      "rol": "Colaborador",
+      "correo": "tania.lopez@claro.com.ni"
+    },
+    {
+      "nombre": "TATIANA DEL CARMEN RUBIO PALACIOS",
+      "rol": "Colaborador",
+      "correo": "tatiana.rubio@claro.com.ni"
+    },
+    {
+      "nombre": "TATIANA VALESKA VANEGAS MARTINEZ",
+      "rol": "Colaborador",
+      "correo": "tatiana.vanegas@claro.com.ni"
+    },
+    {
+      "nombre": "TELMA DEL CARMEN GONZALEZ MARTINEZ",
+      "rol": "Colaborador",
+      "correo": "tgonzal1@claro.com.ni"
+    },
+    {
+      "nombre": "THELMA DEL CARMEN VALLEJOS TELLEZ",
+      "rol": "Colaborador",
+      "correo": "thelma.vallejos@claro.com.ni"
+    },
+    {
+      "nombre": "TOMAS DE JESUS ALTAMIRANO ORTEGA",
+      "rol": "Colaborador",
+      "correo": "tomas.altamirano@claro.com.ni"
+    },
+    {
+      "nombre": "URANIA DEL CARMEN GONZALES VEGA",
+      "rol": "Colaborador",
+      "correo": "urania.gonzales@claro.com.ni"
+    },
+    {
+      "nombre": "UZIEL DAVID FIERRO BALTODANO",
+      "rol": "Colaborador",
+      "correo": "uziel.fierro@claro.com.ni"
+    },
+    {
+      "nombre": "VANESSA\t DEL ROSARIO CISNE RIVERA",
+      "rol": "Colaborador",
+      "correo": "vanessa.cisne@claro.com.ni"
+    },
+    {
+      "nombre": "VERONICA ALEXANDRA SANDOVAL HERNANDEZ",
+      "rol": "Colaborador",
+      "correo": "sandoval.veronica@claro.com.ni"
+    },
+    {
+      "nombre": "VICTOR  ALFREDO  TELLEZ  HERNANDEZ",
+      "rol": "Colaborador",
+      "correo": "victor.tellez@claro.com.ni"
+    },
+    {
+      "nombre": "VICTOR ALEXANDER CAJINA HERNANDEZ",
+      "rol": "Colaborador",
+      "correo": "victor.cajinah@claro.com.ni"
+    },
+    {
+      "nombre": "VICTOR ARIEL SANCHEZ CARBALLO",
+      "rol": "Colaborador",
+      "correo": "victor.sanchez@claro.com.ni"
+    },
+    {
+      "nombre": "VICTOR DANIEL AROSTEGUI TALAVERA",
+      "rol": "Colaborador",
+      "correo": "victor.arostegui@claro.com.ni"
+    },
+    {
+      "nombre": "VICTOR HUGO CERDA ROMERO",
+      "rol": "Colaborador",
+      "correo": "victor.cerda@claro.com.ni"
+    },
+    {
+      "nombre": "VICTOR MANUEL REGIDOR RODRIGUEZ",
+      "rol": "Colaborador",
+      "correo": "victor.regidor@claro.com.ni"
+    },
+    {
+      "nombre": "VICTORIA EUGENIA ROMAN LOVO",
+      "rol": "Colaborador",
+      "correo": "victoria.roman@claro.com.ni"
+    },
+    {
+      "nombre": "VIELKA VANESSA ESTRADA GUTIERREZ",
+      "rol": "Colaborador",
+      "correo": "vielka.estrada@claro.com.ni"
+    },
+    {
+      "nombre": "VILMA AYLEEN PACHECO SOLIS",
+      "rol": "Colaborador",
+      "correo": "vilma.pacheco@claro.com.ni"
+    },
+    {
+      "nombre": "VIRGINIA ARACELI ACEVEDO BENITEZ",
+      "rol": "Colaborador",
+      "correo": "virginia.acevedo@claro.com.ni"
+    },
+    {
+      "nombre": "WALING NALLELYS URBINA ESPINOZA",
+      "rol": "Colaborador",
+      "correo": "waling.urbina@claro.com.ni"
+    },
+    {
+      "nombre": "WALKIRIA DE LOS ANGELES MONCADA GUTIERREZ",
+      "rol": "Colaborador",
+      "correo": "walkiria.moncada@claro.com.ni"
+    },
+    {
+      "nombre": "WALTER ANTONIO TOLEDO GONZALEZ",
+      "rol": "Colaborador",
+      "correo": "waltera.toledo@claro.com.ni"
+    },
+    {
+      "nombre": "WALTER GEOVANY SANCHEZ BETANCOURT",
+      "rol": "Colaborador",
+      "correo": "walterg.sanchez@claro.com.ni"
+    },
+    {
+      "nombre": "WALTER JOSE SANCHEZ GOMEZ",
+      "rol": "Colaborador",
+      "correo": "walterj.sanchez@claro.com.ni"
+    },
+    {
+      "nombre": "WENDDY TATIANA MARTINEZ SANCHEZ",
+      "rol": "Colaborador",
+      "correo": "wenddy.martinez@claro.com.ni"
+    },
+    {
+      "nombre": "WENDY PATRICIA MALTEZ MOLINA",
+      "rol": "Colaborador",
+      "correo": "wendy.maltez@claro.com.ni"
+    },
+    {
+      "nombre": "WIGBERTO RAMON ALVARADO GUTIERREZ",
+      "rol": "Colaborador",
+      "correo": "wigberto.alvarado@claro.com.ni"
+    },
+    {
+      "nombre": "WILBERT DE JESUS MENDIETA NICARAGUA",
+      "rol": "Colaborador",
+      "correo": "wilbert.mendieta@claro.com.ni"
+    },
+    {
+      "nombre": "WILDER YOEL MUÑOZ RIZO",
+      "rol": "Colaborador",
+      "correo": "wilder.munoz@claro.com.ni"
+    },
+    {
+      "nombre": "WILKER HORACIO ALTAMIRANO ALTAMIRANO",
+      "rol": "Colaborador",
+      "correo": "wilker.altamirano@claro.com.ni"
+    },
+    {
+      "nombre": "WILLIAM  ANTONIO  MONTANO  MARTINEZ",
+      "rol": "Colaborador",
+      "correo": "william.montano@claro.com.ni"
+    },
+    {
+      "nombre": "WILLIAM GEOVANNI FLORES SACASA",
+      "rol": "Colaborador",
+      "correo": "williamg.flores@claro.com.ni"
+    },
+    {
+      "nombre": "WILLIAM JOSUE TREMINIO VELEZ",
+      "rol": "Colaborador",
+      "correo": "william.treminio@claro.com.ni"
+    },
+    {
+      "nombre": "WILMER GUILLERMO FERREY GRANADO",
+      "rol": "Colaborador",
+      "correo": "wilmer.ferrey@claro.com.ni"
+    },
+    {
+      "nombre": "WILY JAVIER GARCIA SANCHEZ",
+      "rol": "Colaborador",
+      "correo": "wily.garcia@claro.com.ni"
+    },
+    {
+      "nombre": "XIOMARA DEL CARMEN SOZA BORGE",
+      "rol": "Colaborador",
+      "correo": "xiomara.soza@claro.com.ni"
+    },
+    {
+      "nombre": "XIOMARA DEL ROSARIO AGUILERA ESPINAL",
+      "rol": "Colaborador",
+      "correo": "xiomara.aguilera@claro.com.ni"
+    },
+    {
+      "nombre": "XOCHIL DANELIA MEMBREÑO MERCADO",
+      "rol": "Colaborador",
+      "correo": "xochil.membreno@claro.com.ni"
+    },
+    {
+      "nombre": "XOCHILL ALEXA LOPEZ MUÑOZ",
+      "rol": "Colaborador",
+      "correo": "xochill.lopez@claro.com.ni"
+    },
+    {
+      "nombre": "XOCHILTH DELIA TELLEZ",
+      "rol": "Colaborador",
+      "correo": "xochilth.tellez@claro.com.ni"
+    },
+    {
+      "nombre": "YADER ANIBAL BERTRAND CRUZ",
+      "rol": "Colaborador",
+      "correo": "yader.bertrand@claro.com.ni"
+    },
+    {
+      "nombre": "YADER ANTONIO SANCHEZ URBINA",
+      "rol": "Colaborador",
+      "correo": "yader.sanchez@claro.com.ni"
+    },
+    {
+      "nombre": "YADIRA DEL CARMEN MENDEZ GAITAN",
+      "rol": "Colaborador",
+      "correo": "yadira.mendez@claro.com.ni"
+    },
+    {
+      "nombre": "YADIRA DEL SOCORRO LACAYO CASTRO",
+      "rol": "Colaborador",
+      "correo": "yadira.lacayo@claro.com.ni"
+    },
+    {
+      "nombre": "YAHOSKA ARGENTINA PEÑA MENDIETA",
+      "rol": "Colaborador",
+      "correo": "yahoska.pena@claro.com.ni"
+    },
+    {
+      "nombre": "YAHOSKA DE LOS ANGELES ALVARADO CERDA",
+      "rol": "Colaborador",
+      "correo": "yahoska.alvarado@claro.com.ni"
+    },
+    {
+      "nombre": "YAHOSKA MASSIEL JIMENEZ VASQUEZ",
+      "rol": "Colaborador",
+      "correo": "yahoska.jimenez@claro.com.ni"
+    },
+    {
+      "nombre": "YAJAIRA DAYANA RUIZ DIAZ",
+      "rol": "Colaborador",
+      "correo": "yajaira.ruiz@claro.com.ni"
+    },
+    {
+      "nombre": "YALILA DENISIS ACEVEDO HERNADEZ",
+      "rol": "Colaborador",
+      "correo": "yalila.acevedo@claro.com.ni"
+    },
+    {
+      "nombre": "YAMIL ANTONIO LOPEZ FLORES",
+      "rol": "Colaborador",
+      "correo": "yamil.lopez@claro.com.ni"
+    },
+    {
+      "nombre": "YANINA MARIA ORTIZ RUIZ",
+      "rol": "Colaborador",
+      "correo": "yanina.ortiz@claro.com.ni"
+    },
+    {
+      "nombre": "YAOSCA CAROLINA RIVAS CASTRILLO",
+      "rol": "Colaborador",
+      "correo": "yaosca.rivas@claro.com.ni"
+    },
+    {
+      "nombre": "YAOSKA MARINA MARTINEZ TORRES",
+      "rol": "Colaborador",
+      "correo": "yahoska.martinez@claro.com.ni"
+    },
+    {
+      "nombre": "YAOSKA NICOLE DELGADO BARBERENA",
+      "rol": "Colaborador",
+      "correo": "yaoska.delgado@claro.com.ni"
+    },
+    {
+      "nombre": "YARA  DOLORES  CUADRA  PADILLA",
+      "rol": "Colaborador",
+      "correo": "yara.cuadra@claro.com.ni"
+    },
+    {
+      "nombre": "YARELI GUADALUPE MOJICA DAVILA",
+      "rol": "Colaborador",
+      "correo": "yareli.mojica@claro.com.ni"
+    },
+    {
+      "nombre": "YARIDANIA   MONTEREY  ORELLANO",
+      "rol": "Colaborador",
+      "correo": "yaridania.monterey@claro.com.ni"
+    },
+    {
+      "nombre": "YARIELKA FRANCOISE OCON SILVA",
+      "rol": "Colaborador",
+      "correo": "yarielka.ocon@claro.com.ni"
+    },
+    {
+      "nombre": "YARITZA JOHANNA CANALES MENDOZA",
+      "rol": "Colaborador",
+      "correo": "yaritza.canales@claro.com.ni"
+    },
+    {
+      "nombre": "YASER ARIEL CORDERO CERDA",
+      "rol": "Colaborador",
+      "correo": "yaser.cordero@claro.com.ni"
+    },
+    {
+      "nombre": "YASMINA MARIA CASTILLO VILLALOBOS",
+      "rol": "Colaborador",
+      "correo": "yasmina.castillo@claro.com.ni"
+    },
+    {
+      "nombre": "YASSIRA  NOHEMI  ROJAS  DELGADO",
+      "rol": "Colaborador",
+      "correo": "yassira.rojas@claro.com.ni"
+    },
+    {
+      "nombre": "YELSIN OMAR HERNANDEZ PAVON",
+      "rol": "Colaborador",
+      "correo": "yelsin.hernandez@claro.com.ni"
+    },
+    {
+      "nombre": "YEMYLEYDY DE JESUS PAVON ACOSTA",
+      "rol": "Colaborador",
+      "correo": "yemyleydy.pavon@claro.com.ni"
+    },
+    {
+      "nombre": "YENIA MAGALY URCUYO FLORES",
+      "rol": "Colaborador",
+      "correo": "yenia.urcuyo@claro.com.ni"
+    },
+    {
+      "nombre": "YESIKA SULEY VALDIVIA MARENCO",
+      "rol": "Colaborador",
+      "correo": "yesikasu.valdivia@claro.com.ni"
+    },
+    {
+      "nombre": "YESSER MANUEL ESPINOZA HERNANDEZ",
+      "rol": "Colaborador",
+      "correo": "yesser.espinoza@claro.com.ni"
+    },
+    {
+      "nombre": "YESSICA MARIA CANALES PEREZ",
+      "rol": "Colaborador",
+      "correo": "ycanale1@claro.com.ni"
+    },
+    {
+      "nombre": "YOELIS FERNANDA VALLE HUETE",
+      "rol": "Colaborador",
+      "correo": "yoelis.valle@claro.com.ni"
+    },
+    {
+      "nombre": "YOSSELIN YANIRIS HUETE MARTINEZ",
+      "rol": "Colaborador",
+      "correo": "yosselin.huete@claro.com.ni"
+    },
+    {
+      "nombre": "YUBELKA AUXILIADORA MORALES ESTRADA",
+      "rol": "Colaborador",
+      "correo": "yubelka.morales@claro.com.ni"
+    },
+    {
+      "nombre": "YULIAN HARRISON MEJIA FAJARDO",
+      "rol": "Colaborador",
+      "correo": "yulian.mejia@claro.com.ni"
+    },
+    {
+      "nombre": "YURIEL ALEXANDER CORTEZ CANALES",
+      "rol": "Colaborador",
+      "correo": "yuriel.cortez@claro.com.ni"
+    },
+    {
+      "nombre": "YUSBANKYS DE LOS ANGELES CASTRO GUTIERREZ",
+      "rol": "Colaborador",
+      "correo": "yusbankys.castro@claro.com.ni"
+    },
+    {
+      "nombre": "ZAYRA MERCEDES VADO ROSALES",
+      "rol": "Colaborador",
+      "correo": "zayra.vado@claro.com.ni"
+    },
+    {
+      "nombre": "ZOILA DEYANIRA SALGADO MARTINEZ",
+      "rol": "Colaborador",
+      "correo": "zoila.salgado@claro.com.ni"
+    },
+    {
+      "nombre": "AARON JOSUE OTERO CALIZ",
+      "rol": "Lider",
+      "correo": "aaron.otero@claro.com.ni"
+    },
+    {
+      "nombre": "ALBA MARIA CORTES RIVAS",
+      "rol": "Lider",
+      "correo": "alba.cortes@claro.com.ni"
+    },
+    {
+      "nombre": "ALEJANDRO ANTONIO ARAUZ",
+      "rol": "Lider",
+      "correo": "alejandro.arauz@claro.com.ni"
+    },
+    {
+      "nombre": "ALEJANDRO JAVIER CISNEROS JIRON",
+      "rol": "Lider",
+      "correo": "alejandro.cisneros@claro.com.ni"
+    },
+    {
+      "nombre": "ALEXANDER JAVIER ACUÑA ESCOBAR",
+      "rol": "Lider",
+      "correo": "alexander.acuna@claro.com.ni"
+    },
+    {
+      "nombre": "ALEXANDRA MARGARITA MEDINA MENA",
+      "rol": "Lider",
+      "correo": "alexandra.medina@claro.com.ni"
+    },
+    {
+      "nombre": "ALFONSO AUGUSTO JIRON RAMIREZ",
+      "rol": "Lider",
+      "correo": "alfonso.augusto@claro.com.ni"
+    },
+    {
+      "nombre": "ALI ADOLFO RODRIGUEZ URIARTE",
+      "rol": "Lider",
+      "correo": "ali.rodriguez@claro.com.ni"
+    },
+    {
+      "nombre": "AMANDA LUCIA TRAÑA UMAÑA",
+      "rol": "Lider",
+      "correo": "amanda.trana@claro.com.ni"
+    },
+    {
+      "nombre": "ANGELA DEL SOCORRO PARRALES GUZMAN",
+      "rol": "Lider",
+      "correo": "angela.parrales@claro.com.ni"
+    },
+    {
+      "nombre": "ANTONIO VEGA SANDOVAL",
+      "rol": "Lider",
+      "correo": "antonio.vega@claro.com.ni"
+    },
+    {
+      "nombre": "ANYOLI MERIYEN FONSECA MARTINEZ",
+      "rol": "Lider",
+      "correo": "anyoli.fonseca@claro.com.ni"
+    },
+    {
+      "nombre": "ARELYS DEL CARMEN BRAVO LOPEZ",
+      "rol": "Lider",
+      "correo": "arelys.bravo@claro.com.ni"
+    },
+    {
+      "nombre": "ARIANA CAROLINA LOPEZ JARQUIN",
+      "rol": "Lider",
+      "correo": "ariana.lopez@claro.com.ni"
+    },
+    {
+      "nombre": "ARLE JOSE CARRION HERNANDEZ",
+      "rol": "Lider",
+      "correo": "arle.carrion@claro.com.ni"
+    },
+    {
+      "nombre": "ARLEN JANNELY GUERRERO GARCIA",
+      "rol": "Lider",
+      "correo": "arlen.guerrero@claro.com.ni"
+    },
+    {
+      "nombre": "ARMANDO JOSE GARCIA MARTINEZ",
+      "rol": "Lider",
+      "correo": "armando.garcia@claro.com.ni"
+    },
+    {
+      "nombre": "AUGUSTO ENRIQUE CAMPOS TORREZ",
+      "rol": "Lider",
+      "correo": "augusto.campos@claro.com.ni"
+    },
+    {
+      "nombre": "AURA REGINA CARRILLO ORTEGA",
+      "rol": "Lider",
+      "correo": "aura.carrillo@claro.com.ni"
+    },
+    {
+      "nombre": "BELKIS NINOSKA CASTELLON",
+      "rol": "Lider",
+      "correo": "belkis.castellon@claro.com.ni"
+    },
+    {
+      "nombre": "BIANCA TELMA BALDIZON BRAVO",
+      "rol": "Lider",
+      "correo": "bianca.baldizon@claro.com.ni"
+    },
+    {
+      "nombre": "CANDIDA SANCHEZ",
+      "rol": "Lider",
+      "correo": "candida.sanchez@claro.com.ni"
+    },
+    {
+      "nombre": "CARLOS HUMBERTO MAYORGA FLORES",
+      "rol": "Lider",
+      "correo": "carlos.mayorga@claro.com.ni"
+    },
+    {
+      "nombre": "CARLOS OCTAVIO ALEMAN MEDINA",
+      "rol": "Lider",
+      "correo": "carloso.aleman@claro.com.ni"
+    },
+    {
+      "nombre": "CARMEN MARIA GONZALEZ GONZALEZ",
+      "rol": "Lider",
+      "correo": "carmen.gonzalez@claro.com.ni"
+    },
+    {
+      "nombre": "CESAR ALEJANDRO MONTOYA ZELEDON",
+      "rol": "Lider",
+      "correo": "cesar.montoya@claro.com.ni"
+    },
+    {
+      "nombre": "CESAR AUGUSTO TENORIO ZUNIGA",
+      "rol": "Lider",
+      "correo": "cesar.tenorio@claro.com.ni"
+    },
+    {
+      "nombre": "CHRISTOPHER FRANCISCO ARAUZ VEGA",
+      "rol": "Lider",
+      "correo": "christopherf.arauz@claro.com.ni"
+    },
+    {
+      "nombre": "CLAUDIA VALERIA ARGUELLO BONE",
+      "rol": "Lider",
+      "correo": "claudia.arguello@claro.com.ni"
+    },
+    {
+      "nombre": "CONCEPCION DEL SOCORRO TORREZ MARTINEZ",
+      "rol": "Lider",
+      "correo": "concepcion.torrez@claro.com.ni"
+    },
+    {
+      "nombre": "CRISTIAM ANTONIO TORRES MEZA",
+      "rol": "Lider",
+      "correo": "cristiam.torrez@claro.com.ni"
+    },
+    {
+      "nombre": "CRISTIAN JOSE GOMEZ GURDIAN",
+      "rol": "Lider",
+      "correo": "cristian.gomez@claro.com.ni"
+    },
+    {
+      "nombre": "DANIELA IVANIA CASTILLO AVENDAÑO",
+      "rol": "Lider",
+      "correo": "daniela.castillo@claro.com.ni"
+    },
+    {
+      "nombre": "DARRELL ALBERTO SOTELO REYES",
+      "rol": "Lider",
+      "correo": "darrel.sotelo@claro.com.ni"
+    },
+    {
+      "nombre": "DAVID ALBERTO ARAICA BARRETO",
+      "rol": "Lider",
+      "correo": "david.araica@claro.com.ni"
+    },
+    {
+      "nombre": "DAVID JOSHUA JIMENEZ URBINA",
+      "rol": "Lider",
+      "correo": "davidj.jimenez@claro.com.ni"
+    },
+    {
+      "nombre": "DAVID VLADIMIR HODGSON ESPINOZA",
+      "rol": "Lider",
+      "correo": "david.hodgson@claro.com.ni"
+    },
+    {
+      "nombre": "DENIS BAYARDO GARCIA MARTINEZ",
+      "rol": "Lider",
+      "correo": "denis.garcia@claro.com.ni"
+    },
+    {
+      "nombre": "DINA SARAIT SEQUEIRA MAYORGA",
+      "rol": "Lider",
+      "correo": "dina.sequeira@claro.com.ni"
+    },
+    {
+      "nombre": "DORIS MERCEDES CHAVEZ MORALES",
+      "rol": "Lider",
+      "correo": "doris.chavez@claro.com.ni"
+    },
+    {
+      "nombre": "EDDY ANTONIO CHAMORRO QUINTERO",
+      "rol": "Lider",
+      "correo": "eddy.chamorro@claro.com.ni"
+    },
+    {
+      "nombre": "EDDY BLADIMIR JIMENEZ MORALES",
+      "rol": "Lider",
+      "correo": "eddy.jimenez@claro.com.ni"
+    },
+    {
+      "nombre": "EDITH DEL SOCORRO HERNANDEZ CARRILLO",
+      "rol": "Lider",
+      "correo": "edith.hernan3@claro.com.ni"
+    },
+    {
+      "nombre": "EDWIN JOSE GARCIA TELLEZ",
+      "rol": "Lider",
+      "correo": "edwin.garcia@claro.com.ni"
+    },
+    {
+      "nombre": "EDWIN MARTIN VIGIL PRAVIA",
+      "rol": "Lider",
+      "correo": "edwin.vigil@claro.com.ni"
+    },
+    {
+      "nombre": "ELVIS DANILO MATTIS PARRALES",
+      "rol": "Lider",
+      "correo": "elvis.mattis@claro.com.ni"
+    },
+    {
+      "nombre": "ENA FABIOLA TOLEDO ORDOÑEZ",
+      "rol": "Lider",
+      "correo": "ena.toledo@claro.com.ni"
+    },
+    {
+      "nombre": "ERICK ALONSO RIVERA CARCAMO",
+      "rol": "Lider",
+      "correo": "erick.rivera@claro.com.ni"
+    },
+    {
+      "nombre": "ERICKA MARIA FONSECA GARCIA",
+      "rol": "Lider",
+      "correo": "ericka.fonseca@claro.com.ni"
+    },
+    {
+      "nombre": "ERVIN NOEL LOPEZ PEREZ",
+      "rol": "Lider",
+      "correo": "ervinn.lopez@claro.com.ni"
+    },
+    {
+      "nombre": "FATIMA DEL SOCORRO ARAGON CASTILLO",
+      "rol": "Lider",
+      "correo": "fatima.aragon@claro.com.ni"
+    },
+    {
+      "nombre": "FELIX RAQUEL  ESTRADA CASTRO",
+      "rol": "Lider",
+      "correo": "felixr.estrada@claro.com.ni"
+    },
+    {
+      "nombre": "FERNANDO JAVIER DELGADILLO GALLEGOS",
+      "rol": "Lider",
+      "correo": "fernando.delgadillo@claro.com.ni"
+    },
+    {
+      "nombre": "FERNANDO KENITH AMADOR MARTINEZ",
+      "rol": "Lider",
+      "correo": "fernando.amador@claro.com.ni"
+    },
+    {
+      "nombre": "FRAN ALEXANDER MEJIA JIMENEZ",
+      "rol": "Lider",
+      "correo": "fran.mejia@claro.com.ni"
+    },
+    {
+      "nombre": "FRANKLIN DE JESUS RIVAS GARCIA",
+      "rol": "Lider",
+      "correo": "franklin.rivas@claro.com.ni"
+    },
+    {
+      "nombre": "FREDDY JAVIER VELASQUEZ MONTES",
+      "rol": "Lider",
+      "correo": "freddy.velasquez@claro.com.ni"
+    },
+    {
+      "nombre": "GEISEL MARINA AROSTEGUI TORUÑO",
+      "rol": "Lider",
+      "correo": "geisel.arostegui@claro.com.ni"
+    },
+    {
+      "nombre": "GILDA ELIZABETH TINOCO CASTILLO",
+      "rol": "Lider",
+      "correo": "gilda.tinoco@claro.com.ni"
+    },
+    {
+      "nombre": "GUILBERT ANTONIO BARAHONA TELLERIA",
+      "rol": "Lider",
+      "correo": "guilbert.barahona@claro.com.ni"
+    },
+    {
+      "nombre": "GUSTAVO ADOLFO LIRA SALAZAR",
+      "rol": "Lider",
+      "correo": "gustavo.lira@claro.com.ni"
+    },
+    {
+      "nombre": "HAYDEE MERCEDES ESTRADA COLE",
+      "rol": "Lider",
+      "correo": "haydee.estrada@claro.com.ni"
+    },
+    {
+      "nombre": "HECTOR VLADIMIR USEDA SALGUERA",
+      "rol": "Lider",
+      "correo": "hector.useda@claro.com.ni"
+    },
+    {
+      "nombre": "HENRY DANIEL HUETE VEGA",
+      "rol": "Lider",
+      "correo": "henry.huete@claro.com.ni"
+    },
+    {
+      "nombre": "IRIS ALEXANDRA PEREZ SOMARRIBA",
+      "rol": "Lider",
+      "correo": "irisale.perez@claro.com.ni"
+    },
+    {
+      "nombre": "ISRAEL ANTONIO TREMINIO RUIZ",
+      "rol": "Lider",
+      "correo": "israel.treminio@claro.com.ni"
+    },
+    {
+      "nombre": "IVET DEL SOCORRO DIAZ BOJORGE",
+      "rol": "Lider",
+      "correo": "ivet.diaz@claro.com.ni"
+    },
+    {
+      "nombre": "IVONNE ELIETTE MAYORGA LOPEZ",
+      "rol": "Lider",
+      "correo": "ivonne.mayorga@claro.com.ni"
+    },
+    {
+      "nombre": "JAFFET JOSE ARTOLA ESPINOZA",
+      "rol": "Lider",
+      "correo": "jaffet.artola@claro.com.ni"
+    },
+    {
+      "nombre": "JAIME NATANAEL SUAREZ URBINA",
+      "rol": "Lider",
+      "correo": "jaimen.suarez@claro.com.ni"
+    },
+    {
+      "nombre": "JIMMY JOSUE LOPEZ SANCHEZ",
+      "rol": "Lider",
+      "correo": "jimmy.lopez@claro.com.ni"
+    },
+    {
+      "nombre": "JORDAN JOAQUIN PINEDA BARRANTES",
+      "rol": "Lider",
+      "correo": "jordan.pineda@claro.com.ni"
+    },
+    {
+      "nombre": "JORGE ALBERTO HERRERA FONSECA",
+      "rol": "Lider",
+      "correo": "jorge.herrera@claro.com.ni"
+    },
+    {
+      "nombre": "JORGE LUIS ARAICA RAMIREZ",
+      "rol": "Lider",
+      "correo": "jorge.araica@claro.com.ni"
+    },
+    {
+      "nombre": "JOSE ALBERTO RODRIGUEZ ZELAYA",
+      "rol": "Lider",
+      "correo": "josea.rodriguez@claro.com.ni"
+    },
+    {
+      "nombre": "JOSE EDEN PASTOR CALDERON HERRERA",
+      "rol": "Lider",
+      "correo": "eden.calderon@claro.com.ni"
+    },
+    {
+      "nombre": "JOSE ROBERTO OBREGON AREAS",
+      "rol": "Lider",
+      "correo": "joser.obregon@claro.com.ni"
+    },
+    {
+      "nombre": "JOSE XAVIER PEREZ RIOS",
+      "rol": "Lider",
+      "correo": "jose.perez1@claro.com.ni"
+    },
+    {
+      "nombre": "JUAN BOSCO BARBOSA MORALES",
+      "rol": "Lider",
+      "correo": "jbarbosa@claro.com.ni"
+    },
+    {
+      "nombre": "JUAN CARLOS IZAGA KUHN",
+      "rol": "Lider",
+      "correo": "juan.izaga@claro.com.ni"
+    },
+    {
+      "nombre": "JUAN ORTUNO",
+      "rol": "Lider",
+      "correo": "juan.ortuno@claro.com.ni"
+    },
+    {
+      "nombre": "JULIO EDUARDO III MEDINA ESPINOZA",
+      "rol": "Lider",
+      "correo": "julio.medina@claro.com.ni"
+    },
+    {
+      "nombre": "JULISSA MARYALI ROSTRAN ALVARADO",
+      "rol": "Lider",
+      "correo": "julissa.rostran@claro.com.ni"
+    },
+    {
+      "nombre": "JUVENIA ELIZABETH CALDERON PEREZ",
+      "rol": "Lider",
+      "correo": "juvenia.calderon@claro.com.ni"
+    },
+    {
+      "nombre": "KAREN ASUNCION ARAUZ ORTIZ",
+      "rol": "Lider",
+      "correo": "karena.arauz@claro.com.ni"
+    },
+    {
+      "nombre": "KAREN VALESKA PICADO DOMINGUEZ",
+      "rol": "Lider",
+      "correo": "karen.picado@claro.com.ni"
+    },
+    {
+      "nombre": "KENIA GEORGINA REYES MENDIETA",
+      "rol": "Lider",
+      "correo": "kenia.reyes@claro.com.ni"
+    },
+    {
+      "nombre": "KENNETH ANTONIO SILVA URBINA",
+      "rol": "Lider",
+      "correo": "kenneth.silva@claro.com.ni"
+    },
+    {
+      "nombre": "KEVIN FRANCISCO NARVAEZ SANCHEZ",
+      "rol": "Lider",
+      "correo": "kevin.narvaez@claro.com.ni"
+    },
+    {
+      "nombre": "KRISHNA AUXILIADORA MONTIEL MORALES",
+      "rol": "Lider",
+      "correo": "k.montiel6298@gmail.com"
+    },
+    {
+      "nombre": "KRYSTEL MARGEAUX MORICE ARRIOLA",
+      "rol": "Lider",
+      "correo": "krystel.morice@claro.com.ni"
+    },
+    {
+      "nombre": "LENIN SANTIAGO MEDINA SOLIS",
+      "rol": "Lider",
+      "correo": "lenin.medina@claro.com.ni"
+    },
+    {
+      "nombre": "LUIS ALBERTO LOPEZ",
+      "rol": "Lider",
+      "correo": "lalberto.lopez@claro.com.ni"
+    },
+    {
+      "nombre": "LUIS AURELIO GONZALEZ MULLER",
+      "rol": "Lider",
+      "correo": "luis.gonzalez@claro.com.ni"
+    },
+    {
+      "nombre": "LUIS NOE REYES VADO",
+      "rol": "Lider",
+      "correo": "luisn.reyes@claro.com.ni"
+    },
+    {
+      "nombre": "LUISA ESTHER ALEMAN ARTOLA",
+      "rol": "Lider",
+      "correo": "luisa.aleman@claro.com.ni"
+    },
+    {
+      "nombre": "MARCOS ANTONIO CALERO AGUIRRE",
+      "rol": "Lider",
+      "correo": "marcos.calero@claro.com.ni"
+    },
+    {
+      "nombre": "MARCOS ANTONIO MAYORGA GUARDADO",
+      "rol": "Lider",
+      "correo": "marcos.mayorga@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA ANDREA MANSELL CHAVES",
+      "rol": "Lider",
+      "correo": "maria.mansell@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA DE LOS ANGELES SIEZAR ALVAREZ",
+      "rol": "Lider",
+      "correo": "maria.siezar@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA EUGENIA ESPAÑA CUADRA",
+      "rol": "Lider",
+      "correo": "mariaeugenia.espana@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA ISELLA ESCOBAR BARRIOS",
+      "rol": "Lider",
+      "correo": "maria.escobar@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA JOSE RODRIGUEZ ALFARO",
+      "rol": "Lider",
+      "correo": "mariaj.rodriguez@claro.com.ni"
+    },
+    {
+      "nombre": "MARIA MAGDALENA SANCHEZ CALDERON",
+      "rol": "Lider",
+      "correo": "maria.calderon@claro.com.ni"
+    },
+    {
+      "nombre": "MARTA ADOLFINA CHEVEZ MARTINEZ",
+      "rol": "Lider",
+      "correo": "mchevez@claro.com.ni"
+    },
+    {
+      "nombre": "MARTHA GABRIELA TRAÑA LOPEZ",
+      "rol": "Lider",
+      "correo": "martha.trana@claro.com.ni"
+    },
+    {
+      "nombre": "MARVIN ABNER PORTOCARRERO LOPEZ",
+      "rol": "Lider",
+      "correo": "marvin.portocarrero@claro.com.ni"
+    },
+    {
+      "nombre": "MARVIN LEONEL CORRALES PEREZ",
+      "rol": "Lider",
+      "correo": "marvin.corrales@claro.com.ni"
+    },
+    {
+      "nombre": "MAURICIO ANTONIO LACAYO ARTILES",
+      "rol": "Lider",
+      "correo": "mauricio.lacayo@claro.com.ni"
+    },
+    {
+      "nombre": "MAURICIO RENE TIJERINO GARCIA",
+      "rol": "Lider",
+      "correo": "mauricio.tijerino@claro.com.ni"
+    },
+    {
+      "nombre": "MAURICIO SIEZAR ALVAREZ",
+      "rol": "Lider",
+      "correo": "mauricio.siezar@claro.com.ni"
+    },
+    {
+      "nombre": "MEYLIN LEONOR ARCIA RIVAS",
+      "rol": "Lider",
+      "correo": "meylin.arcia@claro.com.ni"
+    },
+    {
+      "nombre": "MICHELL GERARDO LOPEZ RUIZ",
+      "rol": "Lider",
+      "correo": "michell.lopez@claro.com.ni"
+    },
+    {
+      "nombre": "MIGUEL ANGEL ESCOBAR LAGOS",
+      "rol": "Lider",
+      "correo": "miguel.escobar@claro.com.ni"
+    },
+    {
+      "nombre": "MILTON ANTONIO OBANDO TORRES",
+      "rol": "Lider",
+      "correo": "milton.obando@claro.com.ni"
+    },
+    {
+      "nombre": "MIRIAM SUYAPA ALFARO VILORIO",
+      "rol": "Lider",
+      "correo": "miriam.alfaro@claro.com.ni"
+    },
+    {
+      "nombre": "MOISES AMAN RIVERA ABEL",
+      "rol": "Lider",
+      "correo": "moises.rivera@claro.com.ni"
+    },
+    {
+      "nombre": "MONICA LIBERTAD SALGADO GUTIÉRREZ",
+      "rol": "Lider",
+      "correo": "monica.salgado@claro.com.ni"
+    },
+    {
+      "nombre": "NESTOR JAVIER SEVILLA CORONADO",
+      "rol": "Lider",
+      "correo": "nestor.sevilla@claro.com.ni"
+    },
+    {
+      "nombre": "NORJASH ABNEL ESPINOZA MONDOL",
+      "rol": "Lider",
+      "correo": "norjash.espinoza@claro.com.ni"
+    },
+    {
+      "nombre": "NORLAND ONELL GONZALEZ GONZALEZ",
+      "rol": "Lider",
+      "correo": "norland.gonzalez@claro.com.ni"
+    },
+    {
+      "nombre": "NORMAN JOSE DELGADO LOPEZ",
+      "rol": "Lider",
+      "correo": "norman.delgado@claro.com.ni"
+    },
+    {
+      "nombre": "NORMAN MAURICIO MENESES JAIME",
+      "rol": "Lider",
+      "correo": "Norman.Meneses@claro.com.ni"
+    },
+    {
+      "nombre": "OMAR MACOBIN FRANCIS",
+      "rol": "Lider",
+      "correo": "omar.macobin@claro.com.ni"
+    },
+    {
+      "nombre": "OSCAR DANILO PUTOY RUIZ",
+      "rol": "Lider",
+      "correo": "oscar.putoy@claro.com.ni"
+    },
+    {
+      "nombre": "OSWALDO JOSE CERRATO GONZALEZ",
+      "rol": "Lider",
+      "correo": "oswaldo.cerrato@claro.com.ni"
+    },
+    {
+      "nombre": "OTONIEL ARAUZ VARGAS",
+      "rol": "Lider",
+      "correo": "otoniel.arauz@claro.com.ni"
+    },
+    {
+      "nombre": "PABLO GERARDO MARTINEZ CASTILLO",
+      "rol": "Lider",
+      "correo": "pablo.martinez@claro.com.ni"
+    },
+    {
+      "nombre": "PEDRO ANTONIO ROMERO GONZALEZ",
+      "rol": "Lider",
+      "correo": "pedro.romero@claro.com.ni"
+    },
+    {
+      "nombre": "RAFAEL DE JESUS GODINEZ FLORES",
+      "rol": "Lider",
+      "correo": "rafael.godinez@claro.com.ni"
+    },
+    {
+      "nombre": "RENAN EDUARDO GALEANO TALAVERA",
+      "rol": "Lider",
+      "correo": "renan.galeano@claro.com.ni"
+    },
+    {
+      "nombre": "RONALD MOISES SEQUEIRA MEDINA",
+      "rol": "Lider",
+      "correo": "ronald.sequeira@claro.com.ni"
+    },
+    {
+      "nombre": "ROSA MARIA MEMBREÑO MEMBREÑO",
+      "rol": "Lider",
+      "correo": "rosam.membreno@claro.com.ni"
+    },
+    {
+      "nombre": "RUBEN ANTONIO ROCHA LOPEZ",
+      "rol": "Lider",
+      "correo": "ruben.rocha@claro.com.ni"
+    },
+    {
+      "nombre": "RUDY ALEXANDER JIMENEZ SALAZAR",
+      "rol": "Lider",
+      "correo": "rudy.jimenez@claro.com.ni"
+    },
+    {
+      "nombre": "SAHITH JOSUE LUNA GAITAN",
+      "rol": "Lider",
+      "correo": "sahith.luna@claro.com.ni"
+    },
+    {
+      "nombre": "SAMANTA DILIETH MUÑOZ THOMAS",
+      "rol": "Lider",
+      "correo": "samanta.munoz@claro.com.ni"
+    },
+    {
+      "nombre": "SERGIO ALEXANDER MARTINEZ ESPINOZA",
+      "rol": "Lider",
+      "correo": "sergio.martinez@claro.com.ni"
+    },
+    {
+      "nombre": "SYGRI YAOSKA CESPEDES ESPINOZA",
+      "rol": "Lider",
+      "correo": "sygri.cespedes@claro.com.ni"
+    },
+    {
+      "nombre": "TALIA DANELIA MARTINEZ VALVERDE",
+      "rol": "Lider",
+      "correo": "talia.martinez@claro.com.ni"
+    },
+    {
+      "nombre": "VICTOR MANUEL LOPEZ MIRANDA",
+      "rol": "Lider",
+      "correo": "victor.lopez@claro.com.ni"
+    },
+    {
+      "nombre": "VICTOR ROBERTO MIRANDA HERRERA",
+      "rol": "Lider",
+      "correo": "victor.miranda@claro.com.ni"
+    },
+    {
+      "nombre": "VILMA LOURDES BONILLA PEREZ",
+      "rol": "Lider",
+      "correo": "vilma.bonilla@claro.com.ni"
+    },
+    {
+      "nombre": "VIOLETA MARIA LACAYO MOLINA",
+      "rol": "Lider",
+      "correo": "violeta.lacayo@claro.com.ni"
+    },
+    {
+      "nombre": "WENDY DE LOS ANGELES ROMAN GUTIERREZ",
+      "rol": "Lider",
+      "correo": "wendy.roman@claro.com.ni"
+    },
+    {
+      "nombre": "YADER RENE CUADRA OROZCO",
+      "rol": "Lider",
+      "correo": "yader.cuadra@claro.com.ni"
+    },
+    {
+      "nombre": "YAJAYRA ORTEGA GONZALEZ",
+      "rol": "Lider",
+      "correo": "yajayra.ortega@claro.com.ni"
+    },
+    {
+      "nombre": "YESIKA DE LOS ANGELES AGUILAR HERNANDEZ",
+      "rol": "Lider",
+      "correo": "yesika.aguilar@claro.com.ni"
+    },
+    {
+      "nombre": "YORLING GISSEL ROMERO ALVAREZ",
+      "rol": "Lider",
+      "correo": "yorling.romero@claro.com.ni"
+    }
+  ]
+}

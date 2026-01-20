@@ -24,10 +24,10 @@ export class SolicitudCambio {
     @Column()
     campoAfectado: string;
 
-    @Column({ nullable: true })
+    @Column({ type: 'text', nullable: true })
     valorAnterior: string | null;
 
-    @Column({ nullable: true })
+    @Column({ type: 'text', nullable: true })
     valorNuevo: string | null;
 
     @Column({ type: 'text', nullable: true })
@@ -43,9 +43,12 @@ export class SolicitudCambio {
     @JoinColumn({ name: 'idAprobador' })
     aprobador: Usuario;
 
+    @Column({ type: 'text', nullable: true })
+    motivoRechazo: string;
+
     @CreateDateColumn()
     fechaSolicitud: Date;
 
     @Column({ nullable: true })
-    fechaResolucion: Date;
+    fechaRespuesta: Date;
 }

@@ -500,6 +500,54 @@ export class TasksService {
         return await this.solicitudRepo.save(solicitud);
     }
 
+    // --- APPROVALS FLOW ---
+
+    async getSolicitudesPendientes(idUsuario: number) {
+        // En V1, los administradores/jefes ven todas las solicitudes pendientes
+        // TODO: Filtrar por permisos de proyecto/area si es necesario
+        return await this.solicitudRepo.find({
+            where: { estado: 'Pendiente' },
+            relations: ['tarea', 'tarea.proyecto', 'usuarioSolicitante'],
+            order: { fechaSolicitud: 'DESC' }
+        });
+    }
+
+    async resolverSolicitud(idSolicitud: number, accion: 'Aprobar' | 'Rechazar', idResolutor: number, comentario?: string) {
+        const solicitud = await this.solicitudRepo.findOne({
+            where: { idSolicitud },
+            relations: ['tarea']
+        });
+
+        if (!solicitud) throw new ResourceNotFoundException('Solicitud', idSolicitud);
+        if (solicitud.estado !== 'Pendiente') throw new BusinessRuleException('La solicitud ya fue procesada');
+
+        solicitud.idAprobador = idResolutor;
+        solicitud.fechaRespuesta = new Date();
+        solicitud.motivoRechazo = comentario || ''; // Usamos este campo para guardar comentario de resolución
+
+        if (accion === 'Aprobar') {
+            solicitud.estado = 'Aprobado';
+
+            // Aplicar cambio a la tarea
+            const tarea = solicitud.tarea;
+            if (solicitud.campoAfectado === 'fechaObjetivo' && solicitud.valorNuevo) {
+                tarea.fechaObjetivo = solicitud.valorNuevo;
+            } else if (solicitud.campoAfectado === 'fechaInicioPlanificada' && solicitud.valorNuevo) {
+                tarea.fechaInicioPlanificada = solicitud.valorNuevo;
+            } else if (solicitud.campoAfectado === 'Titulo' && solicitud.valorNuevo) {
+                tarea.titulo = solicitud.valorNuevo;
+            }
+
+            // Guardar tarea con auditoría
+            tarea._auditUsuario = idResolutor;
+            await this.tareaRepo.save(tarea);
+        } else {
+            solicitud.estado = 'Rechazado';
+        }
+
+        return await this.solicitudRepo.save(solicitud);
+    }
+
     async tareaRevalidar(id: number, dto: TareaRevalidarDto, idUsuario: number) {
         console.log(`Revalidar Tarea ${id} por Usuario ${idUsuario}`, dto);
         const tarea = await this.tareaRepo.findOne({ where: { idTarea: id }, relations: ['asignados'] });

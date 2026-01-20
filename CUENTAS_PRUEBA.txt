@@ -1,0 +1,10 @@
+CUENTAS DE PRUEBA (RRHH)
+Password Global: 123456
+
+ID: 155 | TANIA AUXILIADORA AGUIRRE AGUILAR (taniaa.aguirre@claro.com.ni) - Area: NI SUBGERENCIA DE RECURSOS HUMANOS [Colaborador]
+ID: 816 | MARIO ALBERTO RIOS GUILLEN (mario.rios@claro.com.ni) - Area: NI COORD. DE RECURSOS HUMANOS [Colaborador]
+ID: 927 | JOSUE GABRIEL GARCIA BUSTO (josue.garcia@claro.com.ni) - Area: NI SUBGERENCIA DE RECURSOS HUMANOS [Colaborador]
+ID: 1227 | JUANA PASTORA URBINA VASQUEZ (juana.urbina@claro.com.ni) - Area: NI COORD. DE RECURSOS HUMANOS [Colaborador]
+ID: 1461 | JAVIER ANTONIO TORUÑO MENDOZA (javier.toruno@claro.com.ni) - Area: NI COORD. DE RECURSOS HUMANOS [Lider]
+ID: 1523 | SCARLETH VANESSA VIVAS PEREZ (scarleth.vivas@claro.com.ni) - Area: NI GERENCIA DE RECURSOS HUMANOS [Colaborador]
+ID: 1989 | FRANKLIN ELISEO FLORES PEREZ (franklin.flores@claro.com.ni) - Area: NI GERENCIA DE RECURSOS HUMANOS [Lider]

@@ -1,0 +1,36 @@
+MANUAL TÉCNICO - BACKEND (MOMENTUS)
+=====================================
+
+STACK TECNOLÓGICO:
+- Framework: NestJS
+- ORM: TypeORM
+- Base de Datos: PostgreSQL
+- Autenticación: JWT + BCrypt
+
+ESTRUCTURA DE CARPETAS:
+- /src/clarity: Módulo principal del negocio (Gestión de personas, tareas).
+- /src/entities: Definiciones de tablas (BD).
+- /src/auth: Login y protección de rutas.
+
+PROBLEMAS DETECTADOS / DEUDA TÉCNICA:
+1. Relaciones Incompletas: La entidad `Proyecto` no tiene definida la relación inversa `tareas` (@OneToMany). Se usa workaround en consultas.
+   - Solución pendiente: Agregar @OneToMany en entity y migración.
+2. Rutinas: No tienen tabla propia. Se simulan creando Tareas con prefijo "[RUTINA]".
+   - Riesgo: Ensucia reportes de productividad.
+3. Seguridad: Algunos endpoints aceptan ID de usuario por Body en lugar de forzar el del Token.
+
+INSTRUCCIONES DE USO:
+- Iniciar: `npm run start:dev`
+- Swagger API: http://localhost:3000/api
+- Puertos: Corre en 3000 por defecto.
+
+ENDPOINTS CRÍTICOS:
+- GET /equipo/hoy/:userId -> Calcula estado (Bloqueos, Tareas Vencidas). Optimizado con GroupBy.
+- POST /tareas/rapida -> Creación ligera para UX fluida.
+- POST /bloqueos -> Sistema "Andon Cord" de alerta inmediata.
+- POST /logs -> Registro centralizado de errores (Bug Tracking).
+
+SISTEMA DE LOGS:
+Se ha implementado la entidad 'LogSistema' (p_Logs).
+Uso en Backend: clarityService.crearLog({ nivel: 'Error', origen: 'Backend', mensaje: '...' })
+Uso en Frontend: POST /api/logs con token.

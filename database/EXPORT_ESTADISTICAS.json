@@ -1,0 +1,11 @@
+{
+  "totalEmpleados": 1911,
+  "empleadosActivos": 1912,
+  "empleadosInactivos": 0,
+  "totalNodos": 361,
+  "nodosActivos": 361,
+  "nodosVacios": 219,
+  "empleadosSinNodo": 0,
+  "empleadosEnDireccion": 966,
+  "empleadosEnNodosCeros": 342
+}

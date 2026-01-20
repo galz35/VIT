@@ -222,7 +222,7 @@ export class PlanningService {
         if (solicitud.estado !== 'Pendiente') throw new BadRequestException('La solicitud ya fue procesada');
 
         solicitud.idAprobador = idAprobador;
-        solicitud.fechaResolucion = new Date();
+        solicitud.fechaRespuesta = new Date();
         solicitud.estado = accion === 'Aprobar' ? 'Aprobado' : 'Rechazado';
 
         if (accion === 'Aprobar') {
