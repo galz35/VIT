@@ -302,7 +302,7 @@ VISTAS IMPLEMENTADAS PERO NO ACCESIBLES:
 - [ ] **HIGH-003:** Eliminar import `Map` no usado en PlanTrabajoPage
 - [ ] **HIGH-004:** Refactorizar ManagerDashboard.tsx (72KB es muy grande)
 - [ ] **HIGH-005:** Refactorizar PlanTrabajoPage.tsx (118KB es excesivo)
-- [ ] **APPR-002:** Agregar botón "Confirmar Plan" en ProyectosPage
+- [x] **APPR-002:** Agregar botón "Confirmar Plan" en ProyectosPage (DONE)
 - [ ] **APPR-006:** Implementar Dashboard de Aprobaciones (`/app/planning/approvals`)
 
 ### 🟢 MEDIAS (Próximas 2 semanas)
