@@ -41,9 +41,13 @@ export class ClarityController {
     @Post('tareas/rapida')
     @ApiOperation({ summary: 'Crear tarea rápida' })
     async crearTareaRapida(@Body() dto: TareaCrearRapidaDto, @Request() req) {
-        if (dto.idUsuario && Number(dto.idUsuario) !== req.user.userId) {
-            const canManage = await this.tasksService.canManageUser(req.user.userId, Number(dto.idUsuario), req.user.rolGlobal);
+        // Asegurar manejo robusto del ID de usuario (permitir coerción si viene como string)
+        const targetUserId = dto.idUsuario ? Number(dto.idUsuario) : req.user.userId;
+
+        if (targetUserId && targetUserId !== req.user.userId) {
+            const canManage = await this.tasksService.canManageUser(req.user.userId, targetUserId, req.user.rolGlobal);
             if (!canManage) throw new ForbiddenException('No puedes crear tareas para este usuario.');
+            dto.idUsuario = targetUserId; // Asegurar asignación explícita
         } else {
             dto.idUsuario = req.user.userId;
         }
