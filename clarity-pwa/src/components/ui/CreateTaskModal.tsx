@@ -9,8 +9,10 @@ interface Props {
     isOpen: boolean;
     onClose: () => void;
     currentProject?: Proyecto | null;
-    onTaskCreated: () => void;
-    projects: Proyecto[];
+    projectId?: number; // Para compatibilidad
+    onTaskCreated?: () => void; // Para compatibilidad
+    onSuccess?: () => void; // Alias
+    projects?: Proyecto[];
 }
 
 // Tipos de trabajo disponibles
@@ -21,7 +23,7 @@ const TIPOS_TRABAJO = [
     { value: 'Otros', label: 'Otros' }
 ];
 
-export const CreateTaskModal: React.FC<Props> = ({ isOpen, onClose, currentProject, onTaskCreated }) => {
+export const CreateTaskModal: React.FC<Props> = ({ isOpen, onClose, currentProject, projectId, onTaskCreated, onSuccess }) => {
     const [titulo, setTitulo] = useState('');
     const [descripcion, setDescripcion] = useState('');
     const [prioridad, setPrioridad] = useState<Prioridad>('Media');
@@ -49,7 +51,7 @@ export const CreateTaskModal: React.FC<Props> = ({ isOpen, onClose, currentProje
     const [loading, setLoading] = useState(false);
 
     // Usar el proyecto actual automáticamente (NO mostrar selector)
-    const idProyecto = currentProject?.idProyecto;
+    const idProyecto = currentProject?.idProyecto || projectId;
 
     useEffect(() => {
         if (isOpen) {
@@ -138,7 +140,8 @@ export const CreateTaskModal: React.FC<Props> = ({ isOpen, onClose, currentProje
                 });
             }
 
-            onTaskCreated();
+            if (onTaskCreated) onTaskCreated();
+            if (onSuccess) onSuccess();
             onClose();
         } catch (error: any) {
             console.error(error);

@@ -527,6 +527,7 @@ export const TimelinePage: React.FC = () => {
             {/* Create Task Modal */}
             {showCreateTask && selectedProjectId && (
                 <CreateTaskModal
+                    isOpen={true}
                     projectId={selectedProjectId}
                     onClose={() => setShowCreateTask(false)}
                     onSuccess={handleTaskCreated}

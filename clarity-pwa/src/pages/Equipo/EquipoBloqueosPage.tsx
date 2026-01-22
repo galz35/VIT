@@ -41,9 +41,7 @@ export const EquipoBloqueosPage: React.FC = () => {
     }, [today, showToast]);
 
     useEffect(() => {
-        let mounted = true;
         fetchBloqueos();
-        return () => { mounted = false; };
     }, [fetchBloqueos]);
 
     const stats = useMemo(() => {
