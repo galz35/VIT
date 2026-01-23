@@ -32,6 +32,12 @@ export class AdminController {
         return this.adminService.usuarioCambiarRol(+id, rol, req.user?.userId || 1);
     }
 
+    @Post('usuarios/:id/menu')
+    async personalizarMenu(@Param('id') id: string, @Body('menu') menu: any) {
+        const menuJson = menu ? JSON.stringify(menu) : null;
+        return this.securityService.assignCustomMenu(+id, menuJson);
+    }
+
     @Get('usuarios/:id/visibilidad-efectiva')
     async obtenerVisibilidadEfectiva(@Param('id') id: string) {
         return this.adminService.getEfectiveVisibility(+id);

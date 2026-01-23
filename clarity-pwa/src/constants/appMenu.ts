@@ -10,6 +10,7 @@ export const APP_MENU = [
         items: [
             { path: '/app/hoy', label: 'Mi Agenda', icon: 'Sun' },
             { path: '/app/pendientes', label: 'Mis Tareas', icon: 'CheckSquare' },
+            { path: '/app/planning/proyectos', label: 'Gestión Proyectos', icon: 'FileCheck' },
             { path: '/app/notas', label: 'Mis Notas', icon: 'FileText' },
         ]
     },
@@ -24,7 +25,7 @@ export const APP_MENU = [
         group: 'Planificación',
         items: [
             { path: '/app/planning/carga', label: 'Carga Laboral', icon: 'BarChart' },
-            { path: '/app/planning/proyectos', label: 'Gestión Proyectos', icon: 'FileCheck' },
+            // { path: '/app/planning/proyectos', label: 'Gestión Proyectos', icon: 'FileCheck' },
             { path: '/app/software/dashboard', label: 'Anality', icon: 'PieChart' },
             { path: '/app/planning/approvals', label: 'Aprobaciones', icon: 'FileCheck' },
         ]
@@ -54,12 +55,12 @@ export const APP_MENU = [
             { path: '/app/archivo', label: 'Archivo Tareas', icon: 'Archive' },
         ]
     }, */
-    {
+    /* {
         group: 'Ayuda',
         items: [
             { path: '/app/help', label: 'Tutorial Interactivo', icon: 'BookOpen' },
         ]
-    }
+    } */
 ];
 
 export const ICON_MAP: any = {

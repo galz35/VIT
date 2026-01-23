@@ -104,8 +104,8 @@ export const Sidebar: React.FC = () => {
                         // Líder: Mostrar todo excepto Administración
                         return baseMenu.filter(group => group.group !== 'Administración');
                     } else if (dynamicMenu.profileType === 'EMPLOYEE') {
-                        // Empleado: Solo "Mi Espacio"
-                        return baseMenu.filter(group => group.group === 'Mi Espacio');
+                        // Empleado: Solo su espacio personal y ayuda
+                        return baseMenu.filter(group => ['Mi Espacio', 'Ayuda'].includes(group.group));
                     }
                 }
 

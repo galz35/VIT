@@ -69,10 +69,11 @@ export async function obtenerPerfilesSeguridad() {
 export async function listarUsuarios(pagina: number = 1, limite: number = 50) {
     const offset = (pagina - 1) * limite;
 
-    const datos = await ejecutarQuery<UsuarioDb & { rolNombre: string }>(`
-        SELECT u.*, r.nombre as rolNombre
+    const datos = await ejecutarQuery<UsuarioDb & { rolNombre: string, menuPersonalizado: string | null }>(`
+        SELECT u.*, r.nombre as rolNombre, c.menuPersonalizado
         FROM p_Usuarios u
         LEFT JOIN p_Roles r ON u.idRol = r.idRol
+        LEFT JOIN p_UsuariosConfig c ON u.idUsuario = c.idUsuario
         ORDER BY u.nombre ASC
         OFFSET @offset ROWS FETCH NEXT @limite ROWS ONLY
     `, {

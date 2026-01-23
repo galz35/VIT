@@ -285,6 +285,7 @@ export const UsersPage = () => {
                                         if (originalUser) {
                                             setEditingUser(originalUser);
                                             setSelectedRoleId(originalUser.idRol?.toString() || '');
+                                            setCustomMenuJson((originalUser as any).menuPersonalizado || '');
                                         }
                                     }}
                                     className="p-1.5 text-slate-300 hover:text-indigo-600 transition-colors opacity-0 group-hover:opacity-100"
@@ -447,6 +448,7 @@ export const UsersPage = () => {
                                                             onClick={() => {
                                                                 setEditingUser(u);
                                                                 setSelectedRoleId(u.idRol?.toString() || '');
+                                                                setCustomMenuJson((u as any).menuPersonalizado || '');
                                                             }}
                                                             className="p-2 text-slate-300 hover:text-indigo-600 hover:bg-white rounded-xl transition-all shadow-sm hover:shadow group-hover:bg-white"
                                                             title="Editar Usuario"
@@ -504,378 +506,388 @@ export const UsersPage = () => {
                 )}
             </div>
 
-            {visibilityUser && (
-                <VisibilityModal
-                    user={visibilityUser}
-                    onClose={() => setVisibilityUser(null)}
-                />
-            )}
+            {
+                visibilityUser && (
+                    <VisibilityModal
+                        user={visibilityUser}
+                        onClose={() => setVisibilityUser(null)}
+                    />
+                )
+            }
 
             {/* EDIT MODAL */}
-            {editingUser && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden border border-white/20 animate-fade-in-up">
-                        {/* Header */}
-                        <div className="bg-indigo-600 p-6 text-white flex justify-between items-center shrink-0">
-                            <div>
-                                <h3 className="text-xl font-black tracking-tight">Editar Perfil</h3>
-                            </div>
-                            <button onClick={() => setEditingUser(null)} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        {/* Scrollable Content */}
-                        <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                {/* Columna Izquierda: Datos Básicos */}
-                                <div className="space-y-6">
-                                    <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Nombre del Usuario</label>
-                                        <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-700 font-bold">
-                                            {editingUser.nombre}
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Rol de Seguridad</label>
-                                        <div className="flex gap-2">
-                                            <select
-                                                className="flex-1 p-4 bg-white border border-slate-300 rounded-2xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 outline-none transition-all font-bold text-slate-700"
-                                                value={selectedRoleId}
-                                                onChange={e => setSelectedRoleId(e.target.value)}
-                                            >
-                                                <option value="">Seleccionar Rol...</option>
-                                                {roles.map(r => (
-                                                    <option key={r.idRol} value={r.idRol}>
-                                                        {r.nombre}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            <button
-                                                onClick={handleSaveRole}
-                                                className="px-6 bg-indigo-600 text-white font-black text-xs uppercase rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all"
-                                            >
-                                                Guardar
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="pt-6 border-t border-slate-100">
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Restablecer Contraseña</label>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                placeholder="Nueva contraseña"
-                                                className="flex-1 p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-amber-500 font-bold text-slate-700 placeholder:font-normal placeholder:text-slate-400"
-                                                value={newPassword}
-                                                onChange={e => setNewPassword(e.target.value)}
-                                            />
-                                            <button
-                                                onClick={handleResetPassword}
-                                                className="px-6 bg-amber-500 text-white font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-amber-600 shadow-xl shadow-amber-100 transition-all flex items-center justify-center gap-2"
-                                            >
-                                                <Key size={16} /> Reset
-                                            </button>
-                                        </div>
-                                        <p className="text-[10px] text-slate-400 font-medium mt-2">
-                                            Predeterminada: <strong className="text-slate-600">123456</strong>
-                                        </p>
-                                    </div>
+            {
+                editingUser && (
+                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden border border-white/20 animate-fade-in-up">
+                            {/* Header */}
+                            <div className="bg-indigo-600 p-6 text-white flex justify-between items-center shrink-0">
+                                <div>
+                                    <h3 className="text-xl font-black tracking-tight">Editar Perfil</h3>
                                 </div>
+                                <button onClick={() => setEditingUser(null)} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
+                                    <X size={24} />
+                                </button>
+                            </div>
 
-                                {/* Columna Derecha: Menú Avanzado */}
-                                <div className="space-y-4">
-                                    <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200 h-full flex flex-col">
-                                        <div className="flex justify-between items-center mb-4">
-                                            <div>
-                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Personalizar Menú</label>
-                                                <p className="text-[10px] text-slate-500 font-medium">Define opciones específicas para este usuario.</p>
+                            {/* Scrollable Content */}
+                            <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    {/* Columna Izquierda: Datos Básicos */}
+                                    <div className="space-y-6">
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Nombre del Usuario</label>
+                                            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-700 font-bold">
+                                                {editingUser.nombre}
                                             </div>
-
-                                            <button
-                                                onClick={() => setCustomMenuJson(customMenuJson ? '' : JSON.stringify(APP_MENU))}
-                                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all border
-                                                    ${customMenuJson
-                                                        ? 'bg-indigo-100 border-indigo-200 text-indigo-700'
-                                                        : 'bg-slate-200 border-slate-300 text-slate-500'
-                                                    }
-                                                `}
-                                            >
-                                                <span className="text-[10px] font-bold uppercase">{customMenuJson ? 'Habilitado' : 'Deshabilitado'}</span>
-                                                {customMenuJson ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
-                                            </button>
                                         </div>
 
-                                        {customMenuJson ? (
-                                            <div className="flex-1 overflow-hidden flex flex-col min-h-[300px]">
-                                                <MenuBuilder
-                                                    initialJson={customMenuJson !== '[]' ? customMenuJson : JSON.stringify(APP_MENU)}
-                                                    onChange={setCustomMenuJson}
-                                                />
-                                            </div>
-                                        ) : (
-                                            <div className="flex-1 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
-                                                <Network size={40} className="mb-2 opacity-20" />
-                                                <p className="text-xs font-medium text-center px-8">
-                                                    El usuario usará el menú predeterminado de su Rol.
-                                                </p>
-                                                <button
-                                                    onClick={() => setCustomMenuJson(JSON.stringify(APP_MENU))}
-                                                    className="mt-4 px-4 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-xl shadow-sm hover:text-indigo-600 transition-all"
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Rol de Seguridad</label>
+                                            <div className="flex gap-2">
+                                                <select
+                                                    className="flex-1 p-4 bg-white border border-slate-300 rounded-2xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 outline-none transition-all font-bold text-slate-700"
+                                                    value={selectedRoleId}
+                                                    onChange={e => setSelectedRoleId(e.target.value)}
                                                 >
-                                                    Habilitar Personalización
+                                                    <option value="">Seleccionar Rol...</option>
+                                                    {roles.map(r => (
+                                                        <option key={r.idRol} value={r.idRol}>
+                                                            {r.nombre}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <button
+                                                    onClick={handleSaveRole}
+                                                    className="px-6 bg-indigo-600 text-white font-black text-xs uppercase rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all"
+                                                >
+                                                    Guardar
                                                 </button>
                                             </div>
-                                        )}
+                                        </div>
 
-                                        {customMenuJson && (
-                                            <button
-                                                onClick={handleSaveMenu}
-                                                className="mt-4 w-full py-3 bg-slate-800 text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-slate-900 shadow-lg shadow-slate-200 transition-all"
-                                            >
-                                                Guardar Configuración
-                                            </button>
-                                        )}
+                                        <div className="pt-6 border-t border-slate-100">
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Restablecer Contraseña</label>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Nueva contraseña"
+                                                    className="flex-1 p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-amber-500 font-bold text-slate-700 placeholder:font-normal placeholder:text-slate-400"
+                                                    value={newPassword}
+                                                    onChange={e => setNewPassword(e.target.value)}
+                                                />
+                                                <button
+                                                    onClick={handleResetPassword}
+                                                    className="px-6 bg-amber-500 text-white font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-amber-600 shadow-xl shadow-amber-100 transition-all flex items-center justify-center gap-2"
+                                                >
+                                                    <Key size={16} /> Reset
+                                                </button>
+                                            </div>
+                                            <p className="text-[10px] text-slate-400 font-medium mt-2">
+                                                Predeterminada: <strong className="text-slate-600">123456</strong>
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Columna Derecha: Menú Avanzado */}
+                                    <div className="space-y-4">
+                                        <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200 h-full flex flex-col">
+                                            <div className="flex justify-between items-center mb-4">
+                                                <div>
+                                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Personalizar Menú</label>
+                                                    <p className="text-[10px] text-slate-500 font-medium">Define opciones específicas para este usuario.</p>
+                                                </div>
+
+                                                <button
+                                                    onClick={() => setCustomMenuJson(customMenuJson ? '' : JSON.stringify(APP_MENU))}
+                                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all border
+                                                    ${customMenuJson
+                                                            ? 'bg-indigo-100 border-indigo-200 text-indigo-700'
+                                                            : 'bg-slate-200 border-slate-300 text-slate-500'
+                                                        }
+                                                `}
+                                                >
+                                                    <span className="text-[10px] font-bold uppercase">{customMenuJson ? 'Habilitado' : 'Deshabilitado'}</span>
+                                                    {customMenuJson ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
+                                                </button>
+                                            </div>
+
+                                            {customMenuJson ? (
+                                                <div className="flex-1 overflow-hidden flex flex-col min-h-[300px]">
+                                                    <MenuBuilder
+                                                        initialJson={customMenuJson !== '[]' ? customMenuJson : JSON.stringify(APP_MENU)}
+                                                        onChange={setCustomMenuJson}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className="flex-1 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
+                                                    <Network size={40} className="mb-2 opacity-20" />
+                                                    <p className="text-xs font-medium text-center px-8">
+                                                        El usuario usará el menú predeterminado de su Rol.
+                                                    </p>
+                                                    <button
+                                                        onClick={() => setCustomMenuJson(JSON.stringify(APP_MENU))}
+                                                        className="mt-4 px-4 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-xl shadow-sm hover:text-indigo-600 transition-all"
+                                                    >
+                                                        Habilitar Personalización
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            {customMenuJson && (
+                                                <button
+                                                    onClick={handleSaveMenu}
+                                                    className="mt-4 w-full py-3 bg-slate-800 text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-slate-900 shadow-lg shadow-slate-200 transition-all"
+                                                >
+                                                    Guardar Configuración
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
+
                             </div>
 
-                        </div>
-
-                        {/* Footer */}
-                        <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
-                            <button
-                                onClick={() => setEditingUser(null)}
-                                className="px-6 py-3 bg-white border border-slate-200 text-slate-500 font-bold rounded-xl hover:bg-slate-100 transition-all text-sm"
-                            >
-                                Cerrar Ventana
-                            </button>
+                            {/* Footer */}
+                            <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
+                                <button
+                                    onClick={() => setEditingUser(null)}
+                                    className="px-6 py-3 bg-white border border-slate-200 text-slate-500 font-bold rounded-xl hover:bg-slate-100 transition-all text-sm"
+                                >
+                                    Cerrar Ventana
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* ADD NODE MODAL */}
-            {isAddNodeModalOpen && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-up">
-                        <div className="bg-indigo-600 p-6 text-white flex justify-between items-center">
-                            <div>
-                                <h3 className="text-xl font-black tracking-tight">Nuevo Nodo</h3>
-                                <p className="text-indigo-100 text-xs font-bold uppercase mt-1">Padre: {selectedNode?.nombre || 'Raíz'}</p>
+            {
+                isAddNodeModalOpen && (
+                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-up">
+                            <div className="bg-indigo-600 p-6 text-white flex justify-between items-center">
+                                <div>
+                                    <h3 className="text-xl font-black tracking-tight">Nuevo Nodo</h3>
+                                    <p className="text-indigo-100 text-xs font-bold uppercase mt-1">Padre: {selectedNode?.nombre || 'Raíz'}</p>
+                                </div>
+                                <button onClick={() => setIsAddNodeModalOpen(false)} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
+                                    <X size={24} />
+                                </button>
                             </div>
-                            <button onClick={() => setIsAddNodeModalOpen(false)} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
-                                <X size={24} />
-                            </button>
-                        </div>
-                        <div className="p-8 space-y-6">
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Nombre del Equipo/Gerencia</label>
-                                <input
-                                    type="text"
-                                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold"
-                                    value={newNodeName}
-                                    onChange={e => setNewNodeName(e.target.value)}
-                                    placeholder="Ej: Desarrollo Backend"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Tipo de Nodo</label>
-                                <div className="flex gap-2">
-                                    {(['Gerencia', 'Equipo'] as const).map(t => (
-                                        <button
-                                            key={t}
-                                            onClick={() => setNewNodeType(t)}
-                                            className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all border
+                            <div className="p-8 space-y-6">
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Nombre del Equipo/Gerencia</label>
+                                    <input
+                                        type="text"
+                                        className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold"
+                                        value={newNodeName}
+                                        onChange={e => setNewNodeName(e.target.value)}
+                                        placeholder="Ej: Desarrollo Backend"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Tipo de Nodo</label>
+                                    <div className="flex gap-2">
+                                        {(['Gerencia', 'Equipo'] as const).map(t => (
+                                            <button
+                                                key={t}
+                                                onClick={() => setNewNodeType(t)}
+                                                className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all border
                                                 ${newNodeType === t ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}
                                             `}
-                                        >
-                                            {t}
-                                        </button>
-                                    ))}
+                                            >
+                                                {t}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="flex gap-2 pt-4">
-                                <button
-                                    onClick={() => setIsAddNodeModalOpen(false)}
-                                    className="flex-1 py-4 bg-white border border-slate-200 text-slate-500 font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-all"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    onClick={handleCreateNode}
-                                    className="flex-1 py-4 bg-indigo-600 text-white font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all"
-                                >
-                                    Crear Nodo
-                                </button>
+                                <div className="flex gap-2 pt-4">
+                                    <button
+                                        onClick={() => setIsAddNodeModalOpen(false)}
+                                        className="flex-1 py-4 bg-white border border-slate-200 text-slate-500 font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-all"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleCreateNode}
+                                        className="flex-1 py-4 bg-indigo-600 text-white font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all"
+                                    >
+                                        Crear Nodo
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* ASSIGN USER MODAL */}
-            {isAssignUserModalOpen && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-up">
-                        <div className="bg-indigo-600 p-6 text-white flex justify-between items-center">
-                            <div>
-                                <h3 className="text-xl font-black tracking-tight">Asignar Colaborador</h3>
-                                <p className="text-indigo-100 text-xs font-bold uppercase mt-1">Nodo: {selectedNode?.nombre}</p>
-                            </div>
-                            <button onClick={() => setIsAssignUserModalOpen(false)} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
-                                <X size={24} />
-                            </button>
-                        </div>
-                        <div className="p-8 space-y-6">
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Seleccionar Persona</label>
-                                <select
-                                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold"
-                                    value={assignUserId}
-                                    onChange={e => setAssignUserId(e.target.value)}
-                                >
-                                    <option value="">Buscar en el directorio...</option>
-                                    {users.map(u => (
-                                        <option key={u.idUsuario} value={u.idUsuario}>{u.nombre} ({u.correo})</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Rol dentro del Nodo</label>
-                                <select
-                                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold"
-                                    value={assignUserRole}
-                                    onChange={e => setAssignUserRole(e.target.value as any)}
-                                >
-                                    <option value="Colaborador">Colaborador</option>
-                                    <option value="Lider">Líder (Supervisor)</option>
-                                    <option value="Director">Director (Gerente)</option>
-                                </select>
-                            </div>
-                            <div className="flex gap-2 pt-4">
-                                <button
-                                    onClick={() => setIsAssignUserModalOpen(false)}
-                                    className="flex-1 py-4 bg-white border border-slate-200 text-slate-500 font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-all"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    onClick={handleAssignUser}
-                                    className="flex-1 py-4 bg-indigo-600 text-white font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all"
-                                >
-                                    Confirmar Asignación
+            {
+                isAssignUserModalOpen && (
+                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-up">
+                            <div className="bg-indigo-600 p-6 text-white flex justify-between items-center">
+                                <div>
+                                    <h3 className="text-xl font-black tracking-tight">Asignar Colaborador</h3>
+                                    <p className="text-indigo-100 text-xs font-bold uppercase mt-1">Nodo: {selectedNode?.nombre}</p>
+                                </div>
+                                <button onClick={() => setIsAssignUserModalOpen(false)} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
+                                    <X size={24} />
                                 </button>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* CREATE USER MODAL */}
-            {isCreateUserModalOpen && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-up border border-white/20">
-                        <div className="bg-indigo-600 p-6 text-white flex justify-between items-center">
-                            <div>
-                                <h3 className="text-xl font-black tracking-tight">Nuevo Colaborador</h3>
-                                <p className="text-indigo-100 text-[10px] font-bold uppercase mt-1">Registrar acceso al sistema</p>
-                            </div>
-                            <button onClick={() => setIsCreateUserModalOpen(false)} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        <div className="p-8 space-y-5">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="col-span-2">
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nombre Completo *</label>
-                                    <input
-                                        type="text"
-                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold text-slate-700"
-                                        value={newUserForm.nombre}
-                                        onChange={e => setNewUserForm({ ...newUserForm, nombre: e.target.value })}
-                                        placeholder="Ej: Juan Pérez"
-                                    />
-                                </div>
+                            <div className="p-8 space-y-6">
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Correo Corporativo *</label>
-                                    <input
-                                        type="email"
-                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold text-slate-700"
-                                        value={newUserForm.correo}
-                                        onChange={e => setNewUserForm({ ...newUserForm, correo: e.target.value })}
-                                        placeholder="juan@empresa.com"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Cargo / Puesto</label>
-                                    <input
-                                        type="text"
-                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold text-slate-700"
-                                        value={newUserForm.cargo}
-                                        onChange={e => setNewUserForm({ ...newUserForm, cargo: e.target.value })}
-                                        placeholder="Ej: Analista Senior"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Unidad / Organización</label>
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Seleccionar Persona</label>
                                     <select
-                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold text-slate-700"
-                                        value={newUserForm.organizacion}
-                                        onChange={e => setNewUserForm({ ...newUserForm, organizacion: e.target.value })}
+                                        className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold"
+                                        value={assignUserId}
+                                        onChange={e => setAssignUserId(e.target.value)}
                                     >
-                                        <option value="">Seleccione equipo...</option>
-                                        {/* Recursive nodes or flat list */}
-                                        {organigram.map(n => (
-                                            <option key={n.idNodo} value={n.nombre}>{n.nombre}</option>
+                                        <option value="">Buscar en el directorio...</option>
+                                        {users.map(u => (
+                                            <option key={u.idUsuario} value={u.idUsuario}>{u.nombre} ({u.correo})</option>
                                         ))}
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Rol en Equipo</label>
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Rol dentro del Nodo</label>
                                     <select
-                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold text-slate-700"
-                                        value={newUserForm.rol}
-                                        onChange={e => setNewUserForm({ ...newUserForm, rol: e.target.value })}
+                                        className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold"
+                                        value={assignUserRole}
+                                        onChange={e => setAssignUserRole(e.target.value as any)}
                                     >
                                         <option value="Colaborador">Colaborador</option>
-                                        <option value="Lider">Líder</option>
-                                        <option value="Gerente">Gerente</option>
+                                        <option value="Lider">Líder (Supervisor)</option>
+                                        <option value="Director">Director (Gerente)</option>
                                     </select>
                                 </div>
-                            </div>
-
-                            <p className="text-[10px] text-slate-400 font-medium bg-slate-100 p-3 rounded-xl border border-slate-200">
-                                <span className="font-black text-indigo-600 uppercase">Nota:</span> Se enviará un correo de bienvenida y la contraseña temporal será <strong className="text-slate-700">123456</strong>. El usuario deberá cambiarla al primer ingreso.
-                            </p>
-
-                            <div className="flex gap-3 pt-2">
-                                <button
-                                    onClick={() => setIsCreateUserModalOpen(false)}
-                                    className="flex-1 py-4 bg-white border border-slate-200 text-slate-500 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-all"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    onClick={handleCreateUser}
-                                    disabled={isCreating}
-                                    className="flex-1 py-4 bg-indigo-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all flex items-center justify-center gap-2"
-                                >
-                                    {isCreating ? (
-                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    ) : (
-                                        <UserPlus size={16} />
-                                    )}
-                                    {isCreating ? 'Procesando...' : 'Crear Acceso'}
-                                </button>
+                                <div className="flex gap-2 pt-4">
+                                    <button
+                                        onClick={() => setIsAssignUserModalOpen(false)}
+                                        className="flex-1 py-4 bg-white border border-slate-200 text-slate-500 font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-all"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleAssignUser}
+                                        className="flex-1 py-4 bg-indigo-600 text-white font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all"
+                                    >
+                                        Confirmar Asignación
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+
+            {/* CREATE USER MODAL */}
+            {
+                isCreateUserModalOpen && (
+                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-up border border-white/20">
+                            <div className="bg-indigo-600 p-6 text-white flex justify-between items-center">
+                                <div>
+                                    <h3 className="text-xl font-black tracking-tight">Nuevo Colaborador</h3>
+                                    <p className="text-indigo-100 text-[10px] font-bold uppercase mt-1">Registrar acceso al sistema</p>
+                                </div>
+                                <button onClick={() => setIsCreateUserModalOpen(false)} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            <div className="p-8 space-y-5">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="col-span-2">
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nombre Completo *</label>
+                                        <input
+                                            type="text"
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold text-slate-700"
+                                            value={newUserForm.nombre}
+                                            onChange={e => setNewUserForm({ ...newUserForm, nombre: e.target.value })}
+                                            placeholder="Ej: Juan Pérez"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Correo Corporativo *</label>
+                                        <input
+                                            type="email"
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold text-slate-700"
+                                            value={newUserForm.correo}
+                                            onChange={e => setNewUserForm({ ...newUserForm, correo: e.target.value })}
+                                            placeholder="juan@empresa.com"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Cargo / Puesto</label>
+                                        <input
+                                            type="text"
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold text-slate-700"
+                                            value={newUserForm.cargo}
+                                            onChange={e => setNewUserForm({ ...newUserForm, cargo: e.target.value })}
+                                            placeholder="Ej: Analista Senior"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Unidad / Organización</label>
+                                        <select
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold text-slate-700"
+                                            value={newUserForm.organizacion}
+                                            onChange={e => setNewUserForm({ ...newUserForm, organizacion: e.target.value })}
+                                        >
+                                            <option value="">Seleccione equipo...</option>
+                                            {/* Recursive nodes or flat list */}
+                                            {organigram.map(n => (
+                                                <option key={n.idNodo} value={n.nombre}>{n.nombre}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Rol en Equipo</label>
+                                        <select
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 transition-all font-bold text-slate-700"
+                                            value={newUserForm.rol}
+                                            onChange={e => setNewUserForm({ ...newUserForm, rol: e.target.value })}
+                                        >
+                                            <option value="Colaborador">Colaborador</option>
+                                            <option value="Lider">Líder</option>
+                                            <option value="Gerente">Gerente</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <p className="text-[10px] text-slate-400 font-medium bg-slate-100 p-3 rounded-xl border border-slate-200">
+                                    <span className="font-black text-indigo-600 uppercase">Nota:</span> Se enviará un correo de bienvenida y la contraseña temporal será <strong className="text-slate-700">123456</strong>. El usuario deberá cambiarla al primer ingreso.
+                                </p>
+
+                                <div className="flex gap-3 pt-2">
+                                    <button
+                                        onClick={() => setIsCreateUserModalOpen(false)}
+                                        className="flex-1 py-4 bg-white border border-slate-200 text-slate-500 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-all"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleCreateUser}
+                                        disabled={isCreating}
+                                        className="flex-1 py-4 bg-indigo-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all flex items-center justify-center gap-2"
+                                    >
+                                        {isCreating ? (
+                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        ) : (
+                                            <UserPlus size={16} />
+                                        )}
+                                        {isCreating ? 'Procesando...' : 'Crear Acceso'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+        </div >
     );
 };
