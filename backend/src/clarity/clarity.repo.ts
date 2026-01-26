@@ -185,6 +185,87 @@ export async function obtenerEquipoHoy(carnetsMiembros: string[], fechaStr: stri
     };
 }
 
+export async function obtenerEquipoInforme(carnetsMiembros: string[], fechaStr: string): Promise<any> {
+    if (carnetsMiembros.length === 0) return { miembros: [], resumenAnimo: { feliz: 0, neutral: 0, triste: 0, promedio: 0 } };
+
+    const carnetsList = carnetsMiembros.join(',');
+
+    // 1. Obtener Info de Miembros (Nombre, Rol, etc)
+    const miembros = await ejecutarQuery<any>(`
+        SELECT u.*, r.nombre as rolNombre 
+        FROM p_Usuarios u 
+        LEFT JOIN p_Roles r ON u.idRol = r.idRol
+        INNER JOIN STRING_SPLIT(@list, ',') L ON u.carnet = L.value
+        WHERE u.activo = 1
+    `, { list: { valor: carnetsList, tipo: NVarChar } });
+
+    console.log(`[DEBUG] obtenerEquipoInforme: carnetsList length=${carnetsMiembros.length}, miembros found=${miembros.length}`);
+    if (miembros.length > 0) console.log(`[DEBUG] Primer miembro carnet: ${miembros[0].carnet}`);
+
+    if (miembros.length === 0) return { miembros: [], resumenAnimo: { feliz: 0, neutral: 0, triste: 0, promedio: 0 } };
+
+    // 2. Obtener Checkins (Solo para mood y status del día)
+    const checkins = await ejecutarQuery<CheckinDb>(`
+        SELECT * FROM p_Checkins 
+        WHERE usuarioCarnet IN (SELECT value FROM STRING_SPLIT(@list, ',')) 
+        AND CAST(fecha AS DATE) = CAST(@fecha AS DATE)
+    `, { list: { valor: carnetsList, tipo: NVarChar }, fecha: { valor: new Date(fechaStr), tipo: SqlDate } });
+
+    // 3. Ejecutar NUEVO SP de Informe
+    const stats = await ejecutarSP<{ carnet: string, retrasadas: number, planificadas: number, hechas: number, enCurso: number, bloqueadas: number, descartadas: number }>(
+        'sp_Equipo_ObtenerInforme',
+        {
+            carnetsList: { valor: carnetsList, tipo: NVarChar },
+            fecha: { valor: new Date(fechaStr), tipo: SqlDate }
+        }
+    );
+
+    // 4. Mapear Resultados
+    const resultMiembros = miembros.map(m => {
+        const checkin = checkins.find(c => (c as any).usuarioCarnet === m.carnet);
+        const userStats = stats.find(s => (s as any).carnet === m.carnet);
+
+        return {
+            usuario: {
+                idUsuario: m.idUsuario,
+                nombre: m.nombre || m.nombreCompleto,
+                correo: m.correo,
+                carnet: m.carnet,
+                rol: { nombre: m.rolNombre || m.cargo || 'General' }
+            },
+            checkin: checkin ? {
+                idCheckin: checkin.idCheckin,
+                fecha: checkin.fecha,
+                estadoAnimo: checkin.estadoAnimo,
+                nota: checkin.nota,
+                entregableTexto: checkin.entregableTexto
+            } : null,
+            estadisticas: {
+                retrasadas: userStats?.retrasadas || 0,
+                hoy: userStats?.planificadas || 0,
+                hechas: userStats?.hechas || 0,
+                enCurso: userStats?.enCurso || 0,
+                bloqueadas: userStats?.bloqueadas || 0,
+                descartadas: userStats?.descartadas || 0
+            }
+        };
+    });
+
+    // 5. Calcular Resumen de Animo
+    const animos = checkins.map(c => c.estadoAnimo).filter(Boolean);
+    const resumenAnimo = {
+        feliz: animos.filter(a => a === 'Tope' || a === 'Bien').length,
+        neutral: animos.filter(a => a === 'Neutral' || !a).length,
+        triste: animos.filter(a => a === 'Bajo').length,
+        promedio: resultMiembros.length > 0 ? (animos.length / resultMiembros.length) * 100 : 0
+    };
+
+    return {
+        miembros: resultMiembros,
+        resumenAnimo
+    };
+}
+
 export async function checkinUpsert(checkin: any): Promise<number> {
     const carnet = checkin.carnet || checkin.usuarioCarnet;
     if (!carnet) throw new Error('Checkin requiere Carnet válido.');

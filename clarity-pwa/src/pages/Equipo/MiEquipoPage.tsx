@@ -97,7 +97,7 @@ export const MiEquipoPage: React.FC = () => {
 
                     const [teamList, teamPayload, workloadData, projectsRes] = await Promise.all([
                         clarityService.getMyTeam(),
-                        clarityService.getEquipoHoy(dateStr),
+                        clarityService.getEquipoInform(dateStr),
                         clarityService.getWorkload(),
                         clarityService.getProyectos()
                     ]);

@@ -667,6 +667,17 @@ export class TasksService {
             return { miembros: [], resumenAnimo: { feliz: 0, neutral: 0, triste: 0, promedio: 0 } };
         }
     }
+
+    // Equipo Informe (NUEVO API Separado)
+    async getEquipoInform(carnetLider: string, fecha: string) {
+        try {
+            const visibleMembers = await this.visibilidadService.obtenerCarnetsVisibles(carnetLider);
+            return await clarityRepo.obtenerEquipoInforme(visibleMembers, fecha);
+        } catch (error) {
+            console.error(`[TasksService] Error fetching team inform for ${carnetLider} at ${fecha}:`, error);
+            return { miembros: [], resumenAnimo: { feliz: 0, neutral: 0, triste: 0, promedio: 0 } };
+        }
+    }
     async getEquipoBloqueos(idUsuarioLider: number, fecha: string) {
         try {
             // 1. Obtener carnet para visibilidad

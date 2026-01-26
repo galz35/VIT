@@ -205,6 +205,11 @@ export const clarityService = {
         return response.data;
     },
 
+    getEquipoInform: async (fecha: string) => {
+        const { data: response } = await api.get<ApiResponse<EquipoHoyResponse>>('/equipo/inform', { params: { fecha } });
+        return response.data;
+    },
+
     getMyTeam: async () => {
         const { data: response } = await api.get<ApiResponse<any[]>>('/planning/team');
         return response.data || [];

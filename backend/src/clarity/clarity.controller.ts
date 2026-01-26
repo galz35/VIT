@@ -252,6 +252,13 @@ export class ClarityController {
     //    return this.tasksService.getEquipoHoy(req.user.userId, query.fecha);
     // }
 
+    @Get('equipo/inform')
+    @ApiOperation({ summary: 'Dashboard equipo: informe detallado independiente' })
+    async getEquipoInform(@Request() req, @Query() query: FechaQueryDto) {
+        const carnet = req.user.carnet || await this.tasksService.resolveCarnet(req.user.userId);
+        return this.tasksService.getEquipoInform(carnet, query.fecha);
+    }
+
     @Get('equipo/backlog')
     @ApiOperation({ summary: 'Dashboard equipo: backlog' })
     async getEquipoBacklog(@Request() req, @Query() query: FechaQueryDto) {
