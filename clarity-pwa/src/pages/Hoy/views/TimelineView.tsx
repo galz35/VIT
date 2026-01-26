@@ -19,7 +19,7 @@ export const TimelineView: React.FC = () => {
         mutationFn: async (params: { id: number; estado: 'Hecha' | 'Descartada' }) => {
             await clarityService.actualizarTarea(params.id, { estado: params.estado } as any);
         },
-        onSuccess: async (_data, vars) => {
+        onSuccess: async (_data: any, vars: { id: number; estado: 'Hecha' | 'Descartada' }) => {
             showToast(vars.estado === 'Hecha' ? 'Tarea completada' : 'Tarea descartada', 'success');
 
             // ✅ reemplaza fetchMiDia()
@@ -28,7 +28,7 @@ export const TimelineView: React.FC = () => {
             // Si Timeline tiene su propia query:
             // await queryClient.invalidateQueries({ queryKey: ['timeline'] });
         },
-        onError: (_err, vars) => {
+        onError: (_err: any, vars: { id: number; estado: 'Hecha' | 'Descartada' }) => {
             showToast(vars.estado === 'Hecha' ? 'Error al completar' : 'Error al descartar', 'error');
         },
         onSettled: () => setIdEnProceso(null),

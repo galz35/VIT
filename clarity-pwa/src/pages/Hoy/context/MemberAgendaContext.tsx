@@ -40,7 +40,7 @@ export const MemberAgendaProvider: React.FC<{ children: React.ReactNode; userId:
         const arr = arrastrados || [];
         const real = [
             ...arr,
-            ...unique.filter(u => !arr.some(a => Number(a.idTarea) === Number(u.idTarea))),
+            ...unique.filter(u => !arr.some((a: any) => Number(a.idTarea) === Number(u.idTarea))),
         ];
 
         // ✅ orden estable

@@ -11,7 +11,7 @@ import { clarityService } from '../../services/clarity.service';
 import { useAuth } from '../../context/AuthContext';
 import type { Empleado } from '../../types/acceso';
 import type { Tarea } from '../../types/modelos';
-import type { Proyecto } from '../../types/modelos';
+// import type { Proyecto } from '../../types/modelos';
 import { CreateTaskModal } from '../../components/ui/CreateTaskModal';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -37,7 +37,7 @@ export const MiEquipoPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [empleados, setEmpleados] = useState<Empleado[]>([]);
-    const [projects, setProjects] = useState<Proyecto[]>([]);
+    // const [projects, setProjects] = useState<Proyecto[]>([]); // Removed unused
     const [viewMode, setViewMode] = useState<'list' | 'workload'>('list');
 
     // Mapeo de Correo -> Stats
@@ -111,7 +111,7 @@ export const MiEquipoPage: React.FC = () => {
 
                     setEmpleados(teamList || []);
                     if (workloadData) setAllTasks(workloadData.tasks || []);
-                    if (projectsRes) setProjects((projectsRes as any).items || []);
+                    // if (projectsRes) setProjects((projectsRes as any).items || []);
 
                     // Process Clarity Map (Email -> Stats)
                     const map = new Map<string, any>();

@@ -64,7 +64,7 @@ export const LoginPage = () => {
         onMutate: () => {
             setError(''); // limpia error anterior al iniciar
         },
-        onSuccess: async (data) => {
+        onSuccess: async (data: LoginResponse) => {
             if (data) {
                 // ✅ Limpia caché previo para evitar fugas de datos de otros usuarios
                 queryClient.clear();

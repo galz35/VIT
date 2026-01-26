@@ -57,11 +57,11 @@ export const VisibilidadView: React.FC = () => {
 
     const [qVis, qQuien, qDelDadas, qDelRecibidas] = results;
 
-    const loading = results.some(r => r.isLoading);
-    const errorMsg =
-        results.find(r => r.isError)?.error instanceof Error
-            ? results.find(r => r.isError)?.error.message
-            : (results.find(r => r.isError) as any)?.error?.response?.data?.message;
+    const loading = results.some((r: any) => r.isLoading);
+    const errorResult = results.find((r: any) => r.isError);
+    const errorMsg = errorResult?.error instanceof Error
+        ? errorResult.error.message
+        : (errorResult as any)?.error?.response?.data?.message;
 
     // Normalización de data (porque tu API a veces devuelve array o { empleados/accesos })
     const misEscritorios: Empleado[] = useMemo(() => {
@@ -89,7 +89,7 @@ export const VisibilidadView: React.FC = () => {
     const totalDelegaciones = (delegacionesDadas.length || 0) + (delegacionesRecibidas.length || 0);
 
     const refreshAll = useCallback(() => {
-        results.forEach(r => r.refetch());
+        results.forEach((r: any) => r.refetch());
     }, [results]);
 
     if (loading) {

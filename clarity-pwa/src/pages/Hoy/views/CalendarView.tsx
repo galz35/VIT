@@ -21,7 +21,7 @@ export const CalendarView: React.FC = () => {
             const { id, estado } = params;
             await clarityService.actualizarTarea(id, { estado } as any);
         },
-        onSuccess: async (_data, vars) => {
+        onSuccess: async (_data: any, vars: { id: number; estado: 'Hecha' | 'Descartada' }) => {
             showToast(
                 vars.estado === 'Hecha' ? 'Tarea completada' : 'Tarea descartada',
                 'success'
@@ -33,7 +33,7 @@ export const CalendarView: React.FC = () => {
             // Si AgendaSemanal tiene su propia query, invalídala también:
             // await queryClient.invalidateQueries({ queryKey: ['agendaSemanal'] });
         },
-        onError: (_err, vars) => {
+        onError: (_err: any, vars: { id: number; estado: 'Hecha' | 'Descartada' }) => {
             showToast(
                 vars.estado === 'Hecha' ? 'Error al completar' : 'Error al descartar',
                 'error'

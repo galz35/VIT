@@ -27,7 +27,7 @@ export const VisibilityModal: React.FC<Props> = ({ user, onClose }) => {
         try {
             if (activeTab === 'effective') {
                 const effective = await clarityService.getVisibilidadEfectiva(user.idUsuario);
-                setEffectiveUsers(effective || []);
+                setEffectiveUsers((effective as any[]) || []);
             } else {
                 const [pAreas, pPeople] = await Promise.all([
                     clarityService.getPermisosArea(user.carnet!),

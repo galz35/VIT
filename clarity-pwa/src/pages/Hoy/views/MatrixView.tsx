@@ -65,7 +65,7 @@ export const MatrixView: React.FC = () => {
         mutationFn: async (params: { taskId: number; updates: Partial<Tarea> }) => {
             await clarityService.actualizarTarea(params.taskId, params.updates);
         },
-        onMutate: async ({ taskId, updates }) => {
+        onMutate: async ({ taskId, updates }: { taskId: number; updates: Partial<Tarea> }) => {
             const queryKey = miDiaKeys.fecha(userId, today);
             await queryClient.cancelQueries({ queryKey });
 
@@ -90,7 +90,7 @@ export const MatrixView: React.FC = () => {
 
             return { previous };
         },
-        onError: (_err, _vars, ctx) => {
+        onError: (_err: any, _vars: any, ctx: any) => {
             if (ctx?.previous) queryClient.setQueryData(miDiaKeys.fecha(userId, today), ctx.previous);
         },
         onSettled: () => {

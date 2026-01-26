@@ -129,7 +129,7 @@ export const MeetingNotesPage: React.FC = () => {
 
         setIsSaving(true);
         try {
-            const currentNote = notes.find(n => n.id === activeNoteId);
+            // const currentNote = notes.find(n => n.id === activeNoteId);
             // Simple heuristic to check if ID is temporary (timestamp based usually large)
             const isTempId = activeNoteId.length > 8;
 

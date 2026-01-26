@@ -63,7 +63,7 @@ export const useMiDiaQuery = (idUsuario: number, fecha: string) => {
     const revalidarTareaMutation = useMutation({
         mutationFn: ({ idTarea, accion }: { idTarea: number; accion: 'Sigue' | 'HechaPorOtro' | 'NoAplica' }) =>
             clarityService.revalidarTarea(idTarea, accion),
-        onMutate: async ({ idTarea }) => {
+        onMutate: async ({ idTarea }: { idTarea: number }) => {
             await queryClient.cancelQueries({ queryKey });
             const previousData = queryClient.getQueryData<MiDiaData>(queryKey);
             if (previousData) {
@@ -74,7 +74,7 @@ export const useMiDiaQuery = (idUsuario: number, fecha: string) => {
             }
             return { previousData };
         },
-        onError: (_err, _vars, ctx) => {
+        onError: (_err: any, _vars: any, ctx: any) => {
             if (ctx?.previousData) queryClient.setQueryData(queryKey, ctx.previousData);
         },
         onSettled: () => queryClient.invalidateQueries({ queryKey }),
@@ -85,19 +85,19 @@ export const useMiDiaQuery = (idUsuario: number, fecha: string) => {
             const nuevoEstado = estadoActual === 'Hecha' ? 'EnCurso' : 'Hecha';
             return clarityService.actualizarTarea(idTarea, { estado: nuevoEstado as any });
         },
-        onMutate: async ({ idTarea, estadoActual }) => {
+        onMutate: async ({ idTarea, estadoActual }: { idTarea: number; estadoActual: string }) => {
             await queryClient.cancelQueries({ queryKey });
             const previousData = queryClient.getQueryData<MiDiaData>(queryKey);
             const nuevoEstado = estadoActual === 'Hecha' ? 'EnCurso' : 'Hecha';
 
             if (previousData) {
-                queryClient.setQueryData<MiDiaData>(queryKey, old =>
+                queryClient.setQueryData<MiDiaData>(queryKey, (old: MiDiaData | undefined) =>
                     updateTaskInCache(old, idTarea, { estado: nuevoEstado as any })
                 );
             }
             return { previousData };
         },
-        onError: (_err, _vars, ctx) => {
+        onError: (_err: any, _vars: any, ctx: any) => {
             if (ctx?.previousData) queryClient.setQueryData(queryKey, ctx.previousData);
         },
         onSettled: () => queryClient.invalidateQueries({ queryKey }),
