@@ -187,6 +187,26 @@ export const useTaskController = (task: Tarea, onClose: () => void, onUpdate: ()
         }
     };
 
+    const toggleSubtaskCompletion = async (subtaskId: number, currentStatus: string) => {
+        try {
+            const newStatus = currentStatus === 'Hecha' ? 'Pendiente' : 'Hecha';
+            const progreso = newStatus === 'Hecha' ? 100 : 0;
+
+            await clarityService.actualizarTarea(subtaskId, { estado: newStatus, progreso } as any);
+            await clarityService.postAvance(subtaskId, {
+                idUsuario: task.idCreador,
+                progreso,
+                comentario: `Subtarea marcada como ${newStatus} desde lista padre`
+            });
+
+            const updated = await clarityService.getTaskById(task.idTarea);
+            if (updated) setFullTask(updated);
+            onUpdate();
+        } catch (e) {
+            alert('Error actualizando subtarea');
+        }
+    };
+
     return {
         // State
         form: {
@@ -209,7 +229,8 @@ export const useTaskController = (task: Tarea, onClose: () => void, onUpdate: ()
         actions: {
             handleSaveProgress,
             confirmChangeRequest,
-            addSubtask
+            addSubtask,
+            toggleSubtaskCompletion
         }
     };
 };

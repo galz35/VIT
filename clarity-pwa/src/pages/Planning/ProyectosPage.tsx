@@ -632,11 +632,11 @@ export const ProyectosPage: React.FC = () => {
             {/* TABLA */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="overflow-x-auto min-h-[420px]">
-                    <table className="w-full text-left border-collapse table-fixed lg:table-auto">
-                        <thead className="bg-slate-50 text-slate-500 font-black border-b border-slate-200 sticky top-0 z-10 text-[10px] uppercase tracking-wider">
+                    <table className="w-full text-left border-collapse table-fixed">
+                        <thead className="bg-slate-50 text-slate-500 font-black border-b border-slate-200 sticky top-0 z-30 text-[10px] uppercase tracking-wider">
                             <tr>
                                 <th className="px-4 py-4 w-12 text-center"></th>
-                                <th className="px-3 py-4 min-w-[200px]">Proyecto</th>
+                                <th className="px-3 py-4 w-[25%] lg:w-[30%]">Proyecto</th>
                                 <th className="px-3 py-4 hidden xl:table-cell">Gerencia</th>
                                 <th className="px-3 py-4 hidden xl:table-cell">Subgerencia</th>
                                 <th className="px-3 py-4 hidden xl:table-cell">Área</th>
@@ -644,6 +644,99 @@ export const ProyectosPage: React.FC = () => {
                                 <th className="px-3 py-4 hidden md:table-cell">Estado</th>
                                 <th className="px-3 py-4 hidden md:table-cell w-[100px]">Progreso</th>
                                 <th className="px-6 py-4 text-right w-[100px]">Acción</th>
+                            </tr>
+                            {/* FILTROS POR COLUMNA (Datatable style) */}
+                            <tr className="bg-white border-b border-slate-100">
+                                <th className="px-4 py-2"></th>
+                                <th className="px-3 py-2">
+                                    <div className="relative">
+                                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-300" size={12} />
+                                        <input
+                                            type="text"
+                                            placeholder="Filtrar..."
+                                            value={searchTerm}
+                                            onChange={e => setSearchTerm(e.target.value)}
+                                            className="w-full pl-7 pr-2 py-1.5 text-[10px] font-bold border border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
+                                        />
+                                    </div>
+                                </th>
+                                <th className="px-3 py-2 hidden xl:table-cell">
+                                    <select
+                                        className="w-full h-8 px-2 bg-slate-50 border border-slate-200 rounded-lg text-[9px] font-black text-slate-600 outline-none"
+                                        value={filters.gerencia}
+                                        onChange={e => setFilters({ ...filters, gerencia: e.target.value, subgerencia: '', area: '' })}
+                                    >
+                                        <option value="">TODAS</option>
+                                        {uniqueGerencias.map(g => (
+                                            <option key={g} value={g}>{g}</option>
+                                        ))}
+                                    </select>
+                                </th>
+                                <th className="px-3 py-2 hidden xl:table-cell">
+                                    <select
+                                        className="w-full h-8 px-2 bg-slate-50 border border-slate-200 rounded-lg text-[9px] font-black text-slate-600 outline-none disabled:opacity-50"
+                                        value={filters.subgerencia}
+                                        onChange={e => setFilters({ ...filters, subgerencia: e.target.value, area: '' })}
+                                        disabled={!filters.gerencia}
+                                    >
+                                        <option value="">TODAS</option>
+                                        {filterUniqueSubgerencias.map(s => (
+                                            <option key={s} value={s}>{s}</option>
+                                        ))}
+                                    </select>
+                                </th>
+                                <th className="px-3 py-2 hidden xl:table-cell">
+                                    <select
+                                        className="w-full h-8 px-2 bg-slate-50 border border-slate-200 rounded-lg text-[9px] font-black text-slate-600 outline-none disabled:opacity-50"
+                                        value={filters.area}
+                                        onChange={e => setFilters({ ...filters, area: e.target.value })}
+                                        disabled={!filters.gerencia}
+                                    >
+                                        <option value="">TODAS</option>
+                                        {filterUniqueAreas.map(a => (
+                                            <option key={a} value={a}>{a}</option>
+                                        ))}
+                                    </select>
+                                </th>
+                                <th className="px-3 py-2 hidden lg:table-cell">
+                                    <select
+                                        className="w-full h-8 px-2 bg-slate-50 border border-slate-200 rounded-lg text-[9px] font-black text-slate-600 outline-none"
+                                        value={filters.tipo}
+                                        onChange={e => setFilters({ ...filters, tipo: e.target.value })}
+                                    >
+                                        <option value="">TODOS</option>
+                                        <option value="administrativo">ADMIN</option>
+                                        <option value="Logistica">LOGISTICA</option>
+                                        <option value="AMX">AMX</option>
+                                        <option value="Estrategico">ESTRAT.</option>
+                                    </select>
+                                </th>
+                                <th className="px-3 py-2 hidden md:table-cell">
+                                    <select
+                                        className="w-full h-8 px-2 bg-slate-50 border border-slate-200 rounded-lg text-[9px] font-black text-slate-600 outline-none"
+                                        value={filters.estado}
+                                        onChange={e => setFilters({ ...filters, estado: e.target.value })}
+                                    >
+                                        <option value="">TODOS</option>
+                                        <option value="Activo">ACTIVO</option>
+                                        <option value="Terminado">HECHO</option>
+                                        <option value="Borrador">BORRADOR</option>
+                                        <option value="Detenido">PAUSA</option>
+                                    </select>
+                                </th>
+                                <th className="px-3 py-2 hidden md:table-cell"></th>
+                                <th className="px-6 py-2 text-right">
+                                    <button
+                                        onClick={() => {
+                                            setSearchTerm('');
+                                            setFilters({ estado: '', gerencia: '', subgerencia: '', area: '', tipo: '' });
+                                        }}
+                                        className="p-1 px-2 text-[9px] font-black bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-md transition-colors"
+                                        title="Limpiar filtros"
+                                    >
+                                        LIMPIAR
+                                    </button>
+                                </th>
                             </tr>
                         </thead>
 
@@ -695,10 +788,10 @@ export const ProyectosPage: React.FC = () => {
                                                         <Target size={22} />
                                                     </div>
 
-                                                    <div className="min-w-0 w-full">
+                                                    <div className="min-w-0 flex-1 overflow-hidden">
                                                         {/* NOMBRE */}
                                                         <div className="flex items-center gap-2 min-w-0">
-                                                            <div className="font-black text-slate-900 truncate group-hover:text-indigo-700 transition-colors text-sm">
+                                                            <div className="font-black text-slate-900 truncate group-hover:text-indigo-700 transition-colors text-sm" title={p.nombre}>
                                                                 {p.nombre}
                                                             </div>
 
@@ -708,10 +801,10 @@ export const ProyectosPage: React.FC = () => {
                                                         </div>
 
                                                         {/* SUB-INFO PARA MÓVILES O PANTALLAS PEQUEÑAS */}
-                                                        <div className="mt-1 flex xl:hidden flex-wrap items-center gap-2 text-[10px] font-bold text-slate-400 uppercase">
-                                                            <span>{p.gerencia || 'Global'}</span>
+                                                        <div className="mt-1 flex xl:hidden flex-wrap items-center gap-2 text-[10px] font-bold text-slate-400 uppercase truncate">
+                                                            <span className="truncate max-w-[100px]">{p.gerencia || 'Global'}</span>
                                                             <span className="text-slate-200">/</span>
-                                                            <span>{p.subgerencia || 'General'}</span>
+                                                            <span className="truncate max-w-[100px]">{p.subgerencia || 'General'}</span>
                                                         </div>
                                                     </div>
                                                 </div>

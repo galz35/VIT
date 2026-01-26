@@ -8,6 +8,7 @@ import { TaskExecutionPanel } from './TaskExecutionPanel';
 import { TaskAuditLog } from './TaskAuditLog';
 import { TaskABCSection } from '../ui/TaskABCSection'; // Reuse existing
 import { SolicitudCambioModal } from '../ui/SolicitudCambioModal'; // Reuse existing
+import { TaskSubtasks } from './TaskSubtasks';
 
 interface Props {
     task: Tarea;
@@ -112,6 +113,13 @@ export const TaskDetailModalV2: React.FC<Props> = ({ task, onClose, onUpdate, mo
                                 setComentario={form.setComentario}
                                 onSave={actions.handleSaveProgress}
                                 submitting={meta.submitting}
+                            />
+
+                            {/* CHECKLIST / SUBTASKS */}
+                            <TaskSubtasks
+                                subtasks={meta.fullTask?.subtareas}
+                                onToggle={(id, status) => actions.toggleSubtaskCompletion(id, status)}
+                                onAdd={(title) => actions.addSubtask(title)}
                             />
                         </div>
                     )}
