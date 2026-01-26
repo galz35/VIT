@@ -1,11 +1,23 @@
-import React, { useState, useEffect, useMemo } from 'react';
+// Last Modified: 2026-01-24 20:38:55
+import React, { useMemo, useCallback } from 'react';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
+
 import { useMiDiaContext } from '../context/MiDiaContext';
+import { miDiaKeys } from '../../../hooks/query/useMiDiaQuery';
 import { EisenhowerMatrix } from '../../Planning/components/EisenhowerMatrix';
 import { clarityService } from '../../../services/clarity.service';
 import type { Tarea } from '../../../types/modelos';
 
-const classifyTask = (t: Tarea): 'q1' | 'q2' | 'q3' | 'q4' => {
-    const isUrgent = t.fechaObjetivo ? new Date(t.fechaObjetivo) <= new Date(Date.now() + 86400000 * 2) : false;
+type Quad = 'q1' | 'q2' | 'q3' | 'q4';
+
+const MS_DIA = 86400000;
+
+const classifyTask = (t: Tarea, now: Date): Quad => {
+    const limiteUrgente = new Date(now.getTime() + MS_DIA * 2);
+
+    const fechaObj = t.fechaObjetivo ? new Date(t.fechaObjetivo) : null;
+    const isUrgent = !!(fechaObj && fechaObj <= limiteUrgente);
+
     const isImportant = t.prioridad === 'Alta' || t.prioridad === 'Media';
 
     if (isUrgent && isImportant) return 'q1';
@@ -14,59 +26,107 @@ const classifyTask = (t: Tarea): 'q1' | 'q2' | 'q3' | 'q4' => {
     return 'q4';
 };
 
-export const MatrixView: React.FC = () => {
-    const { allDisponibles, fetchMiDia, userId } = useMiDiaContext();
-    const [localTasks, setLocalTasks] = useState<Tarea[]>([]);
+const computeUpdates = (targetQuad: Quad, now: Date): Partial<Tarea> => {
+    const nextWeek = new Date(now);
+    nextWeek.setDate(nextWeek.getDate() + 7);
 
-    useEffect(() => {
-        setLocalTasks(allDisponibles);
+    if (targetQuad === 'q1') return { prioridad: 'Alta', fechaObjetivo: now.toISOString() };
+    if (targetQuad === 'q2') return { prioridad: 'Alta', fechaObjetivo: nextWeek.toISOString() };
+    if (targetQuad === 'q3') return { prioridad: 'Baja', fechaObjetivo: now.toISOString() };
+    return { prioridad: 'Baja', fechaObjetivo: undefined };
+};
+
+export const MatrixView: React.FC = () => {
+    const { allDisponibles, userId, today, isMutating, mutatingTaskId } = useMiDiaContext();
+    const queryClient = useQueryClient();
+
+    // ✅ fuente única: allDisponibles (sin duplicar estado)
+    const matrixTasks = useMemo(() => {
+        const now = new Date();
+        const q1: Tarea[] = [], q2: Tarea[] = [], q3: Tarea[] = [], q4: Tarea[] = [];
+
+        (allDisponibles || []).forEach(t => {
+            const c = classifyTask(t, now);
+            if (c === 'q1') q1.push(t);
+            else if (c === 'q2') q2.push(t);
+            else if (c === 'q3') q3.push(t);
+            else q4.push(t);
+        });
+
+        return { q1, q2, q3, q4 };
     }, [allDisponibles]);
 
-    const matrixTasks = useMemo(() => {
-        const q1: Tarea[] = [], q2: Tarea[] = [], q3: Tarea[] = [], q4: Tarea[] = [];
-        localTasks.forEach(t => {
-            const c = classifyTask(t);
-            if (c === 'q1') q1.push(t);
-            if (c === 'q2') q2.push(t);
-            if (c === 'q3') q3.push(t);
-            if (c === 'q4') q4.push(t);
-        });
-        return { q1, q2, q3, q4 };
-    }, [localTasks]);
+    const invalidateMiDia = useCallback(() => {
+        queryClient.invalidateQueries({ queryKey: miDiaKeys.usuario(userId) });
+    }, [queryClient, userId]);
 
-    const handleQuickMove = async (taskId: number, targetQuad: 'q1' | 'q2' | 'q3' | 'q4') => {
-        const now = new Date();
-        const nextWeek = new Date(now); nextWeek.setDate(nextWeek.getDate() + 7);
+    // ✅ Mutation: mover tarea (optimistic + rollback)
+    const moverTarea = useMutation({
+        mutationFn: async (params: { taskId: number; updates: Partial<Tarea> }) => {
+            await clarityService.actualizarTarea(params.taskId, params.updates);
+        },
+        onMutate: async ({ taskId, updates }) => {
+            const queryKey = miDiaKeys.fecha(userId, today);
+            await queryClient.cancelQueries({ queryKey });
 
-        let updates: Partial<Tarea> = {};
-        if (targetQuad === 'q1') { updates = { prioridad: 'Alta', fechaObjetivo: now.toISOString() }; }
-        if (targetQuad === 'q2') { updates = { prioridad: 'Alta', fechaObjetivo: nextWeek.toISOString() }; }
-        if (targetQuad === 'q3') { updates = { prioridad: 'Baja', fechaObjetivo: now.toISOString() }; }
-        if (targetQuad === 'q4') { updates = { prioridad: 'Baja', fechaObjetivo: undefined }; }
+            const previous = queryClient.getQueryData<any>(queryKey);
 
-        setLocalTasks(prev => prev.map(t => {
-            if (t.idTarea === taskId) return { ...t, ...updates };
-            return t;
-        }));
+            queryClient.setQueryData<any>(queryKey, (old: any) => {
+                if (!old) return old;
 
-        try {
-            await clarityService.actualizarTarea(taskId, updates);
-        } catch (e) {
-            fetchMiDia();
-        }
-    };
+                // EJEMPLO: si old.data.allDisponibles existe. Ajusta a tu estructura real.
+                // Si no sabes la estructura exacta, mejor NO tocar cache y solo invalidate.
+                try {
+                    const cloned = structuredClone(old);
+                    const list: Tarea[] = cloned?.data?.allDisponibles || [];
+                    cloned.data.allDisponibles = list.map((t: Tarea) =>
+                        t.idTarea === taskId ? { ...t, ...updates } : t
+                    );
+                    return cloned;
+                } catch {
+                    return old;
+                }
+            });
 
-    const handleQuickAdd = async (title: string) => {
-        try {
+            return { previous };
+        },
+        onError: (_err, _vars, ctx) => {
+            if (ctx?.previous) queryClient.setQueryData(miDiaKeys.fecha(userId, today), ctx.previous);
+        },
+        onSettled: () => {
+            invalidateMiDia();
+        },
+    });
+
+    const handleQuickMove = useCallback(
+        (taskId: number, targetQuad: Quad) => {
+            const now = new Date();
+            const updates = computeUpdates(targetQuad, now);
+            moverTarea.mutate({ taskId, updates });
+        },
+        [moverTarea]
+    );
+
+    // ✅ Mutation: agregar tarea (y refrescar via invalidación)
+    const crearTarea = useMutation({
+        mutationFn: async (title: string) => {
             await clarityService.postTareaRapida({
                 titulo: title,
                 idUsuario: userId,
                 prioridad: 'Media',
-                esfuerzo: 'M'
+                esfuerzo: 'M',
             });
-            fetchMiDia();
-        } catch (e) { }
-    };
+        },
+        onSuccess: () => invalidateMiDia(),
+    });
+
+    const handleQuickAdd = useCallback(
+        (title: string) => {
+            if (!title?.trim()) return;
+            crearTarea.mutate(title.trim());
+        },
+        [crearTarea]
+    );
 
     return (
         <div className="h-full flex flex-col animate-fade-in">
@@ -79,6 +139,8 @@ export const MatrixView: React.FC = () => {
                     onTaskClick={() => { }}
                     onQuickMove={handleQuickMove}
                     onAdd={handleQuickAdd}
+                    isBusy={isMutating}
+                    busyTaskId={mutatingTaskId || undefined}
                 />
             </div>
         </div>

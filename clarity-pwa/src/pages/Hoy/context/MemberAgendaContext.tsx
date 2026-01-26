@@ -1,31 +1,25 @@
-import React, { useMemo } from 'react';
+// Last Modified: 2026-01-24 20:38:55
+import React, { useMemo, useState } from 'react';
 import { useMemberAgenda } from '../../../hooks/useMemberAgenda';
-import { MiDiaContext } from './MiDiaContext';
+import { MiDiaContext } from './MiDiaContextCore';
 
-export const MemberAgendaProvider: React.FC<{ children: React.ReactNode, userId: string }> = ({ children, userId }) => {
-    const [today, setToday] = React.useState(new Date().toISOString().split('T')[0]);
+// ✅ Fecha local segura (evita bug UTC)
+const fechaLocalYYYYMMDD = () => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+};
 
-    // Hooks dedicated to pulling data for the TARGET user, not the logged-in user
-    const { loading, checkin, arrastrados, bloqueos, bloqueosMeCulpan, disponibles, backlog, fetchMiDia } = useMemberAgenda(userId, today);
+export const MemberAgendaProvider: React.FC<{ children: React.ReactNode; userId: string }> = ({
+    children,
+    userId,
+}) => {
+    const [today, setToday] = useState(fechaLocalYYYYMMDD());
 
-    // Derived logic centralized here (Mirroring MiDiaContext logic)
-    const allDisponibles = useMemo(() => {
-        // Merge suggested tasks + backlog to allow working on anything pending
-        const base = [...(disponibles || []), ...(backlog || [])];
-
-        // Remove duplicates (by idTarea)
-        const unique = Array.from(new Map(base.map(t => [Number(t.idTarea), t])).values());
-
-        // Merge with 'arrastrados' (if any)
-        const real = [...(arrastrados || []), ...unique.filter(u => !(arrastrados || []).some(a => Number(a.idTarea) === Number(u.idTarea)))];
-
-        // Sort by order
-        real.sort((a, b) => (a.orden || 0) - (b.orden || 0));
-
-        return real;
-    }, [arrastrados, disponibles, backlog, loading]);
-
-    const value = {
+    // Hook dedicado a cargar datos del usuario TARGET (no el logueado)
+    const {
         loading,
         checkin,
         arrastrados,
@@ -33,14 +27,59 @@ export const MemberAgendaProvider: React.FC<{ children: React.ReactNode, userId:
         bloqueosMeCulpan,
         disponibles,
         backlog,
-        allDisponibles,
         fetchMiDia,
-        userId: Number(userId),
-        today,
-        setToday
-    };
+    } = useMemberAgenda(userId, today);
 
-    // MAGIC: We provide the Mock/Proxy context using the original Context ID.
-    // This tricks <ExecutionView>, <MatrixView>, etc., into rendering with OUR data.
-    return <MiDiaContext.Provider value={value}>{children}</MiDiaContext.Provider>;
+    const allDisponibles = useMemo(() => {
+        const base = [...(disponibles || []), ...(backlog || [])];
+
+        // ✅ únicos por idTarea
+        const unique = Array.from(new Map(base.map(t => [Number(t.idTarea), t])).values());
+
+        // ✅ arrastrados primero, luego lo demás sin duplicar
+        const arr = arrastrados || [];
+        const real = [
+            ...arr,
+            ...unique.filter(u => !arr.some(a => Number(a.idTarea) === Number(u.idTarea))),
+        ];
+
+        // ✅ orden estable
+        return real.sort((a, b) => (a.orden || 0) - (b.orden || 0));
+    }, [arrastrados, disponibles, backlog]);
+
+    const value = useMemo(
+        () => ({
+            loading,
+            checkin: checkin as any, // Cast temporal para compatibilidad
+            arrastrados,
+            bloqueos,
+            bloqueosMeCulpan,
+            disponibles,
+            backlog,
+            allDisponibles,
+            fetchMiDia,
+            userId: Number(userId),
+            today,
+            setToday,
+            // Agregamos funciones dummy para que no rompa si las vistas las llaman
+            revalidarTarea: () => console.warn('Revalidar no disponible en vista de equipo'),
+            toggleTarea: () => console.warn('Toggle no disponible en vista de equipo')
+        }),
+        [
+            loading,
+            checkin,
+            arrastrados,
+            bloqueos,
+            bloqueosMeCulpan,
+            disponibles,
+            backlog,
+            allDisponibles,
+            fetchMiDia,
+            userId,
+            today,
+        ]
+    );
+
+    // Proxy del contexto para reutilizar ExecutionView/MatrixView/etc.
+    return <MiDiaContext.Provider value={value as any}>{children}</MiDiaContext.Provider>;
 };

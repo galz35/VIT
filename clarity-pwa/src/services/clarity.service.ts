@@ -17,28 +17,29 @@ import type { EquipoHoyResponse } from '../types/equipo';
 /**
  * Agrupa todas las funciones relacionadas con la funcionalidad de "Clarity".
  */
+
 export const clarityService = {
     // === MÓDULO: MI DÍA & AGENDA ===
     // Estas funciones manejan lo que el usuario ve al inicio de su jornada.
-    getMiDia: async (fecha: string) => {
+    getMiDia: async (fecha: string, startDate?: string, endDate?: string) => {
         const { data: response } = await api.get<ApiResponse<{
             checkinHoy: Checkin | null;
             tareasSugeridas: Tarea[]; // Unified list from backend
             backlog: Tarea[];        // New backlog list
             bloqueosActivos?: Bloqueo[];
             bloqueosMeCulpan?: Bloqueo[];
-        }>>(`/mi-dia`, { params: { fecha } });
+        }>>(`/mi-dia`, { params: { fecha, startDate, endDate } });
         return response.data;
     },
 
-    getMemberAgenda: async (userId: string, fecha: string) => {
+    getMemberAgenda: async (userId: string, fecha: string, startDate?: string, endDate?: string) => {
         const { data: response } = await api.get<ApiResponse<{
             checkinHoy: Checkin | null;
             tareasSugeridas: Tarea[];
             backlog: Tarea[];
             bloqueosActivos?: Bloqueo[];
             bloqueosMeCulpan?: Bloqueo[];
-        }>>(`/agenda/${userId}`, { params: { fecha } });
+        }>>(`/agenda/${userId}`, { params: { fecha, startDate, endDate } });
         return response.data;
     },
 
@@ -59,7 +60,7 @@ export const clarityService = {
         return response.data;
     },
 
-    getMisTareas: async (filters?: { estado?: string, idProyecto?: number }) => {
+    getMisTareas: async (filters?: { estado?: string, idProyecto?: number, startDate?: string, endDate?: string, query?: string }) => {
         const { data: response } = await api.get<ApiResponse<Tarea[]>>('/tareas/mias', { params: filters });
         return response.data;
     },
@@ -69,13 +70,18 @@ export const clarityService = {
         return response.data;
     },
 
+    getTaskById: async (id: number) => {
+        const { data: response } = await api.get<ApiResponse<Tarea>>(`/tareas/${id}`);
+        return response.data;
+    },
+
     getTareasUsuario: async (idUsuario: number) => {
         const { data: response } = await api.get<ApiResponse<Tarea[]>>(`/equipo/miembro/${idUsuario}/tareas`);
         return response.data;
     },
 
-    postProyecto: async (nombre: string, idNodoDuenio?: number, descripcion?: string) => {
-        const { data: response } = await api.post<ApiResponse>('/proyectos', { nombre, idNodoDuenio, descripcion });
+    postProyecto: async (nombre: string, idNodoDuenio?: number, descripcion?: string, tipo?: string) => {
+        const { data: response } = await api.post<ApiResponse>('/proyectos', { nombre, idNodoDuenio, descripcion, tipo });
         return response.data;
     },
 
@@ -85,7 +91,7 @@ export const clarityService = {
     },
 
 
-    actualizarTarea: async (idTarea: number, dto: Partial<Pick<Tarea, 'titulo' | 'descripcion' | 'estado' | 'prioridad' | 'esfuerzo' | 'fechaObjetivo' | 'fechaInicioPlanificada'>> & { motivo?: string }) => {
+    actualizarTarea: async (idTarea: number, dto: Partial<Pick<Tarea, 'titulo' | 'descripcion' | 'estado' | 'prioridad' | 'esfuerzo' | 'fechaObjetivo' | 'fechaInicioPlanificada' | 'linkEvidencia' | 'idTareaPadre'>> & { motivo?: string }) => {
         const { data: response } = await api.patch<ApiResponse<Tarea>>(`/tareas/${idTarea}`, dto);
         return response.data;
     },
@@ -100,10 +106,6 @@ export const clarityService = {
         return response.data;
     },
 
-    revalidarTarea: async (idTarea: number, accion: string, idUsuarioOtro?: number, razon?: string) => {
-        const { data: response } = await api.post<ApiResponse>(`/tareas/${idTarea}/revalidar`, { accion, idUsuarioOtro, razon });
-        return response.data;
-    },
 
     solicitarCambio: async (idTarea: number, campo: string, valorNuevo: string, motivo: string) => {
         const { data: response } = await api.post<ApiResponse<any>>('/tareas/solicitud-cambio', { idTarea, campo, valorNuevo, motivo });
@@ -132,6 +134,16 @@ export const clarityService = {
     postAvanceMensual: async (idTarea: number, dto: { anio: number, mes: number, porcentajeMes: number, comentario?: string }) => {
         const { data: response } = await api.post<ApiResponse<{ historial: TareaAvanceMensual[], acumulado: number }>>(`/tareas/${idTarea}/avance-mensual`, dto);
         return response.data;
+    },
+
+    deleteTarea: async (idTarea: number) => {
+        const { data: response } = await api.delete<ApiResponse>(`/tareas/${idTarea}`);
+        return response.data;
+    },
+
+    revalidarTarea: async (idTarea: number, accion: 'Sigue' | 'HechaPorOtro' | 'NoAplica' | 'Reasignar', idUsuarioOtro?: number) => {
+        const { data } = await api.post<ApiResponse>(`/tareas/${idTarea}/revalidar`, { accion, idUsuarioOtro });
+        return data.data;
     },
 
     // ==========================================
@@ -230,7 +242,7 @@ export const clarityService = {
         return response.data;
     },
 
-    updateProyecto: async (id: number, dto: { nombre?: string, descripcion?: string, idNodoDuenio?: number, fechaInicio?: string, fechaFin?: string }) => {
+    updateProyecto: async (id: number, dto: { nombre?: string, descripcion?: string, idNodoDuenio?: number, fechaInicio?: string, fechaFin?: string, tipo?: string }) => {
         const { data: response } = await api.patch<ApiResponse>(`/proyectos/${id}`, dto);
         return response.data;
     },
@@ -259,6 +271,27 @@ export const clarityService = {
         const { data: response } = await api.post<ApiResponse>('/config', dto);
         return response.data;
     },
+
+    // ==========================================
+    // NOTAS (CRUD)
+    // ==========================================
+    getNotes: async () => {
+        const { data: response } = await api.get<ApiResponse>('/notas');
+        return response.data;
+    },
+    createNote: async (dto: { title: string, content: string }) => {
+        const { data: response } = await api.post<ApiResponse>('/notas', dto);
+        return response.data;
+    },
+    updateNote: async (id: string | number, dto: { title: string, content: string }) => {
+        const { data: response } = await api.patch<ApiResponse>(`/notas/${id}`, dto);
+        return response.data;
+    },
+    deleteNote: async (id: string | number) => {
+        const { data: response } = await api.delete<ApiResponse>(`/notas/${id}`);
+        return response.data;
+    },
+
 
 
     getLogs: async (page: number = 1, limit: number = 100) => {
@@ -314,8 +347,14 @@ export const clarityService = {
         const { data: response } = await api.post<ApiResponse>('/admin/usuarios', dto);
         return response.data;
     },
-    getVisibilidadEfectiva: async (idUsuario: number) => {
-        const { data: response } = await api.get<ApiResponse<any[]>>(`/admin/usuarios/${idUsuario}/visibilidad-efectiva`);
+    async getVisibilidadEfectiva(idUsuario: number) {
+        const { data: response } = await api.get<ApiResponse>(`/visibilidad/${idUsuario}`);
+        return response.data;
+    },
+
+    // === DASHBOARD ALERTS ===
+    getDashboardAlerts: async () => {
+        const { data: response } = await api.get<ApiResponse<{ overdue: any[], today: any[] }>>('/planning/dashboard/alerts');
         return response.data;
     },
     updateUsuarioRol: async (idUsuario: number, rol: string, idRol?: number) => {

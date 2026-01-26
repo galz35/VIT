@@ -3,11 +3,15 @@
  * Maneja p_TareaRecurrencia y p_TareaInstancia
  */
 
-import { ejecutarQuery, Int, NVarChar, Bit, DateTime, SqlDate } from '../db/base.repo';
+import { ejecutarQuery, ejecutarSP, Int, NVarChar, Bit, DateTime, SqlDate } from '../db/base.repo';
 import { TareaRecurrenciaDb, TareaInstanciaDb } from '../db/tipos';
 
 // ==========================================
 // RECURRENCIA
+// ==========================================
+
+// ==========================================
+// RECURRENCIA (Migrado a SP)
 // ==========================================
 
 export async function crearRecurrencia(datos: {
@@ -19,12 +23,7 @@ export async function crearRecurrencia(datos: {
     fechaFinVigencia?: Date;
     idCreador: number;
 }): Promise<number> {
-    const result = await ejecutarQuery(`
-        INSERT INTO p_TareaRecurrencia 
-        (idTarea, tipoRecurrencia, diasSemana, diaMes, fechaInicioVigencia, fechaFinVigencia, activo, idCreador)
-        OUTPUT INSERTED.id
-        VALUES (@idTarea, @tipoRecurrencia, @diasSemana, @diaMes, @fechaInicioVigencia, @fechaFinVigencia, 1, @idCreador)
-    `, {
+    const result = await ejecutarSP('sp_Recurrencia_Crear', {
         idTarea: { valor: datos.idTarea, tipo: Int },
         tipoRecurrencia: { valor: datos.tipoRecurrencia, tipo: NVarChar },
         diasSemana: { valor: datos.diasSemana || null, tipo: NVarChar },
@@ -33,25 +32,22 @@ export async function crearRecurrencia(datos: {
         fechaFinVigencia: { valor: datos.fechaFinVigencia || null, tipo: SqlDate },
         idCreador: { valor: datos.idCreador, tipo: Int }
     });
-    return result[0]?.id;
+    return (result as any)[0]?.id;
 }
 
 export async function obtenerRecurrenciaPorTarea(idTarea: number): Promise<TareaRecurrenciaDb | null> {
-    const result = await ejecutarQuery(`
-        SELECT * FROM p_TareaRecurrencia 
-        WHERE idTarea = @idTarea AND activo = 1
-    `, { idTarea: { valor: idTarea, tipo: Int } });
-    return result[0] || null;
+    const result = await ejecutarSP<TareaRecurrenciaDb>('sp_Recurrencia_ObtenerPorTarea', {
+        idTarea: { valor: idTarea, tipo: Int }
+    });
+    return (result as any)[0] || null;
 }
 
 export async function desactivarRecurrencia(id: number): Promise<void> {
-    await ejecutarQuery(`
-        UPDATE p_TareaRecurrencia SET activo = 0 WHERE id = @id
-    `, { id: { valor: id, tipo: Int } });
+    await ejecutarQuery(`UPDATE p_TareaRecurrencia SET activo = 0 WHERE id = @id`, { id: { valor: id, tipo: Int } });
 }
 
 // ==========================================
-// INSTANCIAS (Bitácora)
+// INSTANCIAS (Bitácora - Migrado a SP)
 // ==========================================
 
 export async function crearInstancia(datos: {
@@ -63,14 +59,7 @@ export async function crearInstancia(datos: {
     idUsuarioEjecutor?: number;
     fechaReprogramada?: Date;
 }): Promise<number> {
-    const result = await ejecutarQuery(`
-        INSERT INTO p_TareaInstancia 
-        (idTarea, idRecurrencia, fechaProgramada, estadoInstancia, comentario, idUsuarioEjecutor, fechaEjecucion, fechaReprogramada)
-        OUTPUT INSERTED.id
-        VALUES (@idTarea, @idRecurrencia, @fechaProgramada, @estadoInstancia, @comentario, @idUsuarioEjecutor, 
-                CASE WHEN @estadoInstancia IN ('HECHA', 'OMITIDA') THEN GETDATE() ELSE NULL END,
-                @fechaReprogramada)
-    `, {
+    const result = await ejecutarSP('sp_Instancia_Upsert', {
         idTarea: { valor: datos.idTarea, tipo: Int },
         idRecurrencia: { valor: datos.idRecurrencia || null, tipo: Int },
         fechaProgramada: { valor: datos.fechaProgramada, tipo: SqlDate },
@@ -79,25 +68,18 @@ export async function crearInstancia(datos: {
         idUsuarioEjecutor: { valor: datos.idUsuarioEjecutor || null, tipo: Int },
         fechaReprogramada: { valor: datos.fechaReprogramada || null, tipo: SqlDate }
     });
-    return result[0]?.id;
+    return (result as any)[0]?.id;
 }
 
 export async function obtenerInstanciasPorTarea(idTarea: number, limit: number = 30): Promise<TareaInstanciaDb[]> {
-    return await ejecutarQuery(`
-        SELECT TOP (@limit) * FROM p_TareaInstancia 
-        WHERE idTarea = @idTarea 
-        ORDER BY fechaProgramada DESC
-    `, {
+    return await ejecutarQuery(`SELECT TOP (@limit) * FROM p_TareaInstancia WHERE idTarea = @idTarea ORDER BY fechaProgramada DESC`, {
         idTarea: { valor: idTarea, tipo: Int },
         limit: { valor: limit, tipo: Int }
     });
 }
 
 export async function obtenerInstanciaPorFecha(idTarea: number, fecha: Date): Promise<TareaInstanciaDb | null> {
-    const result = await ejecutarQuery(`
-        SELECT * FROM p_TareaInstancia 
-        WHERE idTarea = @idTarea AND fechaProgramada = @fecha
-    `, {
+    const result = await ejecutarQuery(`SELECT * FROM p_TareaInstancia WHERE idTarea = @idTarea AND fechaProgramada = @fecha`, {
         idTarea: { valor: idTarea, tipo: Int },
         fecha: { valor: fecha, tipo: SqlDate }
     });
@@ -110,6 +92,7 @@ export async function actualizarEstadoInstancia(
     comentario?: string,
     fechaReprogramada?: Date
 ): Promise<void> {
+    // Usamos el mismo SP de Upsert si tenemos los datos necesarios, pero para mantener compatibilidad con 'id' directo:
     await ejecutarQuery(`
         UPDATE p_TareaInstancia 
         SET estadoInstancia = @estadoInstancia,
@@ -129,7 +112,7 @@ export async function actualizarEstadoInstancia(
 // AGENDA DIARIA (Recurrencias)
 // ==========================================
 
-export async function obtenerAgendaRecurrente(fecha: Date, idUsuario: number): Promise<any[]> {
+export async function obtenerAgendaRecurrente(fecha: Date, carnet: string): Promise<any[]> {
     // SET DATEFIRST 1 para que lunes = 1 (ISO)
     return await ejecutarQuery(`
         SET DATEFIRST 1;
@@ -175,7 +158,7 @@ export async function obtenerAgendaRecurrente(fecha: Date, idUsuario: number): P
         FROM p_Tareas t
         LEFT JOIN Inst inst ON inst.idTarea = t.idTarea
         LEFT JOIN RecAplica ra ON ra.idTarea = t.idTarea
-        WHERE t.idCreador = @idUsuario
+        WHERE t.creadorCarnet = @carnet
           AND t.comportamiento = 'RECURRENTE'
           AND (inst.idTarea IS NOT NULL OR ra.idTarea IS NOT NULL)
         ORDER BY
@@ -188,6 +171,6 @@ export async function obtenerAgendaRecurrente(fecha: Date, idUsuario: number): P
             END
     `, {
         fecha: { valor: fecha, tipo: SqlDate },
-        idUsuario: { valor: idUsuario, tipo: Int }
+        carnet: { valor: carnet, tipo: NVarChar }
     });
 }

@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { clarityService } from '../../services/clarity.service';
 import { TaskDetailModal as ReadTaskDetailModal } from '../../components/ui/TaskDetailModal';
+import { StatusBadge } from '../../components/ui/StatusBadge';
 
 export const PendientesPage: React.FC = () => {
     const { user } = useAuth();
@@ -280,9 +281,7 @@ export const PendientesPage: React.FC = () => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="px-2 py-1 rounded text-xs font-medium bg-slate-100 text-slate-600">
-                                                {task.estado}
-                                            </span>
+                                            <StatusBadge status={task.estado} />
                                         </td>
                                         <td className="px-6 py-4 text-right relative">
                                             <div className="flex items-center justify-end gap-1">

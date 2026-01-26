@@ -42,6 +42,11 @@ export class ProyectoFilterDto extends PaginationDto {
     @IsOptional()
     @IsString()
     area?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    tipo?: string;
 }
 
 export class AuditFilterDto extends PaginationDto {
@@ -71,6 +76,16 @@ export class FechaQueryDto {
     @ApiProperty({ example: '2025-12-17' })
     @IsDateString()
     fecha!: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsDateString()
+    startDate?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsDateString()
+    endDate?: string;
 }
 
 export class CheckinUpsertDto {
@@ -127,6 +142,26 @@ export class CheckinUpsertDto {
     @IsOptional()
     @IsIn(['Tope', 'Bien', 'Bajo'])
     estadoAnimo?: 'Tope' | 'Bien' | 'Bajo';
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    usuarioCarnet?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    prioridad1?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    prioridad2?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    prioridad3?: string;
 }
 
 export class TareaCrearRapidaDto {
@@ -186,6 +221,11 @@ export class TareaCrearRapidaDto {
     @IsOptional()
     @IsIn(['SIMPLE', 'RECURRENTE', 'LARGA'])
     comportamiento?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    linkEvidencia?: string;
 }
 
 export class TareaActualizarDto {
@@ -257,6 +297,11 @@ export class TareaActualizarDto {
     @IsOptional()
     @IsString()
     comentario?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    linkEvidencia?: string;
 }
 
 export class TareaRevalidarDto {
@@ -277,6 +322,18 @@ export class TareaRevalidarDto {
     @MaxLength(200)
     razon?: string;
 }
+
+export class TareaMasivaDto {
+    @ApiProperty()
+    @Type(() => TareaCrearRapidaDto)
+    tareaBase!: TareaCrearRapidaDto;
+
+    @ApiProperty({ type: [Number] })
+    @IsArray()
+    @IsInt({ each: true })
+    idUsuarios!: number[];
+}
+
 
 export class BloqueoCrearDto {
     @ApiProperty({ example: 123, required: false })
@@ -396,6 +453,12 @@ export class ProyectoCrearDto {
     @IsOptional()
     @IsString()
     fechaFin?: string;
+
+    @ApiProperty({ required: false, enum: ['administrativo', 'Logistica', 'AMX', 'Estrategico'], default: 'administrativo' })
+    @IsOptional()
+    @IsString()
+    @IsIn(['administrativo', 'Logistica', 'AMX', 'Estrategico'])
+    tipo?: string;
 }
 
 
@@ -532,6 +595,16 @@ export class TaskFilterDto extends PaginationDto {
     @IsInt()
     @Type(() => Number)
     idUsuario?: number;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    startDate?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    endDate?: string;
 }
 
 export class DateRangeDto {

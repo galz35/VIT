@@ -5,7 +5,7 @@
  * para proporcionar una vista completa de la gestión del equipo.
  */
 import React, { useState, useEffect } from 'react';
-import { Search, User, Eye, AlertCircle, Calendar as CalendarIcon, ListTodo, History, CheckCircle2, Mail, Phone, RefreshCw, Plus, ArrowRight, LayoutGrid, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, User, Eye, AlertCircle, Calendar as CalendarIcon, ListTodo, History, CheckCircle2, Mail, Phone, RefreshCw, Plus, ArrowRight, LayoutGrid, X, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { accesoService } from '../../services/acceso.service';
 import { clarityService } from '../../services/clarity.service';
 import { useAuth } from '../../context/AuthContext';
@@ -84,17 +84,30 @@ export const MiEquipoPage: React.FC = () => {
             setLoading(true);
             try {
                 // 1. Get My Details
+                console.log('[DEBUG] 1. Init MiEquipoPage for:', user.correo);
                 const carnetRes = await accesoService.getEmpleadoPorCorreo(user.correo);
                 const carnet = carnetRes.data?.data?.empleado?.carnet;
+                console.log('[DEBUG] 2. Carnet found:', carnet);
 
                 if (carnet) {
+                    console.log('[DEBUG] 3. Starting Parallel Fetch (TeamList, TeamStats, Workload, Projects)...');
                     // 2. Parallel Fetch: Visible Employees AND Clarity Team Stats AND All Tasks for workload AND Projects
+                    const dateStr = new Date().toISOString().split('T')[0];
+                    console.log('[DEBUG]    > Fetching getEquipoHoy for date:', dateStr);
+
                     const [teamList, teamPayload, workloadData, projectsRes] = await Promise.all([
                         clarityService.getMyTeam(),
-                        clarityService.getEquipoHoy(new Date().toISOString().split('T')[0]),
+                        clarityService.getEquipoHoy(dateStr),
                         clarityService.getWorkload(),
                         clarityService.getProyectos()
                     ]);
+
+                    console.log('[DEBUG] 4. API Results Received:', {
+                        teamListCount: teamList?.length || 0,
+                        teamPayloadRaw: teamPayload,
+                        workloadTasks: workloadData?.tasks?.length || 0,
+                        projectsCount: (projectsRes as any)?.items?.length || 0
+                    });
 
                     setEmpleados(teamList || []);
                     if (workloadData) setAllTasks(workloadData.tasks || []);
@@ -109,14 +122,28 @@ export const MiEquipoPage: React.FC = () => {
                         teamMembers = teamPayload;
                     }
 
+                    console.log('--- DEBUG MI EQUIPO ---');
+                    console.log('1. Team Response (Raw):', teamPayload);
+
                     teamMembers.forEach((m: any) => {
+                        // Map by Email
                         if (m.usuario?.correo) {
                             map.set(m.usuario.correo.toLowerCase(), {
                                 ...m.estadisticas,
                                 idUsuario: m.usuario.idUsuario
                             });
                         }
+                        // Map by Carnet (Fallback if email mismatch) - Force string
+                        if (m.usuario?.carnet) {
+                            const c = String(m.usuario.carnet).trim();
+                            map.set(c, {
+                                ...m.estadisticas,
+                                idUsuario: m.usuario.idUsuario
+                            });
+                        }
                     });
+                    console.log('2. Map Keys (Sample):', Array.from(map.keys()).slice(0, 5));
+                    console.log('3. Searching for your Carnet (500708):', map.get('500708'));
                     setClarityMap(map);
                 }
             } catch (err: any) {
@@ -129,9 +156,17 @@ export const MiEquipoPage: React.FC = () => {
         init();
     }, [user?.correo]);
 
-    // Summary Stats
-    const totalHoy = Array.from(clarityMap.values()).reduce((sum, s) => sum + (s.hoy || 0), 0);
-    const totalRetrasadas = Array.from(clarityMap.values()).reduce((sum, s) => sum + (s.retrasadas || 0), 0);
+    // Summary Stats (Fixed: based on actual loaded tasks)
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+
+    // Filtrar tareas que pertenecen a los usuarios visibles actualmente
+    const visibleUserIds = new Set(empleados.map(e => e.idUsuario || getClarityId(e.correo)).filter(Boolean));
+    const visibleTasks = allTasks.filter(t => t.asignados?.some(a => visibleUserIds.has(a.idUsuario)));
+
+    const totalHoy = visibleTasks.filter(t => ['Pendiente', 'EnCurso', 'Pausa', 'Bloqueada', 'Revision'].includes(t.estado)).length;
+    const totalRetrasadas = visibleTasks.filter(t => ['Pendiente', 'EnCurso'].includes(t.estado) && t.fechaObjetivo && t.fechaObjetivo.split('T')[0] < todayStr).length;
+
     const depts = new Set(empleados.map(e => getOrgLocation(e))).size;
 
     // Derived Data
@@ -159,26 +194,28 @@ export const MiEquipoPage: React.FC = () => {
         setLoadingDetails(false);
     };
 
-    const handleShowQuickTasks = async (emp: Empleado, type: 'hoy' | 'retrasada' | 'hecha') => {
+    const handleShowQuickTasks = async (emp: Empleado, type: 'hoy' | 'retrasada' | 'hecha' | 'en_curso' | 'bloqueada' | 'descartada') => {
         const id = emp.idUsuario || getClarityId(emp.correo);
         if (!id) return;
 
         setIsQuickTasksOpen(true);
         setQuickTasksLoading(true);
-        setQuickTasksTitle(`${type === 'hoy' ? 'Tareas para Hoy' : type === 'retrasada' ? 'Tareas Retrasadas' : 'Tareas Hechas Hoy'} - ${emp.nombreCompleto}`);
+
+        const titles = {
+            'hoy': 'Tareas Planificadas (Hoy + Futuro)',
+            'retrasada': 'Tareas Retrasadas',
+            'hecha': 'Tareas Hechas Hoy',
+            'en_curso': 'Tareas En Curso',
+            'bloqueada': 'Tareas Bloqueadas',
+            'descartada': 'Tareas Descartadas Hoy'
+        };
+        setQuickTasksTitle(`${titles[type]} - ${emp.nombreCompleto}`);
         setQuickTasks([]);
 
         try {
-            // Fetch ALL tasks and filter client side for speed/simplicity (data volume usually low per user)
-            // Or use specific endpoint if available. getTareasUsuario returns all active usually?
-            // ClarityService.getTareasUsuario calls /api/mi-dia? or /api/tasks?
-            // It calls `getEquipoMemberTareas` or similar? 
-            // Let's use `getTareasUsuario` (mapped to `tareasMisTareas` or `equipoMiembro`)
-            // Actually `getTareasUsuario` in frontend calls `getEquipoMemberTareas` which returns `{ tareas: [...] }`.
             const responseTasks = await clarityService.getTareasUsuario(id);
             const tasks = responseTasks || [];
 
-            // Fix: Use local date for "Today" comparison to match User perception and likely DB local cast
             const now = new Date();
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -191,18 +228,27 @@ export const MiEquipoPage: React.FC = () => {
             if (type === 'hoy') {
                 filtered = tasks.filter(t => {
                     const tDate = getDatePart(t.fechaObjetivo);
-                    return (t.estado === 'Pendiente' || t.estado === 'EnCurso') && tDate === todayStr;
+                    // Planificadas = Today + Future (matches SQL logic)
+                    return ['Pendiente', 'EnCurso', 'Pausa', 'Bloqueada', 'Revision'].includes(t.estado) && tDate >= todayStr;
                 });
             } else if (type === 'retrasada') {
                 filtered = tasks.filter(t => {
                     const tDate = getDatePart(t.fechaObjetivo);
-                    return (t.estado === 'Pendiente' || t.estado === 'EnCurso') && tDate && tDate < todayStr;
+                    return ['Pendiente', 'EnCurso', 'Pausa', 'Bloqueada', 'Revision'].includes(t.estado) && tDate && tDate < todayStr;
                 });
             } else if (type === 'hecha') {
-                // Hecha today
                 filtered = tasks.filter(t => {
-                    const tDate = getDatePart((t as any).fechaCompletado);
+                    const tDate = getDatePart((t as any).fechaCompletado || t.fechaUltActualizacion); // Fallback to update date if comp date missing
                     return t.estado === 'Hecha' && tDate === todayStr;
+                });
+            } else if (type === 'en_curso') {
+                filtered = tasks.filter(t => t.estado === 'EnCurso');
+            } else if (type === 'bloqueada') {
+                filtered = tasks.filter(t => t.estado === 'Bloqueada');
+            } else if (type === 'descartada') {
+                filtered = tasks.filter(t => {
+                    const tDate = getDatePart(t.fechaUltActualizacion);
+                    return t.estado === 'Descartada' && tDate === todayStr;
                 });
             }
             setQuickTasks(filtered);
@@ -343,7 +389,7 @@ export const MiEquipoPage: React.FC = () => {
                     <p className="text-2xl font-black text-slate-800">{depts}</p>
                 </div>
                 <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Tareas Hoy</p>
+                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Planificadas Total</p>
                     <p className="text-2xl font-black text-indigo-600">{totalHoy}</p>
                 </div>
                 <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
@@ -381,9 +427,12 @@ export const MiEquipoPage: React.FC = () => {
                                                     </span>
                                                 </div>
                                             </th>
-                                            <th className="px-4 py-3 text-center w-24">Hoy</th>
+                                            <th className="px-4 py-3 text-center w-24">Planificadas</th>
                                             <th className="px-4 py-3 text-center w-24">Retrasadas</th>
+                                            <th className="px-4 py-3 text-center w-24">En Curso</th>
+                                            <th className="px-4 py-3 text-center w-24">Bloqueadas</th>
                                             <th className="px-4 py-3 text-center w-24">Hechas</th>
+                                            <th className="px-4 py-3 text-center w-24">Descartadas</th>
                                             <th className="px-4 py-3 text-right">Acción</th>
                                         </tr>
                                     </thead>
@@ -392,7 +441,25 @@ export const MiEquipoPage: React.FC = () => {
                                         {!loading && filteredEmpleados.length === 0 && <tr><td colSpan={5} className="p-12 text-center text-slate-400 italic">No se encontraron colaboradores</td></tr>}
 
                                         {!loading && paginatedEmpleados.map(e => {
-                                            const stats = clarityMap.get(e.correo?.toLowerCase() || '') as any || { hoy: 0, retrasadas: 0, hechas: 0 };
+                                            // [FIX] Calculate stats locally from `allTasks` to match Heatmap/Workload consistency
+                                            const uid = e.idUsuario || getClarityId(e.correo);
+                                            let localStats = { hoy: 0, retrasadas: 0, hechas: 0, enCurso: 0, bloqueadas: 0, descartadas: 0 };
+
+                                            if (uid && allTasks.length > 0) {
+                                                const userTasks = allTasks.filter(t => t.asignados?.some(a => a.idUsuario === uid));
+                                                const now = new Date();
+                                                const todayStr = now.toISOString().split('T')[0];
+
+                                                localStats.hoy = userTasks.filter(t => ['Pendiente', 'EnCurso', 'Pausa', 'Bloqueada', 'Revision'].includes(t.estado)).length;
+                                                localStats.retrasadas = userTasks.filter(t => ['Pendiente', 'EnCurso'].includes(t.estado) && t.fechaObjetivo && t.fechaObjetivo.split('T')[0] < todayStr).length;
+                                                localStats.enCurso = userTasks.filter(t => t.estado === 'EnCurso').length;
+                                                localStats.bloqueadas = userTasks.filter(t => t.estado === 'Bloqueada').length;
+                                                // Hechas hoy
+                                                localStats.hechas = userTasks.filter(t => t.estado === 'Hecha' && ((t as any).fechaCompletado || (t as any).fechaUltActualizacion || '').startsWith(todayStr)).length;
+                                            }
+
+                                            // Fallback to API map if local is empty (e.g. initial load glitch)
+                                            let stats = localStats.hoy + localStats.hechas > 0 ? localStats : (clarityMap.get(e.correo?.toLowerCase() || '') || clarityMap.get(String(e.carnet).trim()) || localStats);
 
                                             return (
                                                 <tr
@@ -411,7 +478,7 @@ export const MiEquipoPage: React.FC = () => {
                                                         </div>
                                                     </td>
 
-                                                    {/* HOY */}
+                                                    {/* PLANIFICADAS (HOY + FUTURO) */}
                                                     <td className="px-4 py-3 text-center">
                                                         <div
                                                             onClick={(ev) => { ev.stopPropagation(); handleShowQuickTasks(e, 'hoy'); }}
@@ -431,6 +498,26 @@ export const MiEquipoPage: React.FC = () => {
                                                         </div>
                                                     </td>
 
+                                                    {/* EN CURSO */}
+                                                    <td className="px-4 py-3 text-center">
+                                                        <div
+                                                            onClick={(ev) => { ev.stopPropagation(); handleShowQuickTasks(e, 'en_curso'); }}
+                                                            className={`mx-auto w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-transform hover:scale-110 cursor-pointer ${stats.enCurso > 0 ? 'bg-blue-100 text-blue-700' : 'bg-slate-50 text-slate-400'}`}
+                                                        >
+                                                            {stats.enCurso || 0}
+                                                        </div>
+                                                    </td>
+
+                                                    {/* BLOQUEADAS */}
+                                                    <td className="px-4 py-3 text-center">
+                                                        <div
+                                                            onClick={(ev) => { ev.stopPropagation(); handleShowQuickTasks(e, 'bloqueada'); }}
+                                                            className={`mx-auto w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-transform hover:scale-110 cursor-pointer ${stats.bloqueadas > 0 ? 'bg-orange-100 text-orange-700' : 'bg-slate-50 text-slate-400'}`}
+                                                        >
+                                                            {stats.bloqueadas || 0}
+                                                        </div>
+                                                    </td>
+
                                                     {/* HECHAS */}
                                                     <td className="px-4 py-3 text-center">
                                                         <div
@@ -438,6 +525,16 @@ export const MiEquipoPage: React.FC = () => {
                                                             className={`mx-auto w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-transform hover:scale-110 cursor-pointer ${stats.hechas > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-50 text-slate-400'}`}
                                                         >
                                                             {stats.hechas || 0}
+                                                        </div>
+                                                    </td>
+
+                                                    {/* DESCARTADAS */}
+                                                    <td className="px-4 py-3 text-center">
+                                                        <div
+                                                            onClick={(ev) => { ev.stopPropagation(); handleShowQuickTasks(e, 'descartada'); }}
+                                                            className={`mx-auto w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-transform hover:scale-110 cursor-pointer ${stats.descartadas > 0 ? 'bg-gray-100 text-gray-700' : 'bg-slate-50 text-slate-400'}`}
+                                                        >
+                                                            {stats.descartadas || 0}
                                                         </div>
                                                     </td>
 
@@ -854,17 +951,42 @@ export const MiEquipoPage: React.FC = () => {
                                     ) : (
                                         <div className="space-y-3">
                                             {quickTasks.map(t => (
-                                                <div key={t.idTarea} className="bg-slate-50 p-3 rounded-xl border border-slate-100 shadow-sm flex items-start gap-3">
-                                                    <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${t.estado === 'Hecha' ? 'bg-emerald-500' : isOverdue(t.fechaObjetivo) ? 'bg-red-500' : 'bg-indigo-500'}`}></div>
+                                                <div
+                                                    key={t.idTarea}
+                                                    className="group flex gap-3 p-3 rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/50 transition-all bg-white shadow-sm"
+                                                >
+                                                    <div className={`mt-1 w-2.5 h-2.5 rounded-full shrink-0 ${t.estado === 'Hecha' ? 'bg-emerald-500' :
+                                                        t.estado === 'Bloqueada' ? 'bg-orange-500' :
+                                                            t.estado === 'Descartada' ? 'bg-slate-400' :
+                                                                isOverdue(t.fechaObjetivo) ? 'bg-rose-500' : 'bg-indigo-500'
+                                                        }`} />
+
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="font-bold text-xs text-slate-700 line-clamp-2">{t.titulo}</p>
-                                                        <div className="flex justify-between items-center mt-2">
-                                                            <span className="text-[10px] bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-500 font-mono">#{t.idTarea}</span>
+                                                        <div className="flex justify-between items-start gap-2">
+                                                            <h4 className="font-bold text-sm text-slate-700 leading-snug group-hover:text-indigo-700 transition-colors">
+                                                                {t.titulo}
+                                                            </h4>
+                                                            <span className="shrink-0 text-[10px] font-black uppercase text-slate-300 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
+                                                                #{t.idTarea}
+                                                            </span>
+                                                        </div>
+
+                                                        {t.descripcion && (
+                                                            <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                                                                {t.descripcion}
+                                                            </p>
+                                                        )}
+
+                                                        <div className="flex items-center gap-3 mt-2 pt-2 border-t border-slate-50">
                                                             {t.fechaObjetivo && (
-                                                                <span className="text-[10px] text-slate-400 font-medium">
+                                                                <span className={`text-[10px] font-bold flex items-center gap-1 ${isOverdue(t.fechaObjetivo) && t.estado !== 'Hecha' ? 'text-rose-600' : 'text-slate-400'}`}>
+                                                                    <Clock size={10} />
                                                                     {new Date(t.fechaObjetivo).toLocaleDateString()}
                                                                 </span>
                                                             )}
+                                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wilder px-1.5 py-0.5 bg-slate-100 rounded">
+                                                                {t.prioridad || 'Normal'}
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -882,9 +1004,11 @@ export const MiEquipoPage: React.FC = () => {
                             isOpen={isCreateTaskOpen}
                             onClose={() => setIsCreateTaskOpen(false)}
                             onTaskCreated={() => {
-                                if (selectedEmpleado) handleSelectEmpleado(selectedEmpleado);
+                                setIsCreateTaskOpen(false);
+                                // Refresh current view
+                                const userEmail = user?.correo;
+                                if (userEmail) window.location.reload(); // Simple reload for now or re-fetch
                             }}
-                            projects={projects}
                             currentProject={null}
                         />
                     )}

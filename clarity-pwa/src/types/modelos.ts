@@ -60,6 +60,7 @@ export interface Proyecto {
     gerencia?: string;
     progreso?: number;
     requiereAprobacion?: boolean;
+    tipo?: string;
 }
 
 export interface SolicitudCambio {
@@ -84,6 +85,7 @@ export interface Tarea {
     idTarea: number;
     idProyecto: number;
     proyecto?: Proyecto;
+    proyectoNombre?: string;
     titulo: string;
     descripcion?: string;
     estado: EstadoTarea;
@@ -96,6 +98,10 @@ export interface Tarea {
     fechaEnCurso?: string;
     fechaHecha?: string;
     idCreador: number;
+    creador?: {
+        nombre: string;
+        correo?: string;
+    };
     idAsignadoPor?: number;
     asignados?: TareaAsignado[];
     // Campos directos para responsable (alternativa a asignados[])
@@ -108,12 +114,17 @@ export interface Tarea {
     orden: number;
     comentario?: string;
     motivoBloqueo?: string;
+    requiereEvidencia?: boolean;
+    idEntregable?: number;
     // Campos para tipos A/B/C
     comportamiento?: 'SIMPLE' | 'RECURRENTE' | 'LARGA';
     idGrupo?: number;
     numeroParte?: number;
     fechaInicioReal?: string;
     fechaFinReal?: string;
+    linkEvidencia?: string;
+    idTareaPadre?: number;
+    subtareas?: Tarea[];
 }
 
 export interface TareaRegistrarAvanceDto {
@@ -134,12 +145,19 @@ export interface Checkin {
     idCheckin: number;
     fecha: string; // YYYY-MM-DD
     idUsuario: number;
+    usuarioCarnet?: string; // Carnet-First
     usuario?: Usuario;
-    entregableTexto: string;
+    entregableTexto?: string;
     nota?: string;
     linkEvidencia?: string;
+    idNodo?: number;
     estadoAnimo?: 'Tope' | 'Bien' | 'Bajo';
+    prioridad1?: string;
+    prioridad2?: string;
+    prioridad3?: string;
+    energia?: number;
     tareas?: CheckinTarea[];
+    fechaCreacion?: string;
 }
 
 export interface CheckinTarea {
@@ -169,15 +187,20 @@ export interface Bloqueo {
 // DTOs para Formularios
 export interface CheckinUpsertDto {
     idUsuario: number;
+    usuarioCarnet?: string;
     fecha: string;
     entregableTexto: string;
+    prioridad1?: string;
+    prioridad2?: string;
+    prioridad3?: string;
+    energia?: number;
     nota?: string;
     linkEvidencia?: string;
-    idNodo?: number;
-    entrego: number[]; // IDs de tareas
-    avanzo: number[]; // IDs de tareas
-    extras?: number[]; // IDs de tareas (opcional, max 5)
     estadoAnimo?: 'Tope' | 'Bien' | 'Bajo';
+    idNodo?: number;
+    entrego?: number[]; // IDs de tareas
+    avanzo?: number[]; // IDs de tareas
+    extras?: number[]; // IDs de tareas (opcional, max 5)
 }
 
 export interface TareaCrearRapidaDto {

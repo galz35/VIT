@@ -5,7 +5,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { TasksService } from './tasks.service';
 import { RecurrenciaService } from './recurrencia.service';
-import { TareaCrearRapidaDto, CheckinUpsertDto, FechaQueryDto, TareaActualizarDto, ProyectoCrearDto, ProyectoFilterDto, TareaRevalidarDto, BloqueoCrearDto } from './dto/clarity.dtos';
+import { TareaCrearRapidaDto, CheckinUpsertDto, FechaQueryDto, TareaActualizarDto, ProyectoCrearDto, ProyectoFilterDto, TareaRevalidarDto, BloqueoCrearDto, TaskFilterDto, TareaMasivaDto } from './dto/clarity.dtos';
 
 @ApiTags('Clarity Core (Migrated)')
 @ApiBearerAuth()
@@ -20,22 +20,13 @@ export class ClarityController {
     @Get('mi-dia')
     @ApiOperation({ summary: 'Obtener snapshot del día para el empleado' })
     async getMiDia(@Request() req, @Query() query: FechaQueryDto) {
-        return this.tasksService.miDiaGet(req.user.userId, query.fecha);
+        return this.tasksService.miDiaGet(req.user.carnet, query.fecha, query.startDate, query.endDate);
     }
 
     @Post('checkins')
     @ApiOperation({ summary: 'Registrar o actualizar check-in diario' })
     async upsertCheckin(@Body() dto: CheckinUpsertDto, @Request() req) {
-        // Si se intenta crear para otro usuario, verificar permisos
-        if (dto.idUsuario && Number(dto.idUsuario) !== req.user.userId) {
-            const canManage = await this.tasksService.canManageUser(req.user.userId, Number(dto.idUsuario), req.user.rolGlobal);
-            if (!canManage) {
-                throw new ForbiddenException('No tienes permisos para modificar el checkin de este usuario.');
-            }
-        } else {
-            dto.idUsuario = req.user.userId;
-        }
-        return this.tasksService.checkinUpsert(dto);
+        return this.tasksService.checkinUpsert(dto, req.user.carnet);
     }
 
     @Post('tareas/rapida')
@@ -54,10 +45,22 @@ export class ClarityController {
         return this.tasksService.tareaCrearRapida(dto);
     }
 
+    @Post('tareas/masiva')
+    @ApiOperation({ summary: 'Crear tarea masiva (asignar a múltiples)' })
+    async crearTareaMasiva(@Body() dto: TareaMasivaDto, @Request() req) {
+        return this.tasksService.crearTareaMasiva(dto, req.user.userId);
+    }
+
     @Get('tareas/mias')
     @ApiOperation({ summary: 'Listar mis tareas' })
-    async getMisTareas(@Request() req, @Query('estado') estado?: string, @Query('idProyecto') idProyecto?: number) {
-        return this.tasksService.tareasMisTareas(req.user.userId, estado, idProyecto);
+    async getMisTareas(@Request() req, @Query() filters: TaskFilterDto) {
+        return this.tasksService.tareasMisTareas(req.user.carnet, filters.estado, filters.idProyecto, filters.startDate, filters.endDate);
+    }
+
+    @Get('tareas/:id')
+    @ApiOperation({ summary: 'Obtener detalle de tarea (con subtasks)' })
+    async getTarea(@Param('id') id: number, @Request() req) {
+        return this.tasksService.tareaObtener(id, req.user.userId);
     }
 
     @Patch('tareas/:id')
@@ -72,40 +75,38 @@ export class ClarityController {
         return this.tasksService.tareaRevalidar(id, body, req.user.userId);
     }
 
-    @Get('agenda/:targetUserId')
+    @Get('agenda/:targetCarnet')
     @ApiOperation({ summary: 'MANAGER: Obtener agenda de un tercero' })
-    async getMemberAgenda(@Param('targetUserId') targetUserId: string, @Query() query: FechaQueryDto, @Request() req) {
-        const requesterId = req.user.userId;
-        const targetId = Number(targetUserId);
+    async getMemberAgenda(@Param('targetCarnet') targetCarnet: string, @Query() query: FechaQueryDto, @Request() req) {
+        const requesterCarnet = req.user.carnet;
 
-        if (requesterId !== targetId) {
-            const hasAccess = await this.tasksService.canManageUser(requesterId, targetId);
+        if (requesterCarnet !== targetCarnet) {
+            const hasAccess = await this.tasksService.canManageUserByCarnet(requesterCarnet, targetCarnet);
             if (!hasAccess) {
                 throw new ForbiddenException('No tienes permisos para ver la agenda de este usuario.');
             }
         }
-        return this.tasksService.miDiaGet(targetId, query.fecha);
+        return this.tasksService.miDiaGet(targetCarnet, query.fecha, query.startDate, query.endDate);
     }
 
-    @Get('equipo/miembro/:idMiembro/tareas')
-    @ApiOperation({ summary: 'MANAGER: Ver detalles de miembro de equipo' })
-    async getEquipoMemberTareas(@Param('idMiembro') idMiembro: number, @Request() req) {
-        const idLider = req.user.userId;
-        const res = await this.tasksService.equipoMiembro(idLider, idMiembro);
-        return res.tareas; // El frontend espera solo el arreglo de tareas en este endpoint
-    }
-
-    @Get('equipo/miembro/:idMiembro')
-    @ApiOperation({ summary: 'MANAGER: Ver detalles de miembro de equipo' })
-    async getEquipoMember(@Param('idMiembro') idMiembro: number, @Request() req) {
-        const idLider = req.user.userId;
-        return this.tasksService.equipoMiembro(idLider, idMiembro);
-    }
 
     @Get('tareas/historico/:carnet')
     @ApiOperation({ summary: 'Obtener historial de tareas por carnet' })
     async getTareasHistorico(@Param('carnet') carnet: string, @Query('dias') dias: number = 30) {
         return this.tasksService.tareasHistorico(carnet, dias);
+    }
+
+    @Delete('tareas/:id')
+    @ApiOperation({ summary: 'Eliminar tarea (Físico si es hoy y creador, sino Soft Delete)' })
+    async eliminarTarea(@Param('id') id: number, @Request() req) {
+        return this.tasksService.tareaEliminar(id, req.user.carnet);
+    }
+
+    @Post('tareas/:id/descartar')
+    @ApiOperation({ summary: 'Descartar tarea (Alias para eliminar)' })
+    async descartarTarea(@Param('id') id: number, @Body() body: { motivo?: string }, @Request() req) {
+        const motivo = body?.motivo || 'Descarte manual';
+        return this.tasksService.tareaEliminar(id, req.user.carnet, motivo);
     }
 
     @Post('tareas/:id/avance')
@@ -117,7 +118,7 @@ export class ClarityController {
     @Get('planning/workload')
     @ApiOperation({ summary: 'Obtener carga de trabajo del equipo' })
     async getWorkload(@Request() req) {
-        return this.tasksService.getWorkload(req.user.userId);
+        return this.tasksService.getWorkload(req.user.carnet);
     }
 
     @Get('audit-logs/task/:idTarea')
@@ -239,12 +240,26 @@ export class ClarityController {
         return this.tasksService.getEquipoBloqueos(req.user.userId, fecha);
     }
 
+    // @Get('equipo/hoy') -> MOVIDO A OTRO LADO O YA EXISTE ARRIBA PARA EVITAR DUPLICADO
+    // @ApiOperation({ summary: 'Dashboard equipo: hoy' })
+    // async getEquipoHoy(@Request() req, @Query() query: FechaQueryDto) {
+    //    return this.tasksService.getEquipoHoy(req.user.userId, query.fecha);
+    // }
+
+    @Get('equipo/backlog')
+    @ApiOperation({ summary: 'Dashboard equipo: backlog' })
+    async getEquipoBacklog(@Request() req, @Query() query: FechaQueryDto) {
+        return this.tasksService.getEquipoBacklog(req.user.userId);
+    }
+
+
+
     @Get('agenda-recurrente')
     @ApiOperation({ summary: 'Obtener tareas recurrentes para una fecha' })
     async obtenerAgendaRecurrente(@Query('fecha') fecha: string, @Request() req) {
         return this.recurrenciaService.obtenerAgendaRecurrente(
             fecha ? new Date(fecha) : new Date(),
-            req.user.userId
+            req.user.carnet
         );
     }
 
@@ -264,6 +279,30 @@ export class ClarityController {
     @ApiOperation({ summary: 'Resolver un bloqueo' })
     async resolverBloqueo(@Param('id') id: number, @Body() body: any, @Request() req) {
         return this.tasksService.bloqueoResolver(id, body, req.user.userId);
+    }
+
+    // ==========================================
+    // NOTAS
+    // ==========================================
+
+    @Get('notas')
+    async getNotas(@Request() req) {
+        return this.tasksService.notasListar(req.user.carnet);
+    }
+
+    @Post('notas')
+    async crearNota(@Body() body: { title: string, content: string }, @Request() req) {
+        return this.tasksService.notaCrear(req.user.carnet, body.title, body.content);
+    }
+
+    @Patch('notas/:id')
+    async updateNota(@Param('id') id: number, @Body() body: { title: string, content: string }, @Request() req) {
+        return this.tasksService.notaActualizar(id, body.title, body.content);
+    }
+
+    @Delete('notas/:id')
+    async deleteNota(@Param('id') id: number, @Request() req) {
+        return this.tasksService.notaEliminar(id);
     }
 }
 

@@ -14,11 +14,9 @@ import {
     Search,
     Plus,
     Edit2,
-    Lock,
+    Lock as LockIcon,
     Filter,
     X,
-    Building2,
-    Calendar,
     Target,
     CheckCircle,
     ChevronDown,
@@ -26,6 +24,7 @@ import {
     ChevronsLeft,
     ChevronsRight,
     MoreHorizontal,
+    Download,
 } from 'lucide-react';
 
 import { clarityService } from '../../services/clarity.service';
@@ -69,6 +68,7 @@ export const ProyectosPage: React.FC = () => {
         gerencia: '',
         subgerencia: '',
         area: '',
+        tipo: '',
     });
 
     // =========================
@@ -116,6 +116,7 @@ export const ProyectosPage: React.FC = () => {
         area: '',
         subgerencia: '',
         gerencia: '',
+        tipo: 'administrativo',
     });
 
     // Estructura org (para selects)
@@ -176,7 +177,7 @@ export const ProyectosPage: React.FC = () => {
         if (e.includes('activo') || e.includes('enejecucion') || e.includes('encurso')) return <Target size={14} className="text-indigo-600" />;
         if (e.includes('deten')) return <X size={14} className="text-rose-600" />;
         if (e.includes('termin') || e.includes('final')) return <CheckCircle size={14} className="text-emerald-600" />;
-        if (e.includes('confirm')) return <Lock size={14} className="text-slate-600" />;
+        if (e.includes('confirm')) return <LockIcon size={14} className="text-slate-600" />;
 
         return <Target size={14} className="text-slate-500" />;
     };
@@ -370,6 +371,44 @@ export const ProyectosPage: React.FC = () => {
         return out.filter((v, idx) => out.indexOf(v) === idx);
     }, [page, lastPage]);
 
+    const handleExportExcel = () => {
+        if (!projects || projects.length === 0) {
+            showToast('No hay datos para exportar', 'warning');
+            return;
+        }
+
+        const headers = ['ID', 'Proyecto', 'Descripción', 'Estado', 'Progreso', 'Tipo', 'Gerencia', 'Subgerencia', 'Área', 'F. Inicio', 'F. Fin'];
+        const rows = projects.map(p => [
+            p.idProyecto,
+            p.nombre,
+            (p as any).descripcion || '',
+            p.estado || '',
+            (p.progreso || 0) + '%',
+            p.tipo || 'administrativo',
+            p.gerencia || '',
+            p.subgerencia || '',
+            p.area || '',
+            (p as any).fechaInicio ? format(new Date((p as any).fechaInicio), 'yyyy-MM-dd') : '',
+            (p as any).fechaFin ? format(new Date((p as any).fechaFin), 'yyyy-MM-dd') : ''
+        ]);
+
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `Proyectos_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('Archivo CSV generado', 'success');
+    };
+
     // =========================
     // MODAL: CRUD
     // =========================
@@ -384,10 +423,11 @@ export const ProyectosPage: React.FC = () => {
                 area: p.area || '',
                 subgerencia: p.subgerencia || '',
                 gerencia: p.gerencia || '',
+                tipo: p.tipo || 'administrativo',
             });
         } else {
             setEditingProject(null);
-            setFormData({ nombre: '', descripcion: '', fechaInicio: '', fechaFin: '', area: '', subgerencia: '', gerencia: '' });
+            setFormData({ nombre: '', descripcion: '', fechaInicio: '', fechaFin: '', area: '', subgerencia: '', gerencia: '', tipo: 'administrativo' });
         }
         setIsModalOpen(true);
     };
@@ -400,11 +440,12 @@ export const ProyectosPage: React.FC = () => {
         const payload: any = {
             nombre: formData.nombre,
             descripcion: formData.descripcion,
-            fechaInicio: formData.fechaInicio || undefined,
-            fechaFin: formData.fechaFin || undefined,
+            fechaInicio: (formData as any).fechaInicio || undefined,
+            fechaFin: (formData as any).fechaFin || undefined,
             area: formData.area || undefined,
             subgerencia: formData.subgerencia || undefined,
             gerencia: formData.gerencia || undefined,
+            tipo: formData.tipo || 'administrativo',
         };
 
         try {
@@ -412,7 +453,7 @@ export const ProyectosPage: React.FC = () => {
                 await clarityService.updateProyecto(editingProject.idProyecto, payload);
                 showToast('Proyecto actualizado', 'success');
             } else {
-                const newProj: any = await clarityService.postProyecto(formData.nombre, undefined, formData.descripcion);
+                const newProj: any = await clarityService.postProyecto(formData.nombre, undefined, formData.descripcion, formData.tipo);
                 await clarityService.updateProyecto(newProj.idProyecto, payload);
                 showToast('Proyecto creado', 'success');
             }
@@ -485,6 +526,14 @@ export const ProyectosPage: React.FC = () => {
                     </button>
 
                     <button
+                        onClick={handleExportExcel}
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-sm shadow-emerald-200"
+                        title="Exportar a CSV/Excel"
+                    >
+                        <Download size={18} /> Exportar
+                    </button>
+
+                    <button
                         onClick={() => openModal()}
                         className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-sm shadow-indigo-200"
                     >
@@ -510,6 +559,21 @@ export const ProyectosPage: React.FC = () => {
                             <option value="Terminado">Terminado</option>
                             <option value="Borrador">Borrador</option>
                             <option value="Confirmado">Confirmado</option>
+                        </select>
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-black text-slate-400 uppercase px-1">Tipo</label>
+                        <select
+                            className="w-full h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 outline-none"
+                            value={filters.tipo}
+                            onChange={e => setFilters({ ...filters, tipo: e.target.value })}
+                        >
+                            <option value="">Cualquier tipo</option>
+                            <option value="administrativo">Administrativo</option>
+                            <option value="Logistica">Logística</option>
+                            <option value="AMX">AMX</option>
+                            <option value="Estrategico">Estratégico</option>
                         </select>
                     </div>
 
@@ -568,26 +632,32 @@ export const ProyectosPage: React.FC = () => {
             {/* TABLA */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="overflow-x-auto min-h-[420px]">
-                    <table className="w-full text-left border-collapse">
-                        <thead className="bg-slate-50 text-slate-500 font-black border-b border-slate-200 sticky top-0 z-10 text-xs uppercase tracking-wider">
+                    <table className="w-full text-left border-collapse table-fixed lg:table-auto">
+                        <thead className="bg-slate-50 text-slate-500 font-black border-b border-slate-200 sticky top-0 z-10 text-[10px] uppercase tracking-wider">
                             <tr>
-                                <th className="px-4 py-4 w-12"></th>
-                                <th className="px-3 py-4">Proyecto</th>
-                                <th className="px-6 py-4 text-right w-[120px]">Acción</th>
+                                <th className="px-4 py-4 w-12 text-center"></th>
+                                <th className="px-3 py-4 min-w-[200px]">Proyecto</th>
+                                <th className="px-3 py-4 hidden xl:table-cell">Gerencia</th>
+                                <th className="px-3 py-4 hidden xl:table-cell">Subgerencia</th>
+                                <th className="px-3 py-4 hidden xl:table-cell">Área</th>
+                                <th className="px-3 py-4 hidden lg:table-cell">Tipo</th>
+                                <th className="px-3 py-4 hidden md:table-cell">Estado</th>
+                                <th className="px-3 py-4 hidden md:table-cell w-[100px]">Progreso</th>
+                                <th className="px-6 py-4 text-right w-[100px]">Acción</th>
                             </tr>
                         </thead>
 
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={3} className="px-6 py-20 text-center">
+                                    <td colSpan={9} className="px-6 py-20 text-center">
                                         <div className="inline-block w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
                                         <p className="mt-3 text-slate-400 font-bold text-sm uppercase tracking-widest">Sincronizando...</p>
                                     </td>
                                 </tr>
                             ) : projects.length === 0 ? (
                                 <tr>
-                                    <td colSpan={3} className="px-6 py-20 text-center text-slate-400 italic font-medium">
+                                    <td colSpan={9} className="px-6 py-20 text-center text-slate-400 italic font-medium">
                                         No se encontraron proyectos bajo estos criterios.
                                     </td>
                                 </tr>
@@ -628,40 +698,56 @@ export const ProyectosPage: React.FC = () => {
                                                     <div className="min-w-0 w-full">
                                                         {/* NOMBRE */}
                                                         <div className="flex items-center gap-2 min-w-0">
-                                                            <div className="font-black text-slate-900 truncate group-hover:text-indigo-700 transition-colors text-lg">
+                                                            <div className="font-black text-slate-900 truncate group-hover:text-indigo-700 transition-colors text-sm">
                                                                 {p.nombre}
                                                             </div>
 
                                                             {(p.enllavado || p.estado === 'Confirmado' || p.estado === 'EnEjecucion') && (
-                                                                <Lock size={14} className="text-amber-500 shrink-0" />
+                                                                <LockIcon size={14} className="text-amber-500 shrink-0" />
                                                             )}
                                                         </div>
 
-                                                        {/* META EN CHIPS */}
-                                                        <div className="mt-2 flex flex-wrap items-center gap-2 text-sm font-bold text-slate-700">
-                                                            <span className="inline-flex items-center gap-2 px-2.5 py-1 rounded-xl bg-white border border-slate-200">
-                                                                <Building2 size={14} className="text-slate-400" />
-                                                                <span className="truncate max-w-[520px]">
-                                                                    {(p.gerencia || 'Global') + ' / ' + (p.subgerencia || 'General') + ' / ' + (p.area || 'Área N/A')}
-                                                                </span>
-                                                            </span>
-
-                                                            <span className="inline-flex items-center gap-2 px-2.5 py-1 rounded-xl bg-white border border-slate-200">
-                                                                <Calendar size={14} className="text-indigo-500" />
-                                                                <span>
-                                                                    {(p as any).fechaInicio ? format(new Date((p as any).fechaInicio), 'dd MMM yyyy') : '--'}
-                                                                    {(p as any).fechaFin ? ` → ${format(new Date((p as any).fechaFin), 'dd MMM yyyy')}` : ''}
-                                                                </span>
-                                                            </span>
-
-                                                            <span className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-xl text-xs font-black border ${badgeEstado(p.estado)}`}>
-                                                                {iconoEstado(p.estado)}
-                                                                {(p.estado || 'N/A').toUpperCase()}
-                                                            </span>
-
-                                                            {renderProgreso(p)}
+                                                        {/* SUB-INFO PARA MÓVILES O PANTALLAS PEQUEÑAS */}
+                                                        <div className="mt-1 flex xl:hidden flex-wrap items-center gap-2 text-[10px] font-bold text-slate-400 uppercase">
+                                                            <span>{p.gerencia || 'Global'}</span>
+                                                            <span className="text-slate-200">/</span>
+                                                            <span>{p.subgerencia || 'General'}</span>
                                                         </div>
                                                     </div>
+                                                </div>
+                                            </td>
+
+                                            {/* COLUMNAS EXCEL-STYLE */}
+                                            <td className="px-3 py-5 hidden xl:table-cell">
+                                                <span className="text-xs font-bold text-slate-600">{p.gerencia || 'N/A'}</span>
+                                            </td>
+
+                                            <td className="px-3 py-5 hidden xl:table-cell">
+                                                <span className="text-xs font-bold text-slate-600">{p.subgerencia || 'N/A'}</span>
+                                            </td>
+
+                                            <td className="px-3 py-5 hidden xl:table-cell">
+                                                <span className="text-xs font-bold text-slate-600 uppercase tracking-tighter text-[10px]">{p.area || 'N/A'}</span>
+                                            </td>
+
+                                            <td className="px-3 py-5 hidden lg:table-cell">
+                                                {p.tipo && (
+                                                    <span className="inline-flex px-2 py-0.5 rounded-lg text-[9px] font-black bg-indigo-50 text-indigo-600 border border-indigo-100 uppercase">
+                                                        {p.tipo}
+                                                    </span>
+                                                )}
+                                            </td>
+
+                                            <td className="px-3 py-5 hidden md:table-cell">
+                                                <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] font-black border ${badgeEstado(p.estado)}`}>
+                                                    {iconoEstado(p.estado)}
+                                                    {(p.estado || 'N/A').toUpperCase()}
+                                                </span>
+                                            </td>
+
+                                            <td className="px-3 py-5 hidden md:table-cell">
+                                                <div className="w-full max-w-[80px]">
+                                                    {renderProgreso(p)}
                                                 </div>
                                             </td>
 
@@ -720,7 +806,7 @@ export const ProyectosPage: React.FC = () => {
                                         {/* EXPANDED: SOLO DESCRIPCIÓN */}
                                         {expandedRows[p.idProyecto] && (
                                             <tr className="bg-slate-50/60">
-                                                <td colSpan={3} className="px-6 pb-6">
+                                                <td colSpan={9} className="px-6 pb-6">
                                                     <div className="ml-[68px] mt-2 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                                                         <p className="text-xs font-black text-slate-400 uppercase mb-2">Descripción</p>
                                                         <p className="text-sm md:text-base text-slate-700 leading-relaxed">
@@ -837,142 +923,158 @@ export const ProyectosPage: React.FC = () => {
             </div>
 
             {/* MODAL */}
-            {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 scale-in-center animate-in zoom-in-95">
-                        <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100">
-                                    {editingProject ? <Edit2 size={20} /> : <Plus size={20} />}
+            {
+                isModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                        <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 scale-in-center animate-in zoom-in-95">
+                            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100">
+                                        {editingProject ? <Edit2 size={20} /> : <Plus size={20} />}
+                                    </div>
+                                    <h2 className="text-lg font-black text-slate-900 tracking-tight">{editingProject ? 'Configurar Proyecto' : 'Nuevo Proyecto'}</h2>
                                 </div>
-                                <h2 className="text-lg font-black text-slate-900 tracking-tight">{editingProject ? 'Configurar Proyecto' : 'Nuevo Proyecto'}</h2>
-                            </div>
-                            <button
-                                onClick={() => setIsModalOpen(false)}
-                                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        <div className="p-8 space-y-5 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Nombre Estratégico</label>
-                                <input
-                                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:border-indigo-500 focus:bg-white transition-all shadow-inner"
-                                    value={formData.nombre}
-                                    onChange={e => setFormData({ ...formData, nombre: e.target.value })}
-                                    placeholder="Ej: Transformación Digital 2026"
-                                />
+                                <button
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+                                >
+                                    <X size={20} />
+                                </button>
                             </div>
 
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Objetivo / Descripción</label>
-                                <textarea
-                                    className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium text-slate-700 outline-none focus:border-indigo-500 focus:bg-white transition-all resize-none shadow-inner"
-                                    rows={3}
-                                    value={formData.descripcion}
-                                    onChange={e => setFormData({ ...formData, descripcion: e.target.value })}
-                                    placeholder="Resumen ejecutivo del alcance..."
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-4 bg-slate-50/50 p-6 rounded-[24px] border border-slate-200">
+                            <div className="p-8 space-y-5 max-h-[70vh] overflow-y-auto custom-scrollbar">
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Gerencia Dueña</label>
-                                    <select
-                                        className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-indigo-500"
-                                        value={formData.gerencia}
-                                        onChange={e => setFormData({ ...formData, gerencia: e.target.value, subgerencia: '', area: '' })}
-                                    >
-                                        <option value="">Seleccionar Gerencia...</option>
-                                        {uniqueGerencias.map(g => (
-                                            <option key={g} value={g}>
-                                                {g}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Nombre Estratégico</label>
+                                    <input
+                                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:border-indigo-500 focus:bg-white transition-all shadow-inner"
+                                        value={formData.nombre}
+                                        onChange={e => setFormData({ ...formData, nombre: e.target.value })}
+                                        placeholder="Ej: Transformación Digital 2026"
+                                    />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Objetivo / Descripción</label>
+                                    <textarea
+                                        className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium text-slate-700 outline-none focus:border-indigo-500 focus:bg-white transition-all resize-none shadow-inner"
+                                        rows={3}
+                                        value={formData.descripcion}
+                                        onChange={e => setFormData({ ...formData, descripcion: e.target.value })}
+                                        placeholder="Resumen ejecutivo del alcance..."
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-4 bg-slate-50/50 p-6 rounded-[24px] border border-slate-200">
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Subgerencia</label>
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Tipo de Proyecto</label>
                                         <select
-                                            className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-indigo-500 disabled:opacity-50"
-                                            value={formData.subgerencia}
-                                            onChange={e => setFormData({ ...formData, subgerencia: e.target.value, area: '' })}
-                                            disabled={!formData.gerencia}
+                                            className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-indigo-500"
+                                            value={formData.tipo}
+                                            onChange={e => setFormData({ ...formData, tipo: e.target.value })}
                                         >
-                                            <option value="">Seleccionar...</option>
-                                            {formUniqueSubgerencias.map(s => (
-                                                <option key={s} value={s}>
-                                                    {s}
+                                            <option value="administrativo">Administrativo</option>
+                                            <option value="Logistica">Logística</option>
+                                            <option value="AMX">AMX</option>
+                                            <option value="Estrategico">Estratégico</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Gerencia Dueña</label>
+                                        <select
+                                            className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-indigo-500"
+                                            value={formData.gerencia}
+                                            onChange={e => setFormData({ ...formData, gerencia: e.target.value, subgerencia: '', area: '' })}
+                                        >
+                                            <option value="">Seleccionar Gerencia...</option>
+                                            {uniqueGerencias.map(g => (
+                                                <option key={g} value={g}>
+                                                    {g}
                                                 </option>
                                             ))}
                                         </select>
                                     </div>
 
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Subgerencia</label>
+                                            <select
+                                                className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-indigo-500 disabled:opacity-50"
+                                                value={formData.subgerencia}
+                                                onChange={e => setFormData({ ...formData, subgerencia: e.target.value, area: '' })}
+                                                disabled={!formData.gerencia}
+                                            >
+                                                <option value="">Seleccionar...</option>
+                                                {formUniqueSubgerencias.map(s => (
+                                                    <option key={s} value={s}>
+                                                        {s}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Área</label>
+                                            <select
+                                                className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-indigo-500 disabled:opacity-50"
+                                                value={formData.area}
+                                                onChange={e => setFormData({ ...formData, area: e.target.value })}
+                                                disabled={!formData.subgerencia}
+                                            >
+                                                <option value="">Seleccionar...</option>
+                                                {formUniqueAreas.map(a => (
+                                                    <option key={a} value={a}>
+                                                        {a}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 border-t border-slate-100 pt-5">
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Área</label>
-                                        <select
-                                            className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-indigo-500 disabled:opacity-50"
-                                            value={formData.area}
-                                            onChange={e => setFormData({ ...formData, area: e.target.value })}
-                                            disabled={!formData.subgerencia}
-                                        >
-                                            <option value="">Seleccionar...</option>
-                                            {formUniqueAreas.map(a => (
-                                                <option key={a} value={a}>
-                                                    {a}
-                                                </option>
-                                            ))}
-                                        </select>
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Lanzamiento</label>
+                                        <input
+                                            type="date"
+                                            className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-800 outline-none focus:bg-white focus:border-indigo-500 transition-all"
+                                            value={formData.fechaInicio}
+                                            onChange={e => setFormData({ ...formData, fechaInicio: e.target.value })}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Cierre Est.</label>
+                                        <input
+                                            type="date"
+                                            className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-800 outline-none focus:bg-white focus:border-indigo-500 transition-all"
+                                            value={formData.fechaFin}
+                                            onChange={e => setFormData({ ...formData, fechaFin: e.target.value })}
+                                        />
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4 border-t border-slate-100 pt-5">
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Lanzamiento</label>
-                                    <input
-                                        type="date"
-                                        className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-800 outline-none focus:bg-white focus:border-indigo-500 transition-all"
-                                        value={formData.fechaInicio}
-                                        onChange={e => setFormData({ ...formData, fechaInicio: e.target.value })}
-                                    />
-                                </div>
+                            <div className="px-8 py-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50/50">
+                                <button
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="px-6 py-2.5 text-sm font-black text-slate-500 hover:text-slate-800 hover:bg-white rounded-xl transition-all"
+                                >
+                                    Cancelar
+                                </button>
 
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Cierre Est.</label>
-                                    <input
-                                        type="date"
-                                        className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-800 outline-none focus:bg-white focus:border-indigo-500 transition-all"
-                                        value={formData.fechaFin}
-                                        onChange={e => setFormData({ ...formData, fechaFin: e.target.value })}
-                                    />
-                                </div>
+                                <button
+                                    onClick={handleCreateOrUpdate}
+                                    disabled={saving}
+                                    className="px-10 py-2.5 bg-slate-900 text-white font-black rounded-xl hover:bg-indigo-600 shadow-xl shadow-slate-200 transition-all text-sm disabled:opacity-50 flex items-center gap-2"
+                                >
+                                    {saving ? 'Guardando...' : 'Guardar Proyecto'}
+                                </button>
                             </div>
-                        </div>
-
-                        <div className="px-8 py-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50/50">
-                            <button
-                                onClick={() => setIsModalOpen(false)}
-                                className="px-6 py-2.5 text-sm font-black text-slate-500 hover:text-slate-800 hover:bg-white rounded-xl transition-all"
-                            >
-                                Cancelar
-                            </button>
-
-                            <button
-                                onClick={handleCreateOrUpdate}
-                                disabled={saving}
-                                className="px-10 py-2.5 bg-slate-900 text-white font-black rounded-xl hover:bg-indigo-600 shadow-xl shadow-slate-200 transition-all text-sm disabled:opacity-50 flex items-center gap-2"
-                            >
-                                {saving ? 'Guardando...' : 'Guardar Proyecto'}
-                            </button>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
         </div>
     );
 };

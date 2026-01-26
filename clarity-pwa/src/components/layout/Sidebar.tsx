@@ -128,7 +128,9 @@ export const Sidebar: React.FC = () => {
         const baseMenu = rawMenuGroups;
 
         // Check if user is Admin
-        if (user && ['Admin', 'Administrador', 'SuperAdmin'].includes(user.rolGlobal || '')) {
+        const userRol = String(user?.rolGlobal || (user as any)?.rol || (user as any)?.role || '').trim();
+        const isAdmin = ['Admin', 'Administrador', 'SuperAdmin'].includes(userRol);
+        if (user && isAdmin) {
             return baseMenu;
         }
 

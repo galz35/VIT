@@ -41,10 +41,28 @@ export const MeetingNotesPage: React.FC = () => {
     const [detectedTasks, setDetectedTasks] = useState<DetectedTask[]>([]);
     const [showTaskPanel, setShowTaskPanel] = useState(true);
 
+    const loadNotes = async () => {
+        try {
+            const res = await clarityService.getNotes();
+            // Map API response to local Note interface
+            const mapped = (res as any || []).map((n: any) => ({
+                id: n.id,
+                title: n.title,
+                content: n.content,
+                date: n.date,
+                status: 'saved',
+                projectId: n.projectId
+            }));
+            setNotes(mapped);
+        } catch (e) {
+            console.error('Error loading notes:', e);
+            showToast('Error cargando notas', 'error');
+        }
+    };
+
     useEffect(() => {
         loadData();
-        const stored = localStorage.getItem('clarity_notes');
-        if (stored) setNotes(JSON.parse(stored));
+        loadNotes();
     }, []);
 
     // Detect tasks on content change
@@ -106,41 +124,50 @@ export const MeetingNotesPage: React.FC = () => {
         setSelectedProjectId(note.projectId || '');
     };
 
-    const handleSaveNote = () => {
+    const handleSaveNote = async () => {
         if (!activeNoteId) return;
 
-        const proj = projects.find(p => p.idProyecto === selectedProjectId);
+        setIsSaving(true);
+        try {
+            const currentNote = notes.find(n => n.id === activeNoteId);
+            // Simple heuristic to check if ID is temporary (timestamp based usually large)
+            const isTempId = activeNoteId.length > 8;
 
-        const updatedNotes = notes.map(n => {
-            if (n.id === activeNoteId) {
-                return {
-                    ...n,
-                    title: title || 'Nueva Nota',
-                    content,
-                    date: new Date().toISOString(),
-                    projectId: selectedProjectId || undefined,
-                    projectName: proj?.nombre,
-                    status: 'saved' as const
-                };
+            if (isTempId) {
+                // CREATE
+                await clarityService.createNote({ title, content });
+                showToast('Nota creada exitosamente', 'success');
+            } else {
+                // UPDATE
+                await clarityService.updateNote(activeNoteId, { title, content });
+                showToast('Nota actualizada', 'success');
             }
-            return n;
-        });
 
-        setNotes(updatedNotes);
-        localStorage.setItem('clarity_notes', JSON.stringify(updatedNotes));
-        showToast('Nota guardada correctamente', 'success');
+            await loadNotes(); // Reload to get Real IDs and updated list
+        } catch (e) {
+            console.error(e);
+            showToast('Error guardando nota', 'error');
+        } finally {
+            setIsSaving(false);
+        }
     };
 
-    const handleDeleteNote = (e: React.MouseEvent, id: string) => {
+    const handleDeleteNote = async (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
-        if (confirm('¿Eliminar nota?')) {
-            const updated = notes.filter(n => n.id !== id);
-            setNotes(updated);
-            localStorage.setItem('clarity_notes', JSON.stringify(updated));
-            if (activeNoteId === id) {
-                setActiveNoteId(null);
-                setTitle('');
-                setContent('');
+        if (confirm('¿Eliminar nota permanentemente?')) {
+            try {
+                await clarityService.deleteNote(id);
+                const updated = notes.filter(n => n.id !== id);
+                setNotes(updated);
+
+                if (activeNoteId === id) {
+                    setActiveNoteId(null);
+                    setTitle('');
+                    setContent('');
+                }
+                showToast('Nota eliminada', 'success');
+            } catch (e) {
+                showToast('Error eliminando nota', 'error');
             }
         }
     };
@@ -162,20 +189,14 @@ export const MeetingNotesPage: React.FC = () => {
             // 2. Actualizar contenido de la nota (marcar como hecho)
             const lines = content.split('\n');
             if (lines[taskItem.index]) {
-                // Reemplazamos el marcador de tarea por un check
-                lines[taskItem.index] = '✅ ' + taskItem.cleanedText; // Simplificamos la linea final
+                lines[taskItem.index] = '✅ ' + taskItem.cleanedText;
                 const newContent = lines.join('\n');
                 setContent(newContent);
 
-                // Actualizar en storage también
-                const updatedNotes = notes.map(n => {
-                    if (n.id === activeNoteId) {
-                        return { ...n, content: newContent };
-                    }
-                    return n;
-                });
-                setNotes(updatedNotes);
-                localStorage.setItem('clarity_notes', JSON.stringify(updatedNotes));
+                // Update note backend if saved
+                if (activeNoteId && activeNoteId.length < 9) {
+                    await clarityService.updateNote(activeNoteId, { title: title, content: newContent });
+                }
             }
 
             showToast('Tarea creada exitosamente', 'success');

@@ -102,6 +102,7 @@ export class AuthService {
             correo: user.correo,
             sub: user.idUsuario,
             userId: user.idUsuario,
+            carnet: user.carnet,
             rol: user.rolGlobal,
             pais: user.pais
         };

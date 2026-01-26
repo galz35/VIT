@@ -69,7 +69,7 @@ export class AdminService {
     }
 
     async auditLogsByTask(idTarea: number) {
-        return [];
+        return this.auditService.getHistorialEntidad('Tarea', idTarea.toString());
     }
 
     // Organigrama

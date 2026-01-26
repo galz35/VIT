@@ -1,0 +1,22 @@
+-- DDL Generado el 2026-01-25T20:04:07.092Z
+
+
+/* ============================================
+   PERMISO EMPLEADO
+   ============================================ */
+
+CREATE   PROCEDURE dbo.sp_PermisoEmpleado_ObtenerActivosPorRecibe
+  @carnetRecibe NVARCHAR(50)
+AS
+BEGIN
+  SET NOCOUNT ON;
+  DECLARE @c NVARCHAR(50) = LTRIM(RTRIM(ISNULL(@carnetRecibe, N'')));
+
+  SELECT *
+  FROM dbo.p_permiso_empleado
+  WHERE LTRIM(RTRIM(carnet_recibe)) = @c
+    AND activo = 1
+  ORDER BY creado_en DESC;
+END;
+
+GO

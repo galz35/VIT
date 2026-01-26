@@ -52,71 +52,52 @@ export const AgendaTimeline: React.FC<Props> = ({ onTaskComplete, onTaskCancel }
             }
             console.log('[AgendaTimeline] Tasks received:', tasks?.length, tasks);
 
-            // Use string comparison safely (YYYY-MM-DD from backend vs Local/UTC)
             const toDateStr = (d: Date) => d.toISOString().split('T')[0];
+            const todayStr = toDateStr(new Date());
 
-            let today = new Date();
-            let todayStr = toDateStr(today);
-            console.log('[AgendaTimeline] Anchor initial:', todayStr);
+            const groupsMap = new Map<string, DayGroup>();
+
+            // Siempre incluimos "Hoy" para dar contexto al inicio
+            groupsMap.set(todayStr, {
+                date: todayStr,
+                label: getLabel(todayStr),
+                tasks: [],
+                stats: { hechas: 0, pendientes: 0, enCurso: 0, bloqueadas: 0 }
+            });
 
             if (tasks && tasks.length > 0) {
-                // Find max date in tasks (not just year)
-                const dates = tasks.map(t => t.fechaObjetivo || t.fechaHecha).filter(d => d).map(d => new Date(d as string));
-                if (dates.length > 0) {
-                    const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
-                    // If max task date is in the future relative to today, shift anchor to it
-                    if (maxDate > today) {
-                        console.log('[AgendaTimeline] Shifting anchor to max task date:', maxDate.toISOString());
-                        todayStr = toDateStr(maxDate);
-                        today = new Date(todayStr + 'T12:00:00Z');
-                    }
-                }
-            }
-            console.log('[AgendaTimeline] Final anchor todayStr:', todayStr);
-
-            const groups: DayGroup[] = [];
-
-            // Show last 30 days of activity instead of 14 to cover full monthly view
-            for (let i = 0; i < 30; i++) {
-                const d = new Date(today);
-                d.setDate(d.getDate() - i);
-                // Force to string 
-                const dStr = d.toISOString().split('T')[0];
-
-                groups.push({
-                    date: dStr,
-                    label: getLabel(dStr),
-                    tasks: [],
-                    stats: { hechas: 0, pendientes: 0, enCurso: 0, bloqueadas: 0 }
-                });
-            }
-
-            console.log('[AgendaTimeline] Generated groups:', groups.map(g => g.date));
-
-            if (tasks) {
                 tasks.forEach((t: Tarea & { fechaTrabajada?: string }) => {
-                    // Prioridad: fechaTrabajada (del check-in) > fechaHecha > fechaCreacion
+                    // Prioridad: fechaTrabajada (donde hubo check-in) > fechaHecha > fechaCreacion
                     const taskDate = (t as any).fechaTrabajada || t.fechaHecha || t.fechaCreacion;
-                    console.log('[AgendaTimeline] Task:', t.titulo, 'fechaTrabajada:', (t as any).fechaTrabajada, 'fechaHecha:', t.fechaHecha, 'fechaCreacion:', t.fechaCreacion, 'resolved:', taskDate);
                     if (taskDate) {
                         const dateStr = typeof taskDate === 'string' ? taskDate.substring(0, 10) : (taskDate as any).toISOString().split('T')[0];
-                        console.log('[AgendaTimeline] Task dateStr:', dateStr);
 
-                        // Find matching group
-                        const idx = groups.findIndex(g => g.date === dateStr);
-                        console.log('[AgendaTimeline] Match idx:', idx);
-                        if (idx >= 0) {
-                            groups[idx].tasks.push(t);
-                            if (t.estado === 'Hecha') groups[idx].stats.hechas++;
-                            else if (t.estado === 'EnCurso') groups[idx].stats.enCurso++;
-                            else if (t.estado === 'Bloqueada') groups[idx].stats.bloqueadas++;
-                            else groups[idx].stats.pendientes++;
+                        if (!groupsMap.has(dateStr)) {
+                            groupsMap.set(dateStr, {
+                                date: dateStr,
+                                label: getLabel(dateStr),
+                                tasks: [],
+                                stats: { hechas: 0, pendientes: 0, enCurso: 0, bloqueadas: 0 }
+                            });
                         }
+
+                        const group = groupsMap.get(dateStr)!;
+                        group.tasks.push(t);
+                        if (t.estado === 'Hecha') group.stats.hechas++;
+                        else if (t.estado === 'EnCurso') group.stats.enCurso++;
+                        else if (t.estado === 'Bloqueada') group.stats.bloqueadas++;
+                        else group.stats.pendientes++;
                     }
                 });
             }
-            console.log('[AgendaTimeline] Groups with tasks:', groups.filter(g => g.tasks.length > 0).map(g => ({ date: g.date, count: g.tasks.length })));
-            setDays(groups.filter((g, i) => i < 2 || g.tasks.length > 0));
+
+            // Ordenar por fecha descendente (lo más nuevo arriba)
+            // Filtramos los días vacíos, excepto Hoy
+            const sortedGroups = Array.from(groupsMap.values())
+                .sort((a, b) => b.date.localeCompare(a.date))
+                .filter(g => g.tasks.length > 0 || g.date === todayStr);
+
+            setDays(sortedGroups);
         } catch (e) {
             console.error(e);
         } finally {

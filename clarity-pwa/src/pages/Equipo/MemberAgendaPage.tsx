@@ -3,6 +3,7 @@ import { NavLink, Outlet, useParams, useNavigate } from 'react-router-dom';
 import { MemberAgendaProvider } from '../Hoy/context/MemberAgendaContext';
 import { useMiDiaContext } from '../Hoy/context/MiDiaContext';
 import { List, Calendar, BookOpen, ChevronLeft, ChevronRight, ShieldAlert, ArrowLeft } from 'lucide-react';
+import { clarityService } from '../../services/clarity.service';
 
 const MemberAgendaContent: React.FC = () => {
     const { today, setToday } = useMiDiaContext();
@@ -76,6 +77,55 @@ const MemberAgendaContent: React.FC = () => {
 export const MemberAgendaPage: React.FC = () => {
     const { userId } = useParams<{ userId: string }>();
     const navigate = useNavigate();
+    const [empNombre, setEmpNombre] = React.useState<string>('...');
+    const [empCarnet, setEmpCarnet] = React.useState<string>('');
+
+    React.useEffect(() => {
+        if (!userId) return;
+        // userId could be ID or carnet, but typical flow sends ID.
+        // We try to fetch minimal info. If userId is numeric, we assume ID.
+        // If your API supports getEmpleado by ID or access has a lookup, use it.
+        // For now, let's try assuming userId is ID and use a service if available.
+        // Actually accessService.getEmpleado expects carnet.
+        // If userId is numeric ID, we need to resolve.
+        // Let's assume userId passed in URL is ID (e.g. 20).
+        // Best effort: clarityService often returns user details on tasks, but we need standalone.
+        // Let's try accessService.getEmpleado with the userId string (if it's carnet) OR
+        // if it's ID, we might need a lookup.
+        // Given your backend, 'getEmpleado' endpoint usually takes carnet.
+        // If userId is 20, we can't fetch by carnet directly unless we have a map.
+        // Workaround: fetch 'getMyTeam' and find the user locally if possible, OR
+        // call a specific endpoint if exists.
+
+        const fetchInfo = async () => {
+            try {
+                // Try to match from team list since we likely came from MiEquipoPage
+                const team = await clarityService.getMyTeam();
+                const match = team.find((m: any) => String(m.usuario.idUsuario) === userId || String(m.usuario.carnet) === userId);
+
+                if (match) {
+                    setEmpNombre(match.usuario.nombre || 'Sin Nombre');
+                    setEmpCarnet(match.usuario.carnet || '');
+                } else {
+                    // Fallback: Try specific endpoint if exists
+                    try {
+                        const user = await clarityService.getEquipoMiembro(Number(userId));
+                        if (user) {
+                            setEmpNombre(user.nombre || 'Sin Nombre');
+                            setEmpCarnet(user.carnet || '');
+                        }
+                    } catch (e2) {
+                        // Ignore secondary error
+                        setEmpNombre(`Usuario #${userId}`);
+                    }
+                }
+            } catch (e) {
+                console.error("Error fetching member info", e);
+                setEmpNombre(`Usuario #${userId}`);
+            }
+        };
+        fetchInfo();
+    }, [userId]);
 
     if (!userId) return <div>Usuario no especificado</div>;
 
@@ -86,7 +136,7 @@ export const MemberAgendaPage: React.FC = () => {
                 <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 sticky top-0 z-50 flex justify-between items-center shadow-sm">
                     <div className="flex items-center gap-2 text-amber-800 text-xs font-bold uppercase tracking-wide">
                         <ShieldAlert size={16} />
-                        <span>Modo Supervisor: Editando Agenda de {userId}</span>
+                        <span>Modo Supervisor: Editando Agenda de {empNombre} <span className="opacity-50">({empCarnet || userId})</span></span>
                     </div>
                     <button onClick={() => navigate('/app/equipo')} className="flex items-center gap-1 text-xs font-bold text-amber-700 hover:text-amber-900 bg-amber-100 hover:bg-amber-200 px-3 py-1 rounded transition-colors">
                         <ArrowLeft size={12} /> Volver al Equipo

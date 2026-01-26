@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Tarea, CheckinUpsertDto, Bloqueo, Proyecto } from '../../../types/modelos';
-import { Zap, Battery, BatteryWarning, Plus, X, CheckCircle2, Circle, MessageSquare, Send, Trash2 } from 'lucide-react';
-import { TaskDetailModal } from '../../../components/ui/TaskDetailModal';
+import { Zap, Battery, BatteryWarning, Plus, CheckCircle2, Circle, MessageSquare, Send, Trash2 } from 'lucide-react';
+import { TaskDetailModalV2 } from '../../../components/task-detail-v2/TaskDetailModalV2';
 import { TaskSelectorOverlay } from './TaskSelectorOverlay';
 import { useToast } from '../../../context/ToastContext';
 
@@ -10,6 +10,7 @@ interface Props {
     checkinTasks?: Tarea[]; // New prop for existing tasks inside the form
     onSubmit: (dto: CheckinUpsertDto) => Promise<void>;
     userId: number;
+    userCarnet?: string; // Carnet-First
     fecha: string;
     initialData?: CheckinUpsertDto;
     onTaskCreated?: () => Promise<void>;
@@ -17,10 +18,11 @@ interface Props {
     onMoodChange?: (mood: 'Tope' | 'Bien' | 'Bajo') => void;
 }
 
-export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], onSubmit, userId, fecha, initialData, onTaskCreated, bloqueos = [], onMoodChange }) => {
+export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], onSubmit, userId, userCarnet, fecha, initialData, onTaskCreated, bloqueos = [], onMoodChange }) => {
     // Form State
     const { showToast } = useToast();
     const [estadoAnimo, setEstadoAnimo] = useState<'Tope' | 'Bien' | 'Bajo' | undefined>(initialData?.estadoAnimo || undefined);
+
     // Note: 'entregableTexto' is now derived from the selected tasks in Column 1, so we don't strictly need a state for it, 
     // but the API requires it. We will generate it on submit.
 
@@ -98,14 +100,10 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
             const newVal = [...prev];
             if (newVal[index] !== null) {
                 newVal[index] = null;
-                return newVal;
             } else {
-                if (newVal.length > minLen) {
-                    newVal.splice(index, 1);
-                    return newVal;
-                }
-                return prev;
+                if (newVal.length > minLen) newVal.splice(index, 1);
             }
+            return newVal;
         };
 
         if (type === 'Entrego') setEntregoIds(p => removeLogic(p, 1));
@@ -114,30 +112,7 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
     };
 
     // UI Helpers
-    const getDaysActive = (dateStr?: string | Date) => {
-        if (!dateStr) return 0;
-        const d = new Date(dateStr);
-        const now = new Date();
-        const diff = now.getTime() - d.getTime();
-        return Math.floor(diff / (1000 * 3600 * 24));
-    };
 
-    const StatusBadge = ({ task }: { task: Tarea }) => {
-        const days = getDaysActive(task.fechaCreacion);
-        const isLate = days > 3;
-        return (
-            <div className="flex items-center gap-2 text-xs font-bold mt-1">
-                <span className={`px-2 py-0.5 rounded-full ${task.estado === 'EnCurso' ? 'bg-blue-100 text-blue-700' : task.estado === 'Hecha' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
-                    {task.estado === 'EnCurso' ? 'En Curso' : task.estado}
-                </span>
-                {days > 0 && task.estado !== 'Hecha' && (
-                    <span className={`${isLate ? 'text-rose-500' : 'text-slate-400'}`}>
-                        {days}d activa
-                    </span>
-                )}
-            </div>
-        );
-    };
 
     const handleSelectTask = (task: Tarea) => {
         if (!selectingFor) return;
@@ -202,13 +177,18 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
         if (!validate()) return;
         setErrors({});
 
-        const validEntrego = entregoIds.filter(id => id !== null);
+        const validEntregoIds = entregoIds.filter((id): id is number => id !== null);
+        const validAvanzoIds = avanzoIds.filter((id): id is number => id !== null);
+        const validExtraIds = extraIds.filter((id): id is number => id !== null);
+
+        // Derive Priorities from Task Titles (Carnet-First Strategy)
+        const getTitle = (id: number | undefined) => id ? getTask(id)?.titulo || '' : '';
+        const prioridad1 = getTitle(validEntregoIds[0]);
+        const prioridad2 = getTitle(validAvanzoIds[0]);
+        const prioridad3 = getTitle(validExtraIds[0]);
 
         // Auto-generate goal text from the "Objetivo Principal" tasks
-        let generatedGoalText = validEntrego.map(id => {
-            const t = disponibles.find(d => d.idTarea === id);
-            return t ? t.titulo : '';
-        }).filter(Boolean).join(' + ');
+        let generatedGoalText = validEntregoIds.map(id => getTask(id)?.titulo || '').filter(Boolean).join(' + ');
 
         // Fallback if no specific task is in Column 1
         if (!generatedGoalText) {
@@ -219,12 +199,16 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
         try {
             await onSubmit({
                 idUsuario: userId,
+                usuarioCarnet: userCarnet, // NEW
                 fecha,
                 entregableTexto: generatedGoalText,
-                entrego: validEntrego as number[],
-                avanzo: avanzoIds.filter((id): id is number => id !== null),
-                extras: extraIds.filter((id): id is number => id !== null),
+                entrego: validEntregoIds,
+                avanzo: validAvanzoIds,
+                extras: validExtraIds,
                 estadoAnimo,
+                prioridad1, // NEW
+                prioridad2,
+                prioridad3,
                 linkEvidencia: initialData?.linkEvidencia
             });
         } catch (err) {
@@ -248,11 +232,7 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
         if (!quickLogText.trim()) return;
         try {
             const { clarityService } = await import('../../../services/clarity.service');
-            await clarityService.postAvance(taskId, {
-                idUsuario: userId,
-                progreso: 0,
-                comentario: quickLogText
-            });
+            await clarityService.postAvance(taskId, { idUsuario: userId, progreso: 0, comentario: quickLogText });
             setQuickLogId(null);
             setQuickLogText('');
             if (onTaskCreated) await onTaskCreated();
@@ -299,48 +279,50 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
                             <input
                                 autoFocus
                                 value={quickLogText}
-                                onChange={e => setQuickLogText(e.target.value)}
-                                placeholder="Bitácora rápida..."
-                                className="flex-1 bg-white p-2 rounded-lg border border-indigo-200 text-sm outline-none focus:border-indigo-500"
-                                onKeyDown={e => e.key === 'Enter' && handleQuickLogSubmit(e, id)}
+                                onChange={(e) => setQuickLogText(e.target.value)}
+                                placeholder="Escribe bitácora..."
+                                className="flex-1 text-xs bg-white border border-indigo-200 rounded px-2 py-1 outline-none"
+                                onKeyDown={(e) => e.key === 'Enter' && handleQuickLogSubmit(e, id)}
                             />
-                            <button onClick={e => handleQuickLogSubmit(e, id)} className="p-2 bg-indigo-600 text-white rounded-lg"><Send size={16} /></button>
-                            <button onClick={() => setQuickLogId(null)} className="p-2 text-slate-400 hover:text-slate-600"><X size={16} /></button>
+                            <button type="submit" onClick={(e) => handleQuickLogSubmit(e, id)} className="text-white bg-indigo-500 p-1 rounded hover:bg-indigo-600"><Send size={12} /></button>
                         </div>
                     ) : (
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3 overflow-hidden">
-                                <button onClick={(e) => handleToggleComplete(task, e)} className="hover:scale-110 transition-transform flex-shrink-0">
-                                    {task.estado === 'Hecha'
-                                        ? <CheckCircle2 size={20} className="text-emerald-500 fill-emerald-50" />
-                                        : <Circle size={20} className="text-slate-300 hover:text-indigo-500" />
-                                    }
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2 overflow-hidden">
+                                <button
+                                    onClick={(e) => handleToggleComplete(task, e)}
+                                    className={`shrink-0 ${task.estado === 'Hecha' ? 'text-emerald-500' : 'text-slate-300 hover:text-emerald-400'}`}>
+                                    {task.estado === 'Hecha' ? <CheckCircle2 size={16} /> : <Circle size={16} />}
                                 </button>
-                                <div className="min-w-0">
-                                    <p className={`font-medium text-slate-700 truncate ${task.estado === 'Hecha' ? 'line-through opacity-50' : ''}`}>
+                                <div className="flex flex-col min-w-0">
+                                    <span className={`text-sm font-semibold truncate ${task.estado === 'Hecha' ? 'line-through text-slate-400' : 'text-slate-700'}`}>
                                         {task.titulo}
-                                    </p>
-                                    <div className="flex gap-2 text-[10px] text-slate-400 mt-0.5">
-                                        <StatusBadge task={task} />
-                                    </div>
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 truncate">{task.proyectoNombre || task.proyecto?.nombre || 'Inbox'}</span>
                                 </div>
                             </div>
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={(e) => { e.stopPropagation(); setQuickLogId(id); setQuickLogText(''); }}
-                                    className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md transition-colors" title="Añadir Bitácora">
-                                    <MessageSquare size={16} />
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setQuickLogId(prev => prev === id ? null : id); }}
+                                    className="p-1 hover:bg-slate-100 rounded text-slate-400"
+                                    title="Bitácora rápida"
+                                >
+                                    <MessageSquare size={14} />
                                 </button>
-                                <button onClick={(e) => removeSlot(e, type, idx)}
-                                    className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-white rounded-md transition-colors" title="Quitar">
-                                    <Trash2 size={16} />
+                                <button
+                                    onClick={(e) => removeSlot(e, type, idx)}
+                                    className="p-1 hover:bg-rose-50 rounded text-rose-300 hover:text-rose-500"
+                                    title="Quitar"
+                                >
+                                    <Trash2 size={14} />
                                 </button>
                             </div>
                         </div>
                     )
                 ) : (
-                    <div className="flex items-center gap-3 py-1">
-                        <Plus size={18} className="text-slate-300 group-hover:text-indigo-500 transition-colors" />
-                        <span className="text-sm font-medium">{emptyText}</span>
+                    <div className="flex items-center gap-2 h-full">
+                        <Plus size={16} />
+                        <span className="text-xs font-medium">{emptyText}</span>
                     </div>
                 )}
             </div>
@@ -350,8 +332,9 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
     return (
         <form onSubmit={handleSubmit} className="h-full flex flex-col gap-4 animate-fade-in max-w-7xl mx-auto pb-6 relative">
             {editingTask && (
-                <TaskDetailModal
+                <TaskDetailModalV2
                     task={editingTask}
+                    mode="execution"
                     onClose={() => setEditingTask(null)}
                     onUpdate={async () => {
                         if (onTaskCreated) await onTaskCreated();
@@ -431,7 +414,7 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
                         disabled={submitting}
                         className="bg-slate-900 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-slate-900/10 active:scale-[0.95] hover:bg-slate-800 transition-all disabled:opacity-70 flex items-center gap-2 text-sm whitespace-nowrap h-full"
                     >
-                        {submitting ? '...' : '🚀 Activar Plan'}
+                        {submitting ? '...' : 'Guardar Agenda'}
                     </button>
                 </div>
             </div>
@@ -521,7 +504,7 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
                     disabled={submitting}
                     className="w-full bg-slate-900 text-white font-bold py-3 rounded-xl shadow-xl shadow-slate-900/20 active:scale-[0.98] transition-all disabled:opacity-70 flex items-center justify-center gap-2"
                 >
-                    {submitting ? 'Guardando...' : '🚀 Activar Plan'}
+                    {submitting ? 'Guardando...' : 'Guardar Agenda'}
                 </button>
             </div>
         </form>

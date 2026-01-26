@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { clarityService } from '../../../services/clarity.service';
-import { useAuth } from '../../../context/AuthContext';
+// import { useAuth } from '../../../context/AuthContext';
 import { ChevronLeft, ChevronRight, Check, X, Save, Loader2, AlertCircle } from 'lucide-react';
 import type { Tarea } from '../../../types/modelos';
 
@@ -29,7 +29,7 @@ const ESFUERZOS = ['S', 'M', 'L'];
 
 export const AgendaSemanal: React.FC<Props> = ({ onTaskComplete, onTaskCancel }) => {
     const [weekOffset, setWeekOffset] = useState(0);
-    const { user } = useAuth();
+    // const { user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [weekData, setWeekData] = useState<DayData[]>([]);
     const [selectedTask, setSelectedTask] = useState<Tarea | null>(null);
@@ -43,84 +43,72 @@ export const AgendaSemanal: React.FC<Props> = ({ onTaskComplete, onTaskCancel })
     const loadWeekData = useCallback(async () => {
         setLoading(true);
         try {
-            let tasks: Tarea[] = [];
-            if (user?.carnet) {
-                const res = await clarityService.getTareasHistorico(user.carnet, 30);
-                tasks = res || [];
-            } else {
-                const res = await clarityService.getMisTareas({});
-                tasks = res || [];
-            }
-            console.log('[AgendaSemanal] Tasks received:', tasks?.length, tasks);
-
-            // 1. Establish "Today" logic
-            const toDateStr = (d: Date) => d.toISOString().split('T')[0];
-            let today = new Date();
-            let todayStr = toDateStr(today);
-            console.log('[AgendaSemanal] Anchor initial:', todayStr);
-
-            if (tasks && tasks.length > 0) {
-                // Find max date in tasks (not just year)
-                const dates = tasks.map(t => t.fechaObjetivo || t.fechaHecha).filter(d => d).map(d => new Date(d as string));
-                if (dates.length > 0) {
-                    const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
-                    // If max task date is in the future relative to today, shift anchor to it
-                    if (maxDate > today) {
-                        console.log('[AgendaSemanal] Shifting anchor to max task date:', maxDate.toISOString());
-                        todayStr = toDateStr(maxDate);
-                        today = new Date(todayStr + 'T12:00:00Z');
-                    }
-                }
-            }
-
-            // 2. Calculate Week Grid
-            // Monday of the current week (relative to today)
+            // Calculate Current View Range
+            const today = new Date();
             const currentDay = today.getDay(); // 0 (Sun) to 6 (Sat)
             const diff = today.getDate() - currentDay + (currentDay === 0 ? -6 : 1); // Adjust to get Monday
             const monday = new Date(today);
-            monday.setDate(diff);
+            monday.setDate(diff + (weekOffset * 7));
+            monday.setHours(0, 0, 0, 0);
 
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            sunday.setHours(23, 59, 59, 999);
+
+            const startDateStr = monday.toISOString().split('T')[0];
+            const endDateStr = sunday.toISOString().split('T')[0];
+
+            console.log('[AgendaSemanal] Fetching range:', startDateStr, 'to', endDateStr);
+
+            // Fetch tasks for the specific range
+            const tasks = await clarityService.getMisTareas({
+                startDate: startDateStr,
+                endDate: endDateStr
+            }) || [];
+
+            console.log('[AgendaSemanal] Tasks received:', tasks.length);
+
+            // Generate Days
             const days: DayData[] = [];
+            const todayStr = new Date().toISOString().split('T')[0];
 
             for (let i = 0; i < 7; i++) {
                 const d = new Date(monday);
-                d.setDate(d.getDate() + i + (weekOffset * 7));
-
+                d.setDate(d.getDate() + i);
                 const dStr = d.toISOString().split('T')[0];
-                const isToday = dStr === todayStr;
-                const isPast = dStr < todayStr && !isToday;
 
                 days.push({
                     date: dStr,
                     dayName: getDayName(d),
                     dayNumber: d.getDate(),
                     monthName: getMonthName(d),
-                    isToday: isToday,
-                    isPast: isPast,
+                    isToday: dStr === todayStr,
+                    isPast: dStr < todayStr,
                     tasks: []
                 });
             }
 
-            // 3. Map Tasks
-            if (tasks) {
-                tasks.forEach((t: Tarea & { fechaTrabajada?: string }) => {
-                    // Prioridad: fechaTrabajada (del check-in) > fechaHecha > fechaObjetivo > fechaCreacion
-                    const taskDate = (t as any).fechaTrabajada || t.fechaHecha || t.fechaObjetivo || t.fechaCreacion;
-                    if (taskDate) {
-                        const dateStr = typeof taskDate === 'string' ? taskDate.substring(0, 10) : (taskDate as any).toISOString().split('T')[0];
+            // Map Tasks
+            tasks.forEach((t: Tarea) => {
+                // Priority: fechaObjetivo > fechaHecha > fechaCreacion
+                // Now we strictly trust startDate/endDate filter from backend for 'fechaObjetivo' 
+                // but we must place them in the correct slot.
+                // We use 'fechaObjetivo' as the primary slot for Agenda.
+                const targetDate = t.fechaObjetivo || t.fechaHecha || t.fechaCreacion;
+                if (targetDate) {
+                    const dateStr = typeof targetDate === 'string' ? targetDate.substring(0, 10) : (targetDate as any).toISOString().split('T')[0];
+                    const idx = days.findIndex(d => d.date === dateStr);
+                    if (idx >= 0) days[idx].tasks.push(t);
+                }
+            });
 
-                        const idx = days.findIndex(d => d.date === dateStr);
-                        if (idx >= 0) days[idx].tasks.push(t);
-                    }
-                });
-            }
             setWeekData(days);
         } catch (e) {
             console.error('Error:', e);
         } finally {
             setLoading(false);
         }
-    }, [weekOffset, user]);
+    }, [weekOffset]);
 
     useEffect(() => { loadWeekData(); }, [loadWeekData]);
 
@@ -224,9 +212,11 @@ export const AgendaSemanal: React.FC<Props> = ({ onTaskComplete, onTaskCancel })
                     <button onClick={() => setWeekOffset(wo => wo - 1)} className="p-2 hover:bg-indigo-700 rounded-lg"><ChevronLeft size={18} /></button>
                     <div className="text-center">
                         <h3 className="text-sm font-bold">📅 Calendario Semanal</h3>
-                        <p className="text-xs text-indigo-200">{weekOffset === 0 ? 'Esta semana' : `Hace ${Math.abs(weekOffset)} sem.`}</p>
+                        <p className="text-xs text-indigo-200">
+                            {weekOffset === 0 ? 'Esta semana' : weekOffset > 0 ? `En ${weekOffset} sem.` : `Hace ${Math.abs(weekOffset)} sem.`}
+                        </p>
                     </div>
-                    <button onClick={() => setWeekOffset(wo => Math.min(0, wo + 1))} disabled={weekOffset >= 0} className="p-2 hover:bg-indigo-700 rounded-lg disabled:opacity-30"><ChevronRight size={18} /></button>
+                    <button onClick={() => setWeekOffset(wo => wo + 1)} className="p-2 hover:bg-indigo-700 rounded-lg"><ChevronRight size={18} /></button>
                 </div>
 
                 {/* Grilla */}

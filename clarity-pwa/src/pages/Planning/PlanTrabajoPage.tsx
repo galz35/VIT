@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { clarityService } from '../../services/clarity.service';
 import { api } from '../../services/api';
@@ -7,12 +7,13 @@ import { useToast } from '../../context/ToastContext';
 import type { Tarea, Proyecto } from '../../types/modelos';
 import { CreateTaskModal } from '../../components/ui/CreateTaskModal';
 import { TipoBadge } from '../../components/ui/TipoBadge';
+import { StatusBadge } from '../../components/ui/StatusBadge';
 
 import { AvanceMensualModal } from './components/AvanceMensualModal';
 import {
     LayoutGrid, List, Calendar as CalendarIcon, ChevronDown, Plus,
     Briefcase, Lock, MoreVertical, Search, CheckCircle, ChevronLeft, ChevronRight,
-    User, Unlock, AlertCircle, Trash2, X
+    User, Unlock, AlertCircle, Trash2, X, Map, Link2
 } from 'lucide-react';
 import {
     format,
@@ -35,27 +36,59 @@ interface Comment { id: number; user: string; text: string; timestamp: string; }
 
 // --- COMPONENTS ---
 
-const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
-    const colors: Record<string, string> = {
-        'Pendiente': 'bg-slate-100 text-slate-600 border-slate-200',
-        'EnCurso': 'bg-sky-50 text-sky-600 border-sky-100',
-        'Bloqueada': 'bg-rose-50 text-rose-600 border-rose-100',
-        'Revision': 'bg-purple-50 text-purple-600 border-purple-100',
-        'Hecha': 'bg-emerald-50 text-emerald-600 border-emerald-100'
-    };
-    const labels: Record<string, string> = {
-        'Pendiente': 'Por Hacer',
-        'EnCurso': 'En Curso',
-        'Bloqueada': 'Bloqueada',
-        'Revision': 'Revisión',
-        'Hecha': 'Completada'
-    };
+/* ---------- HOOKS DE RENDIMIENTO (NUEVO) ---------- */
+function useOutsideClick<T extends HTMLElement>(onOutside: () => void, enabled: boolean) {
+    const ref = useRef<T | null>(null);
+
+    useEffect(() => {
+        if (!enabled) return;
+        const onDown = (e: MouseEvent) => {
+            if (!ref.current) return;
+            if (!ref.current.contains(e.target as Node)) onOutside();
+        };
+        document.addEventListener("mousedown", onDown);
+        return () => document.removeEventListener("mousedown", onDown);
+    }, [enabled, onOutside]);
+
+    return ref;
+}
+
+function useDebouncedValue<T>(value: T, ms = 200) {
+    const [v, setV] = useState(value);
+    useEffect(() => {
+        const t = setTimeout(() => setV(value), ms);
+        return () => clearTimeout(t);
+    }, [value, ms]);
+    return v;
+}
+
+/* ---------- UI COMPONENTS (Refactorizados) ---------- */
+const ViewTabs: React.FC<{ value: ViewMode; onChange: (v: ViewMode) => void }> = ({ value, onChange }) => {
+    const btn = (k: ViewMode, Icon: any, title: string) => (
+        <button
+            type="button"
+            onClick={() => onChange(k)}
+            title={title}
+            className={`p-2 rounded-lg transition-all ${value === k
+                ? "bg-white shadow-sm text-slate-900 scale-105 border border-slate-200"
+                : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                }`}
+        >
+            <Icon size={18} />
+        </button>
+    );
+
     return (
-        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${colors[status] || colors['Pendiente']} uppercase tracking-wider`}>
-            {labels[status] || status}
-        </span>
+        <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner gap-1">
+            {btn("list", List, "Lista Detallada")}
+            {btn("board", LayoutGrid, "Tablero Kanban")}
+            {btn("gantt", CalendarIcon, "Cronograma")}
+            {btn("roadmap", Map, "Roadmap")}
+        </div>
     );
 };
+
+// StatusBadge moved to shared component
 
 
 
@@ -81,18 +114,10 @@ const QuickAssignDropdown: React.FC<{
         (m.carnet || '').toLowerCase().includes(search.toLowerCase())
     );
 
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if ((e.target as any).closest('.quick-assign-container') === null) {
-                setIsOpen(false);
-            }
-        };
-        if (isOpen) document.addEventListener('click', handleClickOutside);
-        return () => document.removeEventListener('click', handleClickOutside);
-    }, [isOpen]);
+    const ref = useOutsideClick<HTMLDivElement>(() => setIsOpen(false), isOpen);
 
     return (
-        <div className="relative quick-assign-container">
+        <div className="relative quick-assign-container" ref={ref}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex items-center gap-2 hover:bg-slate-100 p-1 rounded-full pr-2 transition-colors border border-transparent hover:border-slate-200"
@@ -223,28 +248,55 @@ const RoadmapView: React.FC<{ projects: Proyecto[] }> = ({ projects }) => {
 };
 
 const BoardView: React.FC<{ tasks: Tarea[], team: TeamMember[], onAssign: (tid: number, uid: number) => void, onTaskClick: (t: Tarea) => void }> = ({ tasks, team, onAssign, onTaskClick }) => {
-    const columns = ['Pendiente', 'EnCurso', 'Hecha'];
+    const columns = ['Pendiente', 'En Curso', 'Bloqueada', 'Revisión', 'Hecha'];
+
+    // Status color mapping for board headers
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'Pendiente': return 'bg-slate-400';
+            case 'En Curso': return 'bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.5)]';
+            case 'Bloqueada': return 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]';
+            case 'Revisión': return 'bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]';
+            case 'Hecha': return 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]';
+            default: return 'bg-slate-400';
+        }
+    };
+
+    const getStatusLabel = (status: string) => {
+        switch (status) {
+            case 'Pendiente': return 'Por Hacer';
+            case 'En Curso': return 'En Ejecución';
+            case 'Bloqueada': return 'Bloqueada';
+            case 'Revisión': return 'En Revisión';
+            case 'Hecha': return 'Completado';
+            default: return status;
+        }
+    };
+
     return (
-        <div className="flex gap-8 h-full overflow-x-auto pb-6 px-4">
+        <div className="flex gap-6 h-full overflow-x-auto pb-6 px-4">
             {columns.map(status => (
-                <div key={status} className="w-[340px] shrink-0 flex flex-col bg-slate-100/40 rounded-3xl border border-slate-200/50 max-h-full backdrop-blur-sm">
+                <div key={status} className="w-[320px] shrink-0 flex flex-col bg-slate-100/40 rounded-3xl border border-slate-200/50 max-h-full backdrop-blur-sm">
                     <div className="p-5 flex justify-between items-center">
                         <div className="flex items-center gap-3">
-                            <div className={`w-2 h-2 rounded-full ${status === 'Pendiente' ? 'bg-slate-400' : status === 'EnCurso' ? 'bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.5)]' : 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]'}`} />
-                            <h3 className="font-black text-[11px] text-slate-500 uppercase tracking-[0.2em]">{status === 'Pendiente' ? 'Por Hacer' : status === 'EnCurso' ? 'En Ejecución' : 'Completado'}</h3>
+                            <div className={`w-2.5 h-2.5 rounded-full ${getStatusColor(status)}`} />
+                            <h3 className="font-black text-[11px] text-slate-500 uppercase tracking-[0.2em]">{getStatusLabel(status)}</h3>
                         </div>
                         <span className="bg-white/80 border border-slate-200 text-slate-900 text-[10px] font-black px-3 py-1 rounded-full shadow-sm">
-                            {tasks.filter(t => t.estado === (status === 'Pending' ? 'Pendiente' : status)).length}
+                            {tasks.filter(t => t.estado === status || (status === 'En Curso' && t.estado === 'EnCurso') || (status === 'Revisión' && t.estado === 'Revision')).length}
                         </span>
                     </div>
                     <div className="px-3 pb-4 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
-                        {tasks.filter(t => t.estado === status).map(task => (
+                        {tasks.filter(t => t.estado === status || (status === 'En Curso' && t.estado === 'EnCurso') || (status === 'Revisión' && t.estado === 'Revision')).map(task => (
                             <div key={task.idTarea} onClick={() => onTaskClick(task)} className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-xl transition-all group cursor-pointer active:scale-[0.98] border-b-4 border-b-slate-100 hover:border-b-indigo-500">
                                 <div className="flex justify-between items-start mb-4">
                                     <span className="text-[10px] text-slate-400 font-black tracking-widest uppercase">ID-{task.idTarea}</span>
-                                    <TipoBadge tipo={task.tipo} />
+                                    <div className="flex items-center gap-2">
+                                        {(task as any).isLockedByManager && <Lock size={10} className="text-indigo-400" />}
+                                        <TipoBadge tipo={task.tipo} />
+                                    </div>
                                 </div>
-                                <h4 className="text-sm font-black text-slate-800 leading-relaxed mb-4 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{task.titulo}</h4>
+                                <h4 className="text-sm font-black text-slate-800 leading-relaxed mb-4 group-hover:text-indigo-600 transition-colors uppercase tracking-tight line-clamp-2">{task.titulo}</h4>
                                 <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-50">
                                     <QuickAssignDropdown
                                         currentAssignee={task.asignados && task.asignados.length > 0 ? { id: task.asignados[0].idUsuario, nombre: task.asignados[0].usuario?.nombre || 'U' } : null}
@@ -471,7 +523,9 @@ export const PlanTrabajoPage: React.FC = () => {
                 progreso: selectedTask.progreso,
                 descripcion: selectedTask.descripcion,
                 fechaInicioPlanificada: selectedTask.fechaInicioPlanificada || null,
-                fechaObjetivo: selectedTask.fechaObjetivo || null
+                fechaObjetivo: selectedTask.fechaObjetivo || null,
+                tipo: selectedTask.tipo,
+                linkEvidencia: selectedTask.linkEvidencia
             });
 
             // Handle Approval Response
@@ -550,9 +604,15 @@ export const PlanTrabajoPage: React.FC = () => {
             try {
                 const [projsRes, teamRes, catalog] = await Promise.all([
                     clarityService.getProyectos(),
-                    api.get('/planning/team'),
+                    clarityService.getMyTeam(),
                     clarityService.getCatalogoOrganizacion()
                 ]);
+
+                console.log('[DEBUG-API] loadInitial results:', {
+                    projs: (projsRes as any)?.items?.length,
+                    teamCount: teamRes?.length,
+                    catalogCount: catalog?.length
+                });
 
                 const projs = (projsRes as any)?.items || projsRes || [];
                 setProjects(projs);
@@ -569,17 +629,22 @@ export const PlanTrabajoPage: React.FC = () => {
                     }
                 }
 
-                const teamResponseData = teamRes.data as any;
-                let teamArray = Array.isArray(teamResponseData) ? teamResponseData : (teamResponseData?.data || []);
+                const teamArrayRaw = teamRes || [];
+                console.log('[DEBUG-API] teamArray from service:', teamArrayRaw);
+
                 // Mapear nombreCompleto a nombre para compatibilidad
-                teamArray = (Array.isArray(teamArray) ? teamArray : []).map((m: any) => ({
+                const teamArray = teamArrayRaw.map((m: any) => ({
                     ...m,
                     nombre: m.nombre || m.nombreCompleto || 'Sin Nombre'
                 }));
+                console.log('[DEBUG-API] Final team state to set:', teamArray);
                 setTeam(teamArray);
-            } catch (error) {
-                console.error('Error loading data', error);
-                showToast('Error cargando proyectos', 'error');
+            } catch (error: any) {
+                console.error('[DEBUG-API] Error loading initial data:', error);
+                if (error.response) {
+                    console.error('[DEBUG-API] Response data:', error.response.data);
+                }
+                showToast('Error cargando datos iniciales', 'error');
             } finally {
                 setLoading(false);
             }
@@ -589,6 +654,11 @@ export const PlanTrabajoPage: React.FC = () => {
 
     // --- TASK LOADING ---
     // --- TASK LOADING ---
+    const handleOpenCreateTask = () => {
+        console.log('[DEBUG-API] Opening CreateTaskModal. Current team size:', team.length);
+        setIsCreateTaskOpen(true);
+    };
+
     const loadTasks = async () => {
         if (!selectedProject) {
             setTasks([]);
@@ -700,13 +770,17 @@ export const PlanTrabajoPage: React.FC = () => {
 
     // --- RENDER ---
 
+    // OPTIMIZED FILTERING
+    const debouncedFilterText = useDebouncedValue(filterText, 300); // 300ms delay
+
     const finalFilteredTasks = useMemo(() => {
+        const q = (debouncedFilterText || "").trim().toLowerCase();
         return tasks.filter(t => {
-            const matchText = t.titulo.toLowerCase().includes(filterText.toLowerCase());
+            const matchText = !q || t.titulo.toLowerCase().includes(q);
             const matchAssignee = filterAssignee === '' || t.idResponsable === Number(filterAssignee) || t.asignados?.some(a => a.idUsuario === Number(filterAssignee));
             return matchText && matchAssignee;
         });
-    }, [tasks, filterText, filterAssignee]);
+    }, [tasks, debouncedFilterText, filterAssignee]);
 
     return (
         <div className="flex h-[calc(100vh-4rem)] bg-white overflow-hidden font-sans text-slate-800 flex-col">
@@ -901,391 +975,381 @@ export const PlanTrabajoPage: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    {/* View Tabs */}
-                    <div className="flex bg-slate-100/80 backdrop-blur-md p-1 rounded-xl border border-slate-200/50 mr-2 shadow-inner">
-                        <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white shadow-md text-slate-900 scale-105' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'}`} title="Lista">
-                            <List size={18} />
-                        </button>
-                        <button onClick={() => setViewMode('board')} className={`p-2 rounded-lg transition-all ${viewMode === 'board' ? 'bg-white shadow-md text-slate-900 scale-105' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'}`} title="Tablero">
-                            <LayoutGrid size={18} />
-                        </button>
-                        <button onClick={() => setViewMode('gantt')} className={`p-2 rounded-lg transition-all ${viewMode === 'gantt' ? 'bg-white shadow-md text-slate-900 scale-105' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'}`} title="Cronograma">
-                            <CalendarIcon size={18} />
-                        </button>
-                        <button onClick={() => setViewMode('gantt')} className={`p-2 rounded-lg transition-all ${viewMode === 'gantt' ? 'bg-white shadow-md text-slate-900 scale-105' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'}`} title="Cronograma">
-                            <CalendarIcon size={18} />
+                    {/* VIEW SWITCHER & ACTIONS */}
+                    <div className="flex items-center gap-3">
+                        {/* Selector de Vistas Optimizado */}
+                        <ViewTabs value={viewMode} onChange={setViewMode} />
+
+                        <div className="h-6 w-px bg-slate-200 mx-1 hidden md:block"></div>
+
+                        <button
+                            onClick={() => handleOpenCreateTask()}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-slate-800 text-white font-bold text-xs rounded-lg hover:bg-slate-900 shadow-sm"
+                        >
+                            <Plus size={14} /> <span className="hidden md:inline">Nueva Tarea</span>
                         </button>
                     </div>
-
-                    <button
-                        onClick={() => setIsCreateTaskOpen(true)}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-slate-800 text-white font-bold text-xs rounded-lg hover:bg-slate-900 shadow-sm"
-                    >
-                        <Plus size={14} /> <span className="hidden md:inline">Nueva Tarea</span>
-                    </button>
-
-
-
-                    {selectedProject && canManageProject && (
-                        <button
-                            onClick={async () => {
-                                if (!selectedProject) return;
-                                const nuevoEstado = !(selectedProject as any).enllavado;
-                                try {
-                                    await clarityService.toggleBloqueoProyecto(selectedProject.idProyecto, nuevoEstado);
-                                    // Update local state
-                                    const updatedProject = { ...selectedProject, enllavado: nuevoEstado };
-                                    setSelectedProject(updatedProject as any);
-                                    // Update in projects list
-                                    setProjects(projects.map(p => p.idProyecto === updatedProject.idProyecto ? updatedProject as any : p));
-
-                                    showToast(nuevoEstado ? "Plan Enllavado Correctamente" : "Plan Desbloqueado", "success");
-                                } catch (error) {
-                                    console.error("Error toggling project lock", error);
-                                    showToast("Error al actualizar el estado del proyecto", "error");
-                                }
-                            }}
-                            className={`ml-2 flex items-center gap-1 px-3 py-1.5 font-bold text-xs rounded-lg transition-colors ${(selectedProject as any).enllavado ? 'bg-amber-100 border border-amber-300 text-amber-800' : 'bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100'}`}
-                            title={(selectedProject as any).enllavado ? "El plan está oficializado. Click para permitir ediciones." : "Enllavar Proyecto para oficializar y evitar cambios"}
-                        >
-                            {(selectedProject as any).enllavado ? <Unlock size={14} /> : <Lock size={14} />}
-                            <span className="hidden md:inline">{(selectedProject as any).enllavado ? 'Desbloquear' : 'Enllavar Plan'}</span>
-                        </button>
-                    )}
                 </div>
+
+
+
+                {selectedProject && canManageProject && (
+                    <button
+                        onClick={async () => {
+                            if (!selectedProject) return;
+                            const nuevoEstado = !(selectedProject as any).enllavado;
+                            try {
+                                await clarityService.toggleBloqueoProyecto(selectedProject.idProyecto, nuevoEstado);
+                                // Update local state
+                                const updatedProject = { ...selectedProject, enllavado: nuevoEstado };
+                                setSelectedProject(updatedProject as any);
+                                // Update in projects list
+                                setProjects(projects.map(p => p.idProyecto === updatedProject.idProyecto ? updatedProject as any : p));
+
+                                showToast(nuevoEstado ? "Plan Enllavado Correctamente" : "Plan Desbloqueado", "success");
+                            } catch (error) {
+                                console.error("Error toggling project lock", error);
+                                showToast("Error al actualizar el estado del proyecto", "error");
+                            }
+                        }}
+                        className={`ml-2 flex items-center gap-1 px-3 py-1.5 font-bold text-xs rounded-lg transition-colors ${(selectedProject as any).enllavado ? 'bg-amber-100 border border-amber-300 text-amber-800' : 'bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100'}`}
+                        title={(selectedProject as any).enllavado ? "El plan está oficializado. Click para permitir ediciones." : "Enllavar Proyecto para oficializar y evitar cambios"}
+                    >
+                        {(selectedProject as any).enllavado ? <Unlock size={14} /> : <Lock size={14} />}
+                        <span className="hidden md:inline">{(selectedProject as any).enllavado ? 'Desbloquear' : 'Enllavar Plan'}</span>
+                    </button>
+                )}
             </header >
 
             {/* CONTENT */}
-            < div className="flex-1 overflow-hidden bg-slate-50/50 relative" >
-                {
-                    loading ? (
-                        <div className="absolute inset-0 flex items-center justify-center text-slate-400 bg-white/50 z-50" > Cargando...</div>
-                    ) : (
-                        <div className="w-full h-full flex flex-col">
-                            {/* Filters Bar (Only for List/Board) */}
-                            {['list', 'board'].includes(viewMode) && (
-                                <div className="px-6 py-2 border-b border-slate-200 bg-white flex items-center justify-between shrink-0 gap-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="relative w-64">
-                                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                                            <input
-                                                value={filterText}
-                                                onChange={e => setFilterText(e.target.value)}
-                                                placeholder="Filtrar tareas..."
-                                                className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs font-bold focus:bg-white focus:border-indigo-300 outline-none transition-all"
-                                            />
+            <div className="flex-1 overflow-hidden bg-slate-50/50 relative">
+                {loading ? (
+                    <div className="absolute inset-0 flex items-center justify-center text-slate-400 bg-white/50 z-50">Cargando...</div>
+                ) : (
+                    <div className="w-full h-full flex flex-col">
+                        {/* Filters Bar (Only for List/Board) */}
+                        {['list', 'board'].includes(viewMode) && (
+                            <div className="px-6 py-2 border-b border-slate-200 bg-white flex items-center justify-between shrink-0 gap-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="relative w-64">
+                                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                        <input
+                                            value={filterText}
+                                            onChange={e => setFilterText(e.target.value)}
+                                            placeholder="Filtrar tareas..."
+                                            className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs font-bold focus:bg-white focus:border-indigo-300 outline-none transition-all"
+                                        />
+                                    </div>
+
+                                    {/* Filtro por Asignado */}
+                                    {/* Filtro por Asignado - Searchable Dropdown */}
+                                    <div className="relative">
+                                        <div
+                                            className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-md pl-3 pr-2 py-1.5 text-xs font-bold text-slate-700 cursor-pointer hover:bg-white transition-colors min-w-[180px]"
+                                            onClick={() => setIsAssigneeFilterOpen(!isAssigneeFilterOpen)}
+                                        >
+                                            <User size={12} className="text-slate-400 shrink-0" />
+                                            <span className="flex-1 truncate">
+                                                {filterAssignee
+                                                    ? team.find(m => m.idUsuario === filterAssignee)?.nombre || 'Desconocido'
+                                                    : 'Todos los asignados'
+                                                }
+                                            </span>
+                                            <ChevronDown size={12} className="text-slate-400 shrink-0" />
                                         </div>
 
-                                        {/* Filtro por Asignado */}
-                                        {/* Filtro por Asignado - Searchable Dropdown */}
-                                        <div className="relative">
-                                            <div
-                                                className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-md pl-3 pr-2 py-1.5 text-xs font-bold text-slate-700 cursor-pointer hover:bg-white transition-colors min-w-[180px]"
-                                                onClick={() => setIsAssigneeFilterOpen(!isAssigneeFilterOpen)}
-                                            >
-                                                <User size={12} className="text-slate-400 shrink-0" />
-                                                <span className="flex-1 truncate">
-                                                    {filterAssignee
-                                                        ? team.find(m => m.idUsuario === filterAssignee)?.nombre || 'Desconocido'
-                                                        : 'Todos los asignados'
-                                                    }
-                                                </span>
-                                                <ChevronDown size={12} className="text-slate-400 shrink-0" />
-                                            </div>
-
-                                            {isAssigneeFilterOpen && (
-                                                <>
-                                                    <div className="fixed inset-0 z-10" onClick={() => setIsAssigneeFilterOpen(false)} />
-                                                    <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-slate-200 rounded-lg shadow-xl py-2 z-20 animate-in fade-in zoom-in-95">
-                                                        <div className="px-2 pb-2 border-b border-slate-100 mb-1">
-                                                            <div className="relative">
-                                                                <input
-                                                                    autoFocus
-                                                                    className="w-full bg-slate-50 border border-slate-200 rounded-md py-1.5 pl-8 pr-2 text-xs font-bold outline-none focus:border-indigo-400 transition-colors placeholder:font-normal"
-                                                                    placeholder="Buscar persona..."
-                                                                    value={assigneeFilterSearch}
-                                                                    onChange={e => setAssigneeFilterSearch(e.target.value)}
-                                                                />
-                                                                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                                                            </div>
-                                                        </div>
-                                                        <div className="max-h-60 overflow-y-auto">
-                                                            <button
-                                                                onClick={() => {
-                                                                    setFilterAssignee('');
-                                                                    setIsAssigneeFilterOpen(false);
-                                                                    setAssigneeFilterSearch('');
-                                                                    setCurrentPage(1);
-                                                                }}
-                                                                className={`w-full text-left px-4 py-2 text-xs hover:bg-slate-50 flex items-center justify-between group ${filterAssignee === '' ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600'}`}
-                                                            >
-                                                                <span>Todos</span>
-                                                            </button>
-                                                            {team
-                                                                .filter(m => (m.nombre || '').toLowerCase().includes(assigneeFilterSearch.toLowerCase()))
-                                                                .map(member => {
-                                                                    const count = tasks.filter(t => t.asignados?.some(a => a.idUsuario === member.idUsuario)).length;
-                                                                    return (
-                                                                        <button
-                                                                            key={member.idUsuario}
-                                                                            onClick={() => {
-                                                                                setFilterAssignee(member.idUsuario);
-                                                                                setIsAssigneeFilterOpen(false);
-                                                                                setAssigneeFilterSearch('');
-                                                                                setCurrentPage(1);
-                                                                            }}
-                                                                            className={`w-full text-left px-4 py-2 text-xs hover:bg-slate-50 flex items-center justify-between group ${filterAssignee === member.idUsuario ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600'}`}
-                                                                        >
-                                                                            <span className="truncate">{member.nombre}</span>
-                                                                            <span className={`px-1.5 py-0.5 rounded text-[10px] ml-2 font-bold ${filterAssignee === member.idUsuario ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'}`}>{count}</span>
-                                                                        </button>
-                                                                    );
-                                                                })}
-                                                            {team.filter(m => (m.nombre || '').toLowerCase().includes(assigneeFilterSearch.toLowerCase())).length === 0 && (
-                                                                <div className="px-4 py-3 text-xs text-slate-400 text-center italic">No se encontraron resultados</div>
-                                                            )}
+                                        {isAssigneeFilterOpen && (
+                                            <>
+                                                <div className="fixed inset-0 z-10" onClick={() => setIsAssigneeFilterOpen(false)} />
+                                                <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-slate-200 rounded-lg shadow-xl py-2 z-20 animate-in fade-in zoom-in-95">
+                                                    <div className="px-2 pb-2 border-b border-slate-100 mb-1">
+                                                        <div className="relative">
+                                                            <input
+                                                                autoFocus
+                                                                className="w-full bg-slate-50 border border-slate-200 rounded-md py-1.5 pl-8 pr-2 text-xs font-bold outline-none focus:border-indigo-400 transition-colors placeholder:font-normal"
+                                                                placeholder="Buscar persona..."
+                                                                value={assigneeFilterSearch}
+                                                                onChange={e => setAssigneeFilterSearch(e.target.value)}
+                                                            />
+                                                            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                                                         </div>
                                                     </div>
-                                                </>
-                                            )}
-                                        </div>
-
-                                        {filterAssignee !== '' && (
-                                            <button
-                                                onClick={() => setFilterAssignee('')}
-                                                className="flex items-center gap-1 px-2 py-1 text-xs font-bold text-rose-600 bg-rose-50 rounded-md hover:bg-rose-100 transition-colors"
-                                            >
-                                                <X size={12} /> Limpiar
-                                            </button>
-                                        )}
-                                    </div>
-                                    <div className="text-xs text-slate-400 font-medium">
-                                        {tasks.filter(t => {
-                                            const matchAssignee = filterAssignee === '' || t.idResponsable === filterAssignee || t.asignados?.some(a => a.idUsuario === filterAssignee);
-                                            return matchAssignee;
-                                        }).length} tareas
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="flex-1 overflow-hidden p-4">
-                                {viewMode === 'roadmap' && <RoadmapView projects={projects} />}
-
-                                {selectedProject ? (
-                                    <>
-                                        {viewMode === 'gantt' && <GanttView tasks={tasks} />}
-
-                                        {viewMode === 'board' && (
-                                            <BoardView
-                                                tasks={finalFilteredTasks}
-                                                team={team}
-                                                onAssign={handleAssign}
-                                                onTaskClick={openTaskDetails}
-                                            />
-                                        )}
-
-                                        {viewMode === 'list' && (
-                                            <div className="flex flex-col h-full bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                                                {/* Table Header - Responsive */}
-                                                <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-slate-50/80 backdrop-blur border-b border-slate-200 text-[10px] font-black text-slate-500 uppercase tracking-widest shrink-0 sticky top-0 z-10">
-                                                    <div className="col-span-4 pl-2">Tarea</div>
-                                                    <div className="col-span-2">Estado</div>
-                                                    <div className="col-span-3 text-center">Fechas</div>
-                                                    <div className="col-span-2 text-center">Progreso</div>
-                                                    <div className="col-span-1 text-right"></div>
-                                                </div>
-
-                                                <div className="flex-1 overflow-y-auto custom-scrollbar relative bg-white">
-                                                    {loadingTasks && (
-                                                        <div className="absolute top-0 left-0 w-full h-1 bg-slate-100 overflow-hidden z-10">
-                                                            <div className="h-full bg-slate-500 animate-progress"></div>
-                                                        </div>
-                                                    )}
-                                                    {tasks.length === 0 ? (
-                                                        <div className="h-full flex flex-col items-center justify-center py-20 text-center">
-                                                            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
-                                                                <List size={32} />
-                                                            </div>
-                                                            <p className="text-slate-500 text-sm font-medium mb-1">No hay tareas en este proyecto.</p>
-                                                            <p className="text-slate-400 text-xs">Usa el botón "Nueva Tarea" para comenzar.</p>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="divide-y divide-slate-100">
-                                                            {finalFilteredTasks.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(t => {
-                                                                const daysDelayed = t.fechaObjetivo && t.estado !== 'Hecha' && isAfter(startOfDay(new Date()), new Date(t.fechaObjetivo))
-                                                                    ? differenceInDays(startOfDay(new Date()), new Date(t.fechaObjetivo))
-                                                                    : 0;
-                                                                const assignedUser =
-                                                                    t.idResponsable
-                                                                        ? { id: t.idResponsable, nombre: t.responsableNombre || 'Asignado' }
-                                                                        : (t.asignados && t.asignados.length > 0
-                                                                            ? { id: t.asignados[0].idUsuario, nombre: t.asignados[0].usuario?.nombre || 'U' }
-                                                                            : null);
-
+                                                    <div className="max-h-60 overflow-y-auto">
+                                                        <button
+                                                            onClick={() => {
+                                                                setFilterAssignee('');
+                                                                setIsAssigneeFilterOpen(false);
+                                                                setAssigneeFilterSearch('');
+                                                                setCurrentPage(1);
+                                                            }}
+                                                            className={`w-full text-left px-4 py-2 text-xs hover:bg-slate-50 flex items-center justify-between group ${filterAssignee === '' ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600'}`}
+                                                        >
+                                                            <span>Todos</span>
+                                                        </button>
+                                                        {team
+                                                            .filter(m => (m.nombre || '').toLowerCase().includes(assigneeFilterSearch.toLowerCase()))
+                                                            .map(member => {
+                                                                const count = tasks.filter(t => t.asignados?.some(a => a.idUsuario === member.idUsuario)).length;
                                                                 return (
-                                                                    <div
-                                                                        key={t.idTarea}
-                                                                        className={`group relative hover:bg-slate-50 transition-colors cursor-pointer ${selectedTask?.idTarea === t.idTarea ? 'bg-indigo-50/30' : ''} ${t.estado === 'Bloqueada' ? 'bg-rose-50/20' : ''}`}
-                                                                        onClick={() => openTaskDetails(t)}
+                                                                    <button
+                                                                        key={member.idUsuario}
+                                                                        onClick={() => {
+                                                                            setFilterAssignee(member.idUsuario);
+                                                                            setIsAssigneeFilterOpen(false);
+                                                                            setAssigneeFilterSearch('');
+                                                                            setCurrentPage(1);
+                                                                        }}
+                                                                        className={`w-full text-left px-4 py-2 text-xs hover:bg-slate-50 flex items-center justify-between group ${filterAssignee === member.idUsuario ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600'}`}
                                                                     >
-                                                                        {/* Mobile/Compact View */}
-                                                                        <div className="md:hidden p-4 space-y-3">
-                                                                            <div className="flex justify-between items-start gap-3">
-                                                                                <h4 className={`font-bold text-sm text-slate-800 leading-snug ${t.estado === 'Hecha' ? 'line-through opacity-60' : ''}`}>{t.titulo}</h4>
-                                                                                <StatusBadge status={t.estado} />
-                                                                            </div>
-                                                                            <div className="flex justify-between items-center text-xs text-slate-500">
-                                                                                <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                                                                    <QuickAssignDropdown
-                                                                                        currentAssignee={assignedUser}
-                                                                                        team={team}
-                                                                                        onAssign={(uid) => handleAssign(t.idTarea, uid)}
-                                                                                    />
-                                                                                </div>
-                                                                                <div className="flex items-center gap-2">
-                                                                                    {daysDelayed > 0 && <span className="text-rose-600 font-bold bg-rose-50 px-1.5 py-0.5 rounded">+{daysDelayed}d</span>}
-                                                                                    <span className="font-medium bg-slate-100 px-2 py-0.5 rounded">{t.progreso}%</span>
-                                                                                    {isManagerMode && (
-                                                                                        <button
-                                                                                            onClick={(e) => {
-                                                                                                e.stopPropagation();
-                                                                                                handleDeleteTask(t.idTarea);
-                                                                                            }}
-                                                                                            className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg"
-                                                                                        >
-                                                                                            <Trash2 size={14} />
-                                                                                        </button>
-                                                                                    )}
-                                                                                </div>
-                                                                            </div>
+                                                                        <span className="truncate">{member.nombre}</span>
+                                                                        <span className={`px-1.5 py-0.5 rounded text-[10px] ml-2 font-bold ${filterAssignee === member.idUsuario ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'}`}>{count}</span>
+                                                                    </button>
+                                                                );
+                                                            })}
+                                                        {team.filter(m => (m.nombre || '').toLowerCase().includes(assigneeFilterSearch.toLowerCase())).length === 0 && (
+                                                            <div className="px-4 py-3 text-xs text-slate-400 text-center italic">No se encontraron resultados</div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {filterAssignee !== '' && (
+                                        <button
+                                            onClick={() => setFilterAssignee('')}
+                                            className="flex items-center gap-1 px-2 py-1 text-xs font-bold text-rose-600 bg-rose-50 rounded-md hover:bg-rose-100 transition-colors"
+                                        >
+                                            <X size={12} /> Limpiar
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="text-xs text-slate-400 font-medium">
+                                    {tasks.filter(t => {
+                                        const fa = filterAssignee !== '' ? Number(filterAssignee) : '';
+                                        const matchAssignee = fa === '' || t.idResponsable === fa || (t.asignados && t.asignados.some(a => a.idUsuario === fa));
+                                        return matchAssignee;
+                                    }).length} tareas
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="flex-1 overflow-hidden p-4">
+                            {viewMode === 'roadmap' && <RoadmapView projects={projects} />}
+
+                            {selectedProject ? (
+                                <>
+                                    {viewMode === 'gantt' && <GanttView tasks={tasks} />}
+
+                                    {viewMode === 'board' && (
+                                        <BoardView
+                                            tasks={finalFilteredTasks}
+                                            team={team}
+                                            onAssign={handleAssign}
+                                            onTaskClick={openTaskDetails}
+                                        />
+                                    )}
+
+                                    {viewMode === 'list' && (
+                                        <div className="flex flex-col h-full bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                                            {/* Table Header - Premium Redesign */}
+                                            <div className="hidden md:grid grid-cols-12 gap-4 px-8 py-5 bg-slate-50/50 backdrop-blur border-b border-slate-200 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] shrink-0 sticky top-0 z-10">
+                                                <div className="col-span-4 pl-2">Descripción de la Tarea</div>
+                                                <div className="col-span-2">Estado / Asignado</div>
+                                                <div className="col-span-3 text-center">Cronograma</div>
+                                                <div className="col-span-2 text-center">Progreso Real</div>
+                                                <div className="col-span-1 text-right"></div>
+                                            </div>
+
+                                            <div className="flex-1 overflow-y-auto custom-scrollbar relative bg-white">
+                                                {loadingTasks && (
+                                                    <div className="absolute top-0 left-0 w-full h-1 bg-slate-100 overflow-hidden z-10">
+                                                        <div className="h-full bg-slate-500 animate-progress"></div>
+                                                    </div>
+                                                )}
+                                                {tasks.length === 0 ? (
+                                                    <div className="h-full flex flex-col items-center justify-center py-20 text-center">
+                                                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
+                                                            <List size={32} />
+                                                        </div>
+                                                        <p className="text-slate-500 text-sm font-medium mb-1">No hay tareas en este proyecto.</p>
+                                                        <p className="text-slate-400 text-xs">Usa el botón "Nueva Tarea" para comenzar.</p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="divide-y divide-slate-100">
+                                                        {finalFilteredTasks.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(t => {
+                                                            const daysDelayed = t.fechaObjetivo && t.estado !== 'Hecha' && isAfter(startOfDay(new Date()), new Date(t.fechaObjetivo))
+                                                                ? differenceInDays(startOfDay(new Date()), new Date(t.fechaObjetivo))
+                                                                : 0;
+                                                            const assignedUser =
+                                                                t.idResponsable
+                                                                    ? { id: t.idResponsable, nombre: t.responsableNombre || 'Asignado' }
+                                                                    : (t.asignados && t.asignados.length > 0
+                                                                        ? { id: t.asignados[0].idUsuario, nombre: t.asignados[0].usuario?.nombre || 'U' }
+                                                                        : null);
+
+                                                            return (
+                                                                <div
+                                                                    key={t.idTarea}
+                                                                    className={`group relative hover:bg-slate-50 transition-colors cursor-pointer ${selectedTask?.idTarea === t.idTarea ? 'bg-indigo-50/30' : ''} ${t.estado === 'Bloqueada' ? 'bg-rose-50/20' : ''}`}
+                                                                    onClick={() => openTaskDetails(t)}
+                                                                >
+                                                                    {/* Mobile/Compact View */}
+                                                                    <div className="md:hidden p-4 space-y-3">
+                                                                        <div className="flex justify-between items-start gap-3">
+                                                                            <h4 className={`font-bold text-sm text-slate-800 leading-snug ${t.estado === 'Hecha' ? 'line-through opacity-60' : ''}`}>{t.titulo}</h4>
+                                                                            <StatusBadge status={t.estado} />
                                                                         </div>
-
-                                                                        {/* Desktop Grid View */}
-                                                                        <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 items-center text-xs">
-                                                                            <div className="col-span-4 flex items-center gap-3 pr-4">
-                                                                                <div className="w-1.5 h-1.5 rounded-full shrink-0"
-                                                                                    style={{ backgroundColor: t.prioridad === 'Alta' ? '#f43f5e' : t.prioridad === 'Media' ? '#fbbf24' : '#10b981' }}
-                                                                                    title={`Prioridad ${t.prioridad}`}
+                                                                        <div className="flex justify-between items-center text-xs text-slate-500">
+                                                                            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                                                                <QuickAssignDropdown
+                                                                                    currentAssignee={assignedUser}
+                                                                                    team={team}
+                                                                                    onAssign={(uid) => handleAssign(t.idTarea, uid)}
                                                                                 />
-                                                                                <div className="min-w-0 flex-1">
-                                                                                    <p className={`font-bold text-slate-700 truncate ${t.estado === 'Hecha' ? 'text-slate-400 line-through' : ''}`}>{t.titulo}</p>
-                                                                                    <div className="flex items-center gap-2 mt-1">
-                                                                                        <span className="text-[10px] text-slate-400 font-mono">#{t.idTarea}</span>
-                                                                                        <TipoBadge tipo={t.tipo} />
-                                                                                    </div>
-                                                                                </div>
                                                                             </div>
-
-                                                                            <div className="col-span-2 flex flex-col gap-1.5 items-start">
-                                                                                <StatusBadge status={t.estado} />
-                                                                                <div onClick={(e) => e.stopPropagation()}>
-                                                                                    <QuickAssignDropdown
-                                                                                        currentAssignee={assignedUser}
-                                                                                        team={team}
-                                                                                        onAssign={(uid) => handleAssign(t.idTarea, uid)}
-                                                                                    />
-                                                                                </div>
-                                                                            </div>
-
-                                                                            <div className="col-span-3 flex flex-col items-center justify-center gap-1">
-                                                                                <div className="flex items-center gap-4 text-[10px] text-slate-500">
-                                                                                    <div className="flex flex-col items-center">
-                                                                                        <span className="text-[9px] uppercase font-bold text-slate-300 mb-0.5">Inicio</span>
-                                                                                        {t.fechaInicioPlanificada ? format(new Date(t.fechaInicioPlanificada), 'dd MMM') : '--'}
-                                                                                    </div>
-                                                                                    <div className="w-px h-6 bg-slate-100"></div>
-                                                                                    <div className="flex flex-col items-center">
-                                                                                        <span className="text-[9px] uppercase font-bold text-slate-300 mb-0.5">Fin</span>
-                                                                                        {t.fechaObjetivo ? (
-                                                                                            <span className={`${daysDelayed > 0 ? 'text-rose-600 font-bold' : ''}`}>
-                                                                                                {format(new Date(t.fechaObjetivo), 'dd MMM')}
-                                                                                            </span>
-                                                                                        ) : '--'}
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-
-                                                                            <div className="col-span-2 flex items-center gap-3">
-                                                                                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                                                    <div
-                                                                                        className={`h-full rounded-full transition-all duration-500 ${t.estado === 'Bloqueada' ? 'bg-rose-500' : 'bg-slate-800'}`}
-                                                                                        style={{ width: `${t.progreso}%` }}
-                                                                                    ></div>
-                                                                                </div>
-                                                                                <span className="text-[10px] font-bold text-slate-600 w-8 text-right">{t.progreso}%</span>
-                                                                            </div>
-
-                                                                            <div className="col-span-1 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                                <div className="flex items-center gap-1">
+                                                                            <div className="flex items-center gap-2">
+                                                                                {daysDelayed > 0 && <span className="text-rose-600 font-bold bg-rose-50 px-1.5 py-0.5 rounded">+{daysDelayed}d</span>}
+                                                                                <span className="font-medium bg-slate-100 px-2 py-0.5 rounded">{t.progreso}%</span>
+                                                                                {isManagerMode && (
                                                                                     <button
-                                                                                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                                                                                        title="Eliminar tarea"
                                                                                         onClick={(e) => {
                                                                                             e.stopPropagation();
-                                                                                            if (window.confirm('¿Eliminar esta tarea definitivamente?')) {
-                                                                                                handleDeleteTask(t.idTarea);
-                                                                                            }
+                                                                                            handleDeleteTask(t.idTarea);
                                                                                         }}
+                                                                                        className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg"
                                                                                     >
                                                                                         <Trash2 size={14} />
                                                                                     </button>
-                                                                                    <button className="md:hidden p-1.5 text-slate-400 hover:bg-slate-100 rounded-lg">
-                                                                                        <MoreVertical size={14} />
-                                                                                    </button>
-                                                                                </div>
+                                                                                )}
                                                                             </div>
                                                                         </div>
                                                                     </div>
-                                                                );
-                                                            })}
-                                                            {/* Pagination Controls */}
-                                                            {Math.ceil(finalFilteredTasks.length / itemsPerPage) > 1 && (
-                                                                <div className="px-6 py-4 flex justify-between items-center border-t border-slate-50 bg-slate-50/50 sticky bottom-0 z-20">
-                                                                    <button
-                                                                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                                                        disabled={currentPage === 1}
-                                                                        className="px-3 py-1.5 text-xs font-bold text-slate-500 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all"
-                                                                    >
-                                                                        Anterior
-                                                                    </button>
-                                                                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
-                                                                        Página {currentPage} de {Math.ceil(finalFilteredTasks.length / itemsPerPage)}
-                                                                    </span>
-                                                                    <button
-                                                                        onClick={() => setCurrentPage(p => Math.min(Math.ceil(finalFilteredTasks.length / itemsPerPage), p + 1))}
-                                                                        disabled={currentPage >= Math.ceil(finalFilteredTasks.length / itemsPerPage)}
-                                                                        className="px-3 py-1.5 text-xs font-bold text-slate-500 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all"
-                                                                    >
-                                                                        Siguiente
-                                                                    </button>
+
+                                                                    {/* Desktop Grid View - Premium Redesign */}
+                                                                    <div className="hidden md:grid grid-cols-12 gap-4 px-8 py-5 items-center text-sm">
+                                                                        <div className="col-span-4 flex items-center gap-4 pr-6">
+                                                                            <div className={`w-2.5 h-2.5 rounded-full shrink-0 shadow-sm ${t.prioridad === 'Alta' ? 'bg-rose-500 shadow-rose-200 animate-pulse' : t.prioridad === 'Media' ? 'bg-amber-500 shadow-amber-200' : 'bg-emerald-500 shadow-emerald-200'}`}
+                                                                                title={`Prioridad ${t.prioridad}`}
+                                                                            />
+                                                                            <div className="min-w-0 flex-1">
+                                                                                <p className={`font-black text-slate-800 group-hover:text-indigo-700 transition-colors text-base leading-tight ${t.estado === 'Hecha' ? 'text-slate-300 line-through' : ''}`}>{t.titulo}</p>
+                                                                                <div className="flex items-center gap-3 mt-1.5">
+                                                                                    <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-md">#{t.idTarea}</span>
+                                                                                    <TipoBadge tipo={t.tipo} />
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div className="col-span-2 flex flex-col gap-2 items-start">
+                                                                            <StatusBadge status={t.estado} />
+                                                                            <div onClick={(e) => e.stopPropagation()} className="scale-110 origin-left">
+                                                                                <QuickAssignDropdown
+                                                                                    currentAssignee={assignedUser}
+                                                                                    team={team}
+                                                                                    onAssign={(uid) => handleAssign(t.idTarea, uid)}
+                                                                                />
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div className="col-span-3 flex flex-col items-center justify-center gap-1.5">
+                                                                            <div className="flex items-center gap-5">
+                                                                                <div className="flex flex-col items-center">
+                                                                                    <span className="text-[9px] uppercase font-black text-slate-300 mb-1 tracking-tighter">Inicio</span>
+                                                                                    <span className="font-black text-slate-600 border-b-2 border-slate-100 pb-0.5">
+                                                                                        {t.fechaInicioPlanificada ? format(new Date(t.fechaInicioPlanificada), 'dd MMM yyyy', { locale: es }) : '--'}
+                                                                                    </span>
+                                                                                </div>
+                                                                                <div className="w-1.5 h-1.5 rounded-full bg-slate-200 mt-3"></div>
+                                                                                <div className="flex flex-col items-center">
+                                                                                    <span className="text-[9px] uppercase font-black text-slate-300 mb-1 tracking-tighter">Objetivo</span>
+                                                                                    {t.fechaObjetivo ? (
+                                                                                        <span className={`font-black pb-0.5 border-b-2 ${daysDelayed > 0 ? 'text-rose-600 border-rose-100 animate-pulse' : 'text-slate-800 border-slate-100'}`}>
+                                                                                            {format(new Date(t.fechaObjetivo), 'dd MMM yyyy', { locale: es })}
+                                                                                        </span>
+                                                                                    ) : '--'}
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div className="col-span-2 flex items-center gap-4 px-4">
+                                                                            <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden shadow-inner p-[1px]">
+                                                                                <div
+                                                                                    className={`h-full rounded-full transition-all duration-1000 ease-out shadow-sm ${t.estado === 'Hecha' ? 'bg-emerald-500' : 'bg-indigo-600'}`}
+                                                                                    style={{ width: `${t.progreso}%` }}
+                                                                                ></div>
+                                                                            </div>
+                                                                            <span className="text-xs font-black text-slate-900 w-10 text-right">{t.progreso}%</span>
+                                                                        </div>
+
+                                                                        <div className="col-span-1 flex justify-end opacity-0 group-hover:opacity-100 transition-all scale-95 group-hover:scale-100">
+                                                                            <div className="flex items-center gap-2">
+                                                                                <button
+                                                                                    className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all shadow-sm hover:shadow-md bg-white border border-transparent hover:border-rose-100"
+                                                                                    title="Descartar tarea"
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        if (window.confirm('¿Seguro que deseas eliminar esta tarea?')) {
+                                                                                            handleDeleteTask(t.idTarea);
+                                                                                        }
+                                                                                    }}
+                                                                                >
+                                                                                    <Trash2 size={18} />
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
                                                                 </div>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                            );
+                                                        })}
+                                                        {/* Pagination Controls */}
+                                                        {Math.ceil(finalFilteredTasks.length / itemsPerPage) > 1 && (
+                                                            <div className="px-6 py-4 flex justify-between items-center border-t border-slate-50 bg-slate-50/50 sticky bottom-0 z-20">
+                                                                <button
+                                                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                                                    disabled={currentPage === 1}
+                                                                    className="px-3 py-1.5 text-xs font-bold text-slate-500 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all"
+                                                                >
+                                                                    Anterior
+                                                                </button>
+                                                                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                                                                    Página {currentPage} de {Math.ceil(finalFilteredTasks.length / itemsPerPage)}
+                                                                </span>
+                                                                <button
+                                                                    onClick={() => setCurrentPage(p => Math.min(Math.ceil(finalFilteredTasks.length / itemsPerPage), p + 1))}
+                                                                    disabled={currentPage >= Math.ceil(finalFilteredTasks.length / itemsPerPage)}
+                                                                    className="px-3 py-1.5 text-xs font-bold text-slate-500 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all"
+                                                                >
+                                                                    Siguiente
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
-                                    </>
-                                ) : (
-                                    <div className="h-full flex flex-col items-center justify-center text-slate-400 p-8 max-w-md mx-auto text-center">
-                                        <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6 text-slate-300 animate-pulse">
-                                            <Briefcase size={48} />
                                         </div>
-                                        <h3 className="text-xl font-black text-slate-800 mb-2">Comienza tu Planificación</h3>
-                                        <p className="text-sm text-slate-500 mb-8 leading-relaxed">
-                                            Selecciona un proyecto existente desde el selector superior o crea uno nuevo para empezar a gestionar tareas y cronogramas.
-                                        </p>
-                                        <button
-                                            onClick={() => setIsNewProjectModalOpen(true)}
-                                            className="flex items-center gap-2 px-6 py-3 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 shadow-xl shadow-slate-200 transition-all hover:-translate-y-1 active:scale-95"
-                                        >
-                                            <Plus size={18} /> Crear primer proyecto
-                                        </button>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="h-full flex flex-col items-center justify-center text-slate-400 p-8 max-w-md mx-auto text-center">
+                                    <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6 text-slate-300 animate-pulse">
+                                        <Briefcase size={48} />
                                     </div>
-                                )}
-                            </div>
+                                    <h3 className="text-xl font-black text-slate-800 mb-2">Comienza tu Planificación</h3>
+                                    <p className="text-sm text-slate-500 mb-8 leading-relaxed">
+                                        Selecciona un proyecto existente desde el selector superior o crea uno nuevo para empezar a gestionar tareas y cronogramas.
+                                    </p>
+                                    <button
+                                        onClick={() => setIsNewProjectModalOpen(true)}
+                                        className="flex items-center gap-2 px-6 py-3 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 shadow-xl shadow-slate-200 transition-all hover:-translate-y-1 active:scale-95"
+                                    >
+                                        <Plus size={18} /> Crear primer proyecto
+                                    </button>
+                                </div>
+                            )}
                         </div>
-                    )}
+                    </div>
+                )}
             </div >
 
             {/* TASK DETAIL SLIDE-OVER */}
@@ -1483,6 +1547,36 @@ export const PlanTrabajoPage: React.FC = () => {
                                 </div>
                             </div>
 
+                            {/* TIPO Y EVIDENCIA (NUEVO) */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-[10px] text-slate-400 font-bold uppercase mb-1 block">Tipo Trabajo</label>
+                                    <select
+                                        value={selectedTask.tipo || 'Administrativa'}
+                                        onChange={(e) => setSelectedTask({ ...selectedTask, tipo: e.target.value as any })}
+                                        className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 outline-none focus:border-slate-400"
+                                    >
+                                        <option value="Administrativa">Administrativa</option>
+                                        <option value="Logistica">Logística</option>
+                                        <option value="Estrategica">Estratégica</option>
+                                        <option value="Otros">Otros</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] text-slate-400 font-bold uppercase mb-1 block">Evidencia (URL)</label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            value={selectedTask.linkEvidencia || ''}
+                                            onChange={(e) => setSelectedTask({ ...selectedTask, linkEvidencia: e.target.value })}
+                                            placeholder="https://..."
+                                            className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 pl-6 text-xs text-slate-600 outline-none focus:border-slate-400 truncate"
+                                        />
+                                        <Link2 size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* Progress or Monthly Manager */}
                             {selectedTask.comportamiento === 'LARGA' ? (
                                 <div className="mb-4">
@@ -1657,8 +1751,8 @@ export const PlanTrabajoPage: React.FC = () => {
                         isOpen={isCreateTaskOpen}
                         onClose={() => setIsCreateTaskOpen(false)}
                         currentProject={selectedProject}
-                        projects={projects}
                         onTaskCreated={loadTasks}
+                        defaultTeam={team.map(m => ({ ...m, nombreCompleto: m.nombre } as any))}
                     />
                 )
             }

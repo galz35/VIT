@@ -1,4 +1,9 @@
-import { ejecutarQuery, ejecutarSP, Int, BigInt, NVarChar, sql } from '../db/base.repo';
+// src/acceso/acceso.repo.ts
+// Repo 100% Stored Procedures (cero SQL inline)
+// Requiere: base.repo.ts exporte ejecutarSP, Int, BigInt, NVarChar
+// Nota: los SP listados abajo deben existir en SQL Server (te dejo el script en el siguiente paso si lo pides).
+
+import { ejecutarSP, Int, BigInt, NVarChar } from '../db/base.repo';
 
 export interface UsuarioDb {
     idUsuario: number;
@@ -28,7 +33,7 @@ export interface OrganizacionNodoRhDb {
     padre: number | null;
     orden: number;
     activo: boolean;
-    // Campos legacy/virtuales para compatibilidad
+    // Compat / legacy
     descripcion?: string;
     nivel?: number;
 }
@@ -68,276 +73,257 @@ export interface DelegacionVisibilidadDb {
 }
 
 // ==========================================
-// VISIBILIDAD (CTE Recursiva -> SP)
+// HELPERS
 // ==========================================
-
-export async function calcularCarnetsVisibles(carnetSolicitante: string): Promise<string[]> {
-    // Migrado a SP sp_Visibilidad_ObtenerCarnets
-    const result = await ejecutarSP<{ carnet: string }>('sp_Visibilidad_ObtenerCarnets', {
-        carnetSolicitante: { valor: carnetSolicitante, tipo: NVarChar }
-    });
-    // Ensure trimmed carnets
-    return result.map(r => (r.carnet || '').trim()).filter(c => c.length > 0);
+function cleanStr(x: any): string {
+    return String(x || '').trim();
 }
 
-export async function obtenerDetallesUsuarios(carnets: string[]) {
-    if (!carnets || carnets.length === 0) return [];
+function cleanLower(x: any): string {
+    return cleanStr(x).toLowerCase();
+}
 
-    // Clean input carnets
-    const cleanCarnets = carnets.map(c => c.trim()).filter(c => c.length > 0);
-    if (cleanCarnets.length === 0) return [];
+function uniqueCarnets(carnets: string[]): string[] {
+    return [...new Set((carnets || []).map(cleanStr).filter(Boolean))];
+}
 
-    console.log(`[AccesoRepo] Buscando detalles para ${cleanCarnets.length} carnets:`, cleanCarnets.slice(0, 5));
+// ==========================================
+// VISIBILIDAD
+// ==========================================
+export async function calcularCarnetsVisibles(carnetSolicitante: string): Promise<string[]> {
+    const cleanCarnet = cleanStr(carnetSolicitante);
+    if (!cleanCarnet) return [];
 
-    // Usar IN dinámico en lugar de STRING_SPLIT para máxima compatibilidad y evitar problemas de espacios
-    // Sanitizar inputs es importante, pero aquí son carnets internos.
-    const uniqueCarnets = [...new Set(cleanCarnets)];
-    // Construir lista de parámetros @p0, @p1, etc.
-    const params: any = {};
-    const paramNames = uniqueCarnets.map((c, i) => {
-        const pName = `c${i}`;
-        params[pName] = { valor: c, tipo: NVarChar };
-        return `@${pName}`;
+    const rows = await ejecutarSP<{ carnet: string }>('sp_Visibilidad_ObtenerCarnets', {
+        carnetSolicitante: { valor: cleanCarnet, tipo: NVarChar }
     });
 
-    const rows = await ejecutarQuery<UsuarioDb & { rolNombre?: string }>(`
-        SELECT u.idUsuario, u.carnet, u.nombreCompleto, u.correo, u.cargo, u.departamento,
-               u.orgDepartamento, u.orgGerencia, u.idOrg, u.jefeCarnet, u.jefeNombre, u.jefeCorreo, u.activo,
-               u.gerencia, u.subgerencia, u.idRol, u.rolGlobal,
-               r.nombre as rolNombre
-        FROM p_Usuarios u
-        LEFT JOIN p_Roles r ON u.idRol = r.idRol
-        WHERE LTRIM(RTRIM(u.carnet)) IN (${paramNames.join(',')})
-        ORDER BY u.nombreCompleto
-    `, params);
+    return rows.map(r => cleanStr(r.carnet)).filter(Boolean);
+}
 
-    console.log(`[AccesoRepo] Usuarios encontrados: ${rows.length}`);
+/**
+ * Devuelve usuarios con rolNombre opcional.
+ * Implementación: SP recibe CSV (CarnetsCsv) y hace split seguro (STRING_SPLIT / OPENJSON / TVP).
+ */
+export async function obtenerDetallesUsuarios(carnets: string[]) {
+    const clean = uniqueCarnets(carnets);
+    if (clean.length === 0) return [];
 
+    const csv = clean.join(',');
+
+    const rows = await ejecutarSP<UsuarioDb & { rolNombre?: string }>('sp_Usuarios_ObtenerDetallesPorCarnets', {
+        CarnetsCsv: { valor: csv, tipo: NVarChar }
+    });
+
+    // Compat: agrega rol como objeto si idRol existe
     return rows.map(u => {
         const user: any = { ...u };
-        if (u.idRol) {
-            user.rol = { idRol: u.idRol, nombre: u.rolNombre || 'Empleado' };
+        if ((u as any).idRol) {
+            user.rol = { idRol: (u as any).idRol, nombre: (u as any).rolNombre || 'Empleado' };
         }
         return user;
     });
 }
 
-export async function obtenerCarnetDeUsuario(idUsuario: number) {
-    const res = await ejecutarQuery<{ carnet: string }>(`SELECT carnet FROM p_Usuarios WHERE idUsuario = @id`, { id: { valor: idUsuario, tipo: Int } });
-    return res[0]?.carnet || null;
+export async function obtenerCarnetDeUsuario(idUsuario: number): Promise<string | null> {
+    const rows = await ejecutarSP<{ carnet: string }>('sp_Usuarios_ObtenerCarnetPorId', {
+        idUsuario: { valor: idUsuario, tipo: Int }
+    });
+    return rows[0]?.carnet || null;
 }
 
 // ==========================================
 // DELEGACIONES
 // ==========================================
 export async function obtenerDelegacionesActivas(carnetDelegado: string) {
-    return await ejecutarQuery<DelegacionVisibilidadDb>(`
-        SELECT * FROM p_delegacion_visibilidad 
-        WHERE carnet_delegado = @carnet AND activo = 1
-        AND (fecha_inicio IS NULL OR fecha_inicio <= GETDATE())
-        AND (fecha_fin IS NULL OR fecha_fin >= GETDATE())
-    `, { carnet: { valor: carnetDelegado, tipo: NVarChar } });
+    const clean = cleanStr(carnetDelegado);
+    if (!clean) return [];
+
+    return await ejecutarSP<DelegacionVisibilidadDb>('sp_DelegacionVisibilidad_ObtenerActivas', {
+        carnetDelegado: { valor: clean, tipo: NVarChar }
+    });
 }
 
 export async function crearDelegacion(delegacion: Partial<DelegacionVisibilidadDb>) {
-    await ejecutarQuery(`
-        INSERT INTO p_delegacion_visibilidad (carnet_delegante, carnet_delegado, motivo, activo, creado_en)
-        VALUES (@delegante, @delegado, @motivo, 1, GETDATE())
-    `, {
-        delegante: { valor: delegacion.carnet_delegante, tipo: NVarChar },
-        delegado: { valor: delegacion.carnet_delegado, tipo: NVarChar },
-        motivo: { valor: delegacion.motivo || null, tipo: NVarChar }
+    await ejecutarSP('sp_DelegacionVisibilidad_Crear', {
+        delegante: { valor: cleanStr(delegacion.carnet_delegante), tipo: NVarChar },
+        delegado: { valor: cleanStr(delegacion.carnet_delegado), tipo: NVarChar },
+        motivo: { valor: delegacion.motivo ? cleanStr(delegacion.motivo) : null, tipo: NVarChar },
+        fecha_inicio: { valor: (delegacion as any).fecha_inicio || null, tipo: NVarChar },
+        fecha_fin: { valor: (delegacion as any).fecha_fin || null, tipo: NVarChar }
+    });
+}
+
+export async function desactivarDelegacion(id: number) {
+    await ejecutarSP('sp_DelegacionVisibilidad_Desactivar', {
+        id: { valor: id, tipo: BigInt }
+    });
+}
+
+export async function listarTodasDelegaciones() {
+    return await ejecutarSP<DelegacionVisibilidadDb>('sp_DelegacionVisibilidad_ListarActivas');
+}
+
+export async function listarDelegacionesPorDelegante(carnetDelegante: string) {
+    return await ejecutarSP<DelegacionVisibilidadDb>('sp_DelegacionVisibilidad_ListarPorDelegante', {
+        carnetDelegante: { valor: cleanStr(carnetDelegante), tipo: NVarChar }
     });
 }
 
 // ==========================================
-// PERMISOS AREA
+// PERMISOS ÁREA
 // ==========================================
 export async function obtenerPermisosAreaActivos(carnetRecibe: string) {
-    return await ejecutarQuery<PermisoAreaDb>(`
-        SELECT * FROM p_permiso_area
-        WHERE carnet_recibe = @carnet AND activo = 1
-    `, { carnet: { valor: carnetRecibe, tipo: NVarChar } });
+    const clean = cleanStr(carnetRecibe);
+    if (!clean) return [];
+
+    return await ejecutarSP<PermisoAreaDb>('sp_PermisoArea_ObtenerActivosPorRecibe', {
+        carnetRecibe: { valor: clean, tipo: NVarChar }
+    });
 }
 
 export async function crearPermisoArea(permiso: Partial<PermisoAreaDb>) {
-    await ejecutarQuery(`
-        INSERT INTO p_permiso_area (carnet_otorga, carnet_recibe, idorg_raiz, alcance, motivo, activo, creado_en)
-        VALUES (@otorga, @recibe, @idorg, @alcance, @motivo, 1, GETDATE())
-    `, {
-        otorga: { valor: permiso.carnet_otorga, tipo: NVarChar },
-        recibe: { valor: permiso.carnet_recibe, tipo: NVarChar },
+    await ejecutarSP('sp_PermisoArea_Crear', {
+        otorga: { valor: permiso.carnet_otorga ? cleanStr(permiso.carnet_otorga) : null, tipo: NVarChar },
+        recibe: { valor: cleanStr(permiso.carnet_recibe), tipo: NVarChar },
         idorg: { valor: permiso.idorg_raiz, tipo: BigInt },
-        alcance: { valor: permiso.alcance || 'SUBARBOL', tipo: NVarChar },
-        motivo: { valor: permiso.motivo, tipo: NVarChar }
+        alcance: { valor: cleanStr(permiso.alcance || 'SUBARBOL'), tipo: NVarChar },
+        motivo: { valor: permiso.motivo ? cleanStr(permiso.motivo) : null, tipo: NVarChar },
+        fecha_fin: { valor: (permiso as any).fecha_fin || null, tipo: NVarChar }
     });
 }
 
 export async function desactivarPermisoArea(id: number) {
-    await ejecutarQuery(`UPDATE p_permiso_area SET activo = 0 WHERE id = @id`, { id: { valor: id, tipo: BigInt } });
+    await ejecutarSP('sp_PermisoArea_Desactivar', {
+        id: { valor: id, tipo: BigInt }
+    });
+}
+
+export async function listarTodosPermisosArea() {
+    return await ejecutarSP<PermisoAreaDb>('sp_PermisoArea_ListarActivos');
 }
 
 // ==========================================
 // PERMISOS EMPLEADO
 // ==========================================
 export async function obtenerPermisosEmpleadoActivos(carnetRecibe: string) {
-    return await ejecutarQuery<PermisoEmpleadoDb>(`
-        SELECT * FROM p_permiso_empleado
-        WHERE carnet_recibe = @carnet AND activo = 1
-    `, { carnet: { valor: carnetRecibe, tipo: NVarChar } });
+    const clean = cleanStr(carnetRecibe);
+    if (!clean) return [];
+
+    return await ejecutarSP<PermisoEmpleadoDb>('sp_PermisoEmpleado_ObtenerActivosPorRecibe', {
+        carnetRecibe: { valor: clean, tipo: NVarChar }
+    });
 }
 
 export async function crearPermisoEmpleado(p: Partial<PermisoEmpleadoDb>) {
-    await ejecutarQuery(`
-        INSERT INTO p_permiso_empleado (carnet_otorga, carnet_recibe, carnet_objetivo, tipo_acceso, motivo, activo, creado_en)
-        VALUES (@otorga, @recibe, @objetivo, @tipo, @motivo, 1, GETDATE())
-    `, {
-        otorga: { valor: p.carnet_otorga, tipo: NVarChar },
-        recibe: { valor: p.carnet_recibe, tipo: NVarChar },
-        objetivo: { valor: p.carnet_objetivo, tipo: NVarChar },
-        tipo: { valor: p.tipo_acceso || 'ALLOW', tipo: NVarChar },
-        motivo: { valor: p.motivo, tipo: NVarChar }
+    await ejecutarSP('sp_PermisoEmpleado_Crear', {
+        otorga: { valor: p.carnet_otorga ? cleanStr(p.carnet_otorga) : null, tipo: NVarChar },
+        recibe: { valor: cleanStr(p.carnet_recibe), tipo: NVarChar },
+        objetivo: { valor: cleanStr(p.carnet_objetivo), tipo: NVarChar },
+        tipo: { valor: cleanStr(p.tipo_acceso || 'ALLOW'), tipo: NVarChar },
+        motivo: { valor: p.motivo ? cleanStr(p.motivo) : null, tipo: NVarChar }
     });
 }
 
 export async function desactivarPermisoEmpleado(id: number) {
-    await ejecutarQuery(`UPDATE p_permiso_empleado SET activo = 0 WHERE id = @id`, { id: { valor: id, tipo: BigInt } });
+    await ejecutarSP('sp_PermisoEmpleado_Desactivar', {
+        id: { valor: id, tipo: BigInt }
+    });
+}
+
+export async function listarTodosPermisosEmpleado() {
+    return await ejecutarSP<PermisoEmpleadoDb>('sp_PermisoEmpleado_ListarActivos');
 }
 
 // ==========================================
-// ORGANIGRAMA RH y HELPERS DE SERVICIO
+// ORGANIGRAMA (RH)
 // ==========================================
 export async function obtenerArbolOrganizacion() {
-    // Migrado a SP sp_Organizacion_ObtenerArbol
     return await ejecutarSP<OrganizacionNodoRhDb>('sp_Organizacion_ObtenerArbol');
 }
 
 export async function buscarNodoPorId(idorg: number) {
-    const res = await ejecutarQuery<OrganizacionNodoRhDb>(`
-        SELECT id as idorg, nombre, tipo, idPadre as padre, orden, activo
-        FROM p_OrganizacionNodos WHERE id = @id
-    `, { id: { valor: idorg, tipo: BigInt } });
-    return res[0] || null;
-}
-
-export async function listarTodosPermisosArea() {
-    return await ejecutarQuery<PermisoAreaDb>(`SELECT * FROM p_permiso_area WHERE activo = 1 ORDER BY creado_en DESC`);
-}
-
-export async function listarTodosPermisosEmpleado() {
-    return await ejecutarQuery<PermisoEmpleadoDb>(`SELECT * FROM p_permiso_empleado WHERE activo = 1 ORDER BY creado_en DESC`);
-}
-
-export async function listarTodasDelegaciones() {
-    return await ejecutarQuery<DelegacionVisibilidadDb>(`SELECT * FROM p_delegacion_visibilidad WHERE activo = 1 ORDER BY creado_en DESC`);
-}
-
-export async function listarDelegacionesPorDelegante(carnetDelegante: string) {
-    return await ejecutarQuery<DelegacionVisibilidadDb>(`
-        SELECT * FROM p_delegacion_visibilidad 
-        WHERE carnet_delegante = @carnet
-        ORDER BY creado_en DESC
-    `, { carnet: { valor: carnetDelegante, tipo: NVarChar } });
-}
-
-export async function buscarUsuarioPorCarnet(carnet: string) {
-    const res = await ejecutarQuery<UsuarioDb>(`SELECT * FROM p_Usuarios WHERE carnet = @carnet`, { carnet: { valor: carnet.trim(), tipo: NVarChar } });
-    return res[0] || null;
-}
-
-export async function buscarUsuarioPorCorreo(correo: string) {
-    const res = await ejecutarQuery<UsuarioDb>(`SELECT * FROM p_Usuarios WHERE correo = @correo`, { correo: { valor: correo.trim().toLowerCase(), tipo: NVarChar } });
-    return res[0] || null;
-}
-
-export async function listarEmpleadosActivos() {
-    return await ejecutarQuery<UsuarioDb>(`SELECT * FROM p_Usuarios WHERE activo = 1 ORDER BY nombre ASC`);
-}
-
-export async function buscarUsuarios(termino: string, limite = 10) {
-    const t = `%${termino}%`;
-    return await ejecutarQuery<UsuarioDb>(`
-        SELECT TOP (@limite) * FROM p_Usuarios 
-        WHERE (LOWER(nombre) LIKE LOWER(@t) OR carnet LIKE @t OR LOWER(correo) LIKE LOWER(@t))
-        AND activo = 1
-        ORDER BY nombre ASC
-    `, { t: { valor: t, tipo: NVarChar }, limite: { valor: limite, tipo: Int } });
+    const rows = await ejecutarSP<OrganizacionNodoRhDb>('sp_Organizacion_BuscarNodoPorId', {
+        idorg: { valor: idorg, tipo: BigInt }
+    });
+    return rows[0] || null;
 }
 
 export async function buscarNodosOrganizacion(termino: string) {
-    const t = `%${termino}%`;
-    return await ejecutarQuery<OrganizacionNodoRhDb>(`
-        SELECT TOP 50 id as idorg, nombre, tipo, idPadre as padre, orden, activo 
-        FROM p_OrganizacionNodos
-        WHERE LOWER(nombre) LIKE LOWER(@t)
-        ORDER BY nombre ASC
-    `, { t: { valor: t, tipo: NVarChar } });
+    return await ejecutarSP<OrganizacionNodoRhDb>('sp_Organizacion_BuscarNodos', {
+        termino: { valor: cleanStr(termino), tipo: NVarChar }
+    });
 }
 
 export async function contarEmpleadosPorNodo() {
-    return await ejecutarQuery<{ idOrg: string, count: number }>(`
-        SELECT idOrg, COUNT(*) as count 
-        FROM p_Usuarios 
-        WHERE activo = 1 AND idOrg IS NOT NULL 
-        GROUP BY idOrg
-    `);
+    return await ejecutarSP<{ idOrg: string; count: number }>('sp_Organizacion_ContarEmpleadosPorNodo');
 }
 
 export async function previewEmpleadosSubarbol(idOrgRaiz: string, limite = 50) {
-    return await ejecutarQuery<UsuarioDb>(`
-        WITH NodosSub AS (
-            SELECT CAST(id AS NVARCHAR(50)) as idorg FROM p_OrganizacionNodos WHERE CAST(id AS NVARCHAR(50)) = @id
-            UNION ALL
-            SELECT CAST(n.id AS NVARCHAR(50)) FROM p_OrganizacionNodos n
-            JOIN NodosSub ns ON CAST(n.idPadre AS NVARCHAR(50)) = ns.idorg
-        )
-        SELECT TOP (@limite) u.idUsuario, u.nombre, u.nombreCompleto, u.cargo, u.departamento, u.correo
-        FROM p_Usuarios u
-        JOIN NodosSub ns ON CAST(u.idOrg AS NVARCHAR(50)) = ns.idorg
-        WHERE u.activo = 1
-    `, { id: { valor: idOrgRaiz, tipo: NVarChar }, limite: { valor: limite, tipo: Int } });
+    return await ejecutarSP<UsuarioDb>('sp_Organizacion_SubarbolPreviewEmpleados', {
+        idOrgRaiz: { valor: cleanStr(idOrgRaiz), tipo: NVarChar },
+        limite: { valor: limite, tipo: Int }
+    });
 }
 
 export async function contarEmpleadosSubarbol(idOrgRaiz: string) {
-    const res = await ejecutarQuery<{ total: number }>(`
-        WITH NodosSub AS (
-            SELECT CAST(id AS NVARCHAR(50)) as idorg FROM p_OrganizacionNodos WHERE CAST(id AS NVARCHAR(50)) = @id
-            UNION ALL
-            SELECT CAST(n.id AS NVARCHAR(50)) FROM p_OrganizacionNodos n
-            JOIN NodosSub ns ON CAST(n.idPadre AS NVARCHAR(50)) = ns.idorg
-        )
-        SELECT COUNT(*) as total
-        FROM p_Usuarios u
-        JOIN NodosSub ns ON CAST(u.idOrg AS NVARCHAR(50)) = ns.idorg
-        WHERE u.activo = 1
-    `, { id: { valor: idOrgRaiz, tipo: NVarChar } });
-    return res[0].total;
-}
-
-// ==========================================
-// FUNCIONES RESTAURADAS / COMPATIBILIDAD
-// ==========================================
-
-export async function desactivarDelegacion(id: number) {
-    await ejecutarQuery(`UPDATE p_delegacion_visibilidad SET activo = 0 WHERE id = @id`, { id: { valor: id, tipo: BigInt } });
+    const rows = await ejecutarSP<{ total: number }>('sp_Organizacion_SubarbolContarEmpleados', {
+        idOrgRaiz: { valor: cleanStr(idOrgRaiz), tipo: NVarChar }
+    });
+    return rows[0]?.total || 0;
 }
 
 export async function obtenerEmpleadosNodoDirecto(idOrg: string | number, limite = 50) {
     const id = typeof idOrg === 'string' ? parseInt(idOrg, 10) : idOrg;
-    return await ejecutarQuery<UsuarioDb>(`
-        SELECT TOP (@limite) * 
-        FROM p_Usuarios 
-        WHERE idOrg = @id AND activo = 1
-        ORDER BY nombre ASC
-    `, { id: { valor: id, tipo: Int }, limite: { valor: limite, tipo: Int } });
+
+    return await ejecutarSP<UsuarioDb>('sp_Organizacion_ObtenerEmpleadosNodoDirecto', {
+        idOrg: { valor: id, tipo: Int },
+        limite: { valor: limite, tipo: Int }
+    });
 }
 
 export async function contarEmpleadosNodoDirecto(idOrg: string | number) {
     const id = typeof idOrg === 'string' ? parseInt(idOrg, 10) : idOrg;
-    const res = await ejecutarQuery<{ total: number }>(`
-        SELECT COUNT(*) as total 
-        FROM p_Usuarios 
-        WHERE idOrg = @id AND activo = 1
-    `, { id: { valor: id, tipo: Int } });
-    return res[0]?.total || 0;
+
+    const rows = await ejecutarSP<{ total: number }>('sp_Organizacion_ContarEmpleadosNodoDirecto', {
+        idOrg: { valor: id, tipo: Int }
+    });
+
+    return rows[0]?.total || 0;
+}
+
+// ==========================================
+// USUARIOS (Helpers)
+// ==========================================
+export async function buscarUsuarioPorCarnet(carnet: string) {
+    const rows = await ejecutarSP<UsuarioDb>('sp_Usuarios_BuscarPorCarnet', {
+        carnet: { valor: cleanStr(carnet), tipo: NVarChar }
+    });
+    return rows[0] || null;
+}
+
+export async function buscarUsuarioPorCorreo(correo: string) {
+    const rows = await ejecutarSP<UsuarioDb>('sp_Usuarios_BuscarPorCorreo', {
+        correo: { valor: cleanLower(correo), tipo: NVarChar }
+    });
+    return rows[0] || null;
+}
+
+export async function listarEmpleadosActivos() {
+    return await ejecutarSP<UsuarioDb>('sp_Usuarios_ListarActivos');
+}
+
+
+export async function buscarUsuarios(termino: string, limite = 10) {
+    return await ejecutarSP<UsuarioDb>('sp_Usuarios_Buscar', {
+        termino: { valor: cleanStr(termino), tipo: NVarChar },
+        limite: { valor: limite, tipo: Int }
+    });
+}
+
+// NUEVO: Obtener Mi Equipo (Jerarquía + Permisos)
+export async function obtenerMiEquipoPorCarnet(carnet: string) {
+    return await ejecutarSP<UsuarioDb & { nivel: number; fuente: string }>('sp_Visibilidad_ObtenerMiEquipo', {
+        carnet: { valor: cleanStr(carnet), tipo: NVarChar }
+    });
 }

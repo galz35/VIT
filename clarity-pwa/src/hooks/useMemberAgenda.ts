@@ -1,54 +1,51 @@
-import { useState, useEffect, useCallback } from 'react';
+// Last Modified: 2026-01-24 20:38:55
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { clarityService } from '../services/clarity.service';
 import type { Tarea, Checkin, Bloqueo } from '../types/modelos';
 
+interface MemberAgendaData {
+    checkinHoy: Checkin | null;
+    tareasSugeridas: Tarea[];
+    backlog: Tarea[];
+    bloqueosActivos: Bloqueo[];
+    bloqueosMeCulpan: Bloqueo[];
+}
+
+export const memberKeys = {
+    all: ['member-mi-dia'] as const,
+    detail: (userId: string, fecha: string) => [...memberKeys.all, userId, fecha] as const,
+};
+
 export const useMemberAgenda = (userId: string, fecha: string) => {
-    const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
+    const queryClient = useQueryClient();
 
-    // State Data
-    const [checkin, setCheckin] = useState<Checkin | null>(null);
-    const [arrastrados, setArrastrados] = useState<Tarea[]>([]);
-    const [bloqueos, setBloqueos] = useState<Bloqueo[]>([]);
-    const [bloqueosMeCulpan, setBloqueosMeCulpan] = useState<Bloqueo[]>([]);
-    const [disponibles, setDisponibles] = useState<Tarea[]>([]);
-    const [backlog, setBacklog] = useState<Tarea[]>([]);
-
-    const fetchMiDia = useCallback(async () => {
-        if (!userId) return;
-        try {
-            setRefreshing(true);
-            // This is the key difference: calling `getMemberAgenda`
+    const query = useQuery({
+        queryKey: memberKeys.detail(userId, fecha),
+        queryFn: async () => {
+            if (!userId) return null;
             const data = await clarityService.getMemberAgenda(userId, fecha);
-            if (data) {
-                setCheckin(data.checkinHoy as any);
-                setArrastrados([]);
-                setBloqueos(data.bloqueosActivos || []);
-                setBloqueosMeCulpan(data.bloqueosMeCulpan || []);
-                setDisponibles(data.tareasSugeridas || []);
-                setBacklog(data.backlog || []);
-            }
-        } catch (error) {
-            console.error('Error fetching Member Agenda', error);
-        } finally {
-            setLoading(false);
-            setRefreshing(false);
-        }
-    }, [userId, fecha]);
+            return data as MemberAgendaData;
+        },
+        enabled: !!userId,
+        staleTime: 60_000, // 1 minuto
+    });
 
-    useEffect(() => {
-        fetchMiDia();
-    }, [fetchMiDia]);
+    const fetchMiDia = () => {
+        queryClient.invalidateQueries({ queryKey: memberKeys.detail(userId, fecha) });
+    };
+
+    const data = query.data;
 
     return {
-        loading,
-        refreshing,
-        checkin,
-        arrastrados,
-        bloqueos,
-        bloqueosMeCulpan,
-        disponibles,
-        backlog,
-        fetchMiDia
+        loading: query.isLoading,
+        refreshing: query.isFetching,
+        checkin: data?.checkinHoy || null,
+        arrastrados: [] as Tarea[], // Por ahora el backend de member no lo devuelve separado
+        bloqueos: data?.bloqueosActivos || [],
+        bloqueosMeCulpan: data?.bloqueosMeCulpan || [],
+        disponibles: data?.tareasSugeridas || [],
+        backlog: data?.backlog || [],
+        fetchMiDia,
+        ...query
     };
 };

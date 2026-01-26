@@ -63,8 +63,15 @@ const getProjectHealth = (tasks: Tarea[]) => {
 
 // 1. Gantt Chart Component
 const GanttChart: React.FC<{ tasks: Tarea[], onTaskClick: (t: Tarea) => void }> = ({ tasks, onTaskClick }) => {
-    const [viewStart, setViewStart] = useState(startOfMonth(new Date()));
-    const viewEnd = useMemo(() => endOfMonth(addMonths(viewStart, 2)), [viewStart]);
+    // Start with current date, aligned to start of month for clean view
+    const [viewStart, setViewStart] = useState(() => startOfMonth(new Date()));
+    const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
+
+    // Calculate view end based on mode
+    const viewEnd = useMemo(() => {
+        if (viewMode === 'week') return addDays(viewStart, 7); // Show 7 days (1 week window)
+        return endOfMonth(addMonths(viewStart, 0)); // Show 1 month
+    }, [viewStart, viewMode]);
 
     const days = useMemo(() => eachDayOfInterval({ start: viewStart, end: viewEnd }), [viewStart, viewEnd]);
     const CELL_WIDTH = 40;
@@ -72,10 +79,51 @@ const GanttChart: React.FC<{ tasks: Tarea[], onTaskClick: (t: Tarea) => void }> 
     return (
         <div className="flex flex-col h-full bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden select-none">
             <div className="flex justify-between items-center px-2 py-1 border-b border-slate-100 bg-slate-50/50">
-                <div className="flex gap-2">
-                    <button onClick={() => setViewStart(d => subMonths(d, 1))} className="p-1 hover:bg-slate-200 rounded text-[10px] font-bold text-slate-600">{'< Anterior'}</button>
-                    <span className="text-xs font-bold text-slate-800 capitalize w-24 text-center">{format(viewStart, 'MMM yyyy', { locale: es })}</span>
-                    <button onClick={() => setViewStart(d => addMonths(d, 1))} className="p-1 hover:bg-slate-200 rounded text-[10px] font-bold text-slate-600">{'Siguiente >'}</button>
+                <div className="flex gap-2 items-center">
+                    <button
+                        onClick={() => setViewStart(d => viewMode === 'week' ? addDays(d, -7) : subMonths(d, 1))}
+                        className="p-1 hover:bg-slate-200 rounded text-[10px] font-bold text-slate-600 flex items-center gap-1"
+                        title="Anterior"
+                    >
+                        <ArrowLeft size={10} /> Anterior
+                    </button>
+
+                    <button
+                        onClick={() => setViewStart(startOfDay(new Date()))}
+                        className="px-2 py-0.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded text-[10px] font-bold border border-indigo-200 transition-colors"
+                        title="Ir a Hoy"
+                    >
+                        Hoy
+                    </button>
+
+                    <span className="text-xs font-bold text-slate-800 capitalize min-w-[100px] text-center">
+                        {format(viewStart, viewMode === 'week' ? "'Semana del' d MMM" : 'MMMM yyyy', { locale: es })}
+                    </span>
+
+                    <button
+                        onClick={() => setViewStart(d => viewMode === 'week' ? addDays(d, 7) : addMonths(d, 1))}
+                        className="p-1 hover:bg-slate-200 rounded text-[10px] font-bold text-slate-600 flex items-center gap-1 flex-row-reverse"
+                        title="Siguiente"
+                    >
+                        <ArrowLeft size={10} className="rotate-180" /> Siguiente
+                    </button>
+
+                    <div className="h-4 w-px bg-slate-300 mx-2"></div>
+
+                    <div className="flex bg-slate-200 p-0.5 rounded-lg">
+                        <button
+                            onClick={() => setViewMode('week')}
+                            className={`px-2 py-0.5 rounded text-[9px] font-bold transition-all ${viewMode === 'week' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Semana
+                        </button>
+                        <button
+                            onClick={() => setViewMode('month')}
+                            className={`px-2 py-0.5 rounded text-[9px] font-bold transition-all ${viewMode === 'month' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Mes
+                        </button>
+                    </div>
                 </div>
                 <div className="flex text-[10px] gap-2">
                     <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 bg-rose-500 rounded-full"></div> Atrasada</div>
@@ -538,6 +586,7 @@ export const TimelinePage: React.FC = () => {
             {selectedTask && (
                 <TaskDetailModal
                     task={selectedTask}
+                    mode="planning"
                     onClose={() => setSelectedTask(null)}
                     onUpdate={() => {
                         setSelectedTask(null);
