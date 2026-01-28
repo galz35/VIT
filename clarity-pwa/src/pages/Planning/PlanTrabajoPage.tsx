@@ -3,7 +3,6 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { clarityService } from '../../services/clarity.service';
-import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import type { Tarea, Proyecto } from '../../types/modelos';
@@ -57,10 +56,10 @@ const ViewTabs: React.FC<{ value: ViewMode; onChange: (v: ViewMode) => void }> =
             type="button"
             onClick={() => onChange(k)}
             title={title}
-            className={`p - 2 rounded - lg transition - all ${value === k
+            className={`p-2 rounded-lg transition-all ${value === k
                 ? "bg-white shadow-sm text-slate-900 scale-105 border border-slate-200"
                 : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
-                } `}
+                }`}
         >
             <Icon size={18} />
         </button>
@@ -81,7 +80,7 @@ const ViewTabs: React.FC<{ value: ViewMode; onChange: (v: ViewMode) => void }> =
 
 
 const UserAvatar: React.FC<{ name: string, color?: string }> = ({ name, color }) => (
-    <div className={`w - 6 h - 6 rounded - full flex items - center justify - center text - [10px] font - bold text - white shadow - sm ${color || 'bg-slate-600'} `}>
+    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm ${color || 'bg-slate-600'}`}>
         {(name || '?').charAt(0).toUpperCase()}
     </div>
 );
@@ -323,7 +322,7 @@ const BoardView: React.FC<{ tasks: Tarea[], team: TeamMember[], onAssign: (tid: 
                 <div key={status} className="w-[320px] shrink-0 flex flex-col bg-slate-100/40 rounded-3xl border border-slate-200/50 max-h-full backdrop-blur-sm">
                     <div className="p-5 flex justify-between items-center">
                         <div className="flex items-center gap-3">
-                            <div className={`w - 2.5 h - 2.5 rounded - full ${getStatusColor(status)} `} />
+                            <div className={`w-2.5 h-2.5 rounded-full ${getStatusColor(status)}`} />
                             <h3 className="font-black text-[11px] text-slate-500 uppercase tracking-[0.2em]">{getStatusLabel(status)}</h3>
                         </div>
                         <span className="bg-white/80 border border-slate-200 text-slate-900 text-[10px] font-black px-3 py-1 rounded-full shadow-sm">
@@ -346,7 +345,7 @@ const BoardView: React.FC<{ tasks: Tarea[], team: TeamMember[], onAssign: (tid: 
                             return (
                                 <div key={task.idTarea} onClick={() => onTaskClick(task)} className={cardClass}>
                                     <div className="flex justify-between items-start mb-4">
-                                        <span className={`text - [10px] font - black tracking - widest uppercase ${isDone || isDelayed ? 'text-slate-500' : 'text-slate-400'} `}>ID-{task.idTarea}</span>
+                                        <span className={`text-[10px] font-black tracking-widest uppercase ${isDone || isDelayed ? 'text-slate-500' : 'text-slate-400'}`}>ID-{task.idTarea}</span>
                                         <div className="flex items-center gap-2">
                                             {(task as any).isLockedByManager && <Lock size={10} className="text-indigo-400" />}
                                             <TipoBadge tipo={task.tipo} />
@@ -467,7 +466,7 @@ const GanttView: React.FC<{ tasks: Tarea[] }> = ({ tasks }) => {
                         {tasks.map(task => (
                             <div key={task.idTarea} className="flex flex-col justify-center px-6 border-b border-slate-50 hover:bg-indigo-50/30 transition-colors group" style={{ height: ROW_HEIGHT }}>
                                 <div className="flex items-center gap-3">
-                                    <div className={`w - 1.5 h - 1.5 rounded - full shrink - 0 ${task.estado === 'Hecha' ? 'bg-emerald-400' : task.estado === 'En Curso' ? 'bg-indigo-400' : 'bg-slate-300'} `} />
+                                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${task.estado === 'Hecha' ? 'bg-emerald-400' : task.estado === 'En Curso' ? 'bg-indigo-400' : 'bg-slate-300'}`} />
                                     <span className="text-sm font-bold text-slate-700 truncate group-hover:text-indigo-700 transition-colors">{task.titulo}</span>
                                 </div>
                                 <div className="pl-4 text-[10px] text-slate-400 flex items-center gap-2 mt-0.5">
@@ -502,7 +501,7 @@ const GanttView: React.FC<{ tasks: Tarea[] }> = ({ tasks }) => {
                                 {days.map(day => (
                                     <div
                                         key={day.toString()}
-                                        className={`shrink - 0 flex items - center justify - center border - r border - slate - 100 text - [9px] font - black uppercase tracking - wider ${isWeekend(day) ? 'text-slate-300' : 'text-indigo-300'} `}
+                                        className={`shrink-0 flex items-center justify-center border-r border-slate-100 text-[9px] font-black uppercase tracking-wider ${isWeekend(day) ? 'text-slate-300' : 'text-indigo-300'}`}
                                         style={{ width: COL_WIDTH }}
                                     >
                                         {format(day, 'EEE', { locale: es })}
@@ -812,22 +811,22 @@ export const PlanTrabajoPage: React.FC = () => {
         if (!selectedTask) return;
         setIsSaving(true);
         try {
-            const { data } = await api.patch(`/ tareas / ${selectedTask.idTarea} `, {
+            const response = await clarityService.actualizarTarea(selectedTask.idTarea, {
                 titulo: selectedTask.titulo,
                 estado: selectedTask.estado,
                 prioridad: selectedTask.prioridad,
                 progreso: selectedTask.progreso,
                 descripcion: selectedTask.descripcion,
-                fechaInicioPlanificada: selectedTask.fechaInicioPlanificada || null,
-                fechaObjetivo: selectedTask.fechaObjetivo || null,
+                fechaInicioPlanificada: selectedTask.fechaInicioPlanificada || undefined,
+                fechaObjetivo: selectedTask.fechaObjetivo || undefined,
                 tipo: selectedTask.tipo,
                 linkEvidencia: selectedTask.linkEvidencia
             });
 
             // Handle Approval Response
-            const payload = data.data || data;
-            if (payload?.requiresApproval) {
-                showToast(payload.message || 'Cambio enviado para aprobación', 'info');
+            // If the backend returns a special structure for approval
+            if ((response as any)?.requiresApproval) {
+                showToast((response as any).message || 'Cambio enviado para aprobación', 'info');
                 loadTasks(); // Reload to reflect true state
                 setIsPanelOpen(false);
                 return;
@@ -1419,7 +1418,7 @@ export const PlanTrabajoPage: React.FC = () => {
                                 showToast("Error al actualizar el estado del proyecto", "error");
                             }
                         }}
-                        className={`ml - 2 flex items - center gap - 1 px - 3 py - 1.5 font - bold text - xs rounded - lg transition - colors ${(selectedProject as any).enllavado ? 'bg-amber-100 border border-amber-300 text-amber-800' : 'bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100'} `}
+                        className={`ml-2 flex items-center gap-1 px-3 py-1.5 font-bold text-xs rounded-lg transition-colors ${(selectedProject as any).enllavado ? 'bg-amber-100 border border-amber-300 text-amber-800' : 'bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100'}`}
                         title={(selectedProject as any).enllavado ? "El plan está oficializado. Click para permitir ediciones." : "Enllavar Proyecto para oficializar y evitar cambios"}
                     >
                         {(selectedProject as any).enllavado ? <Unlock size={14} /> : <Lock size={14} />}
@@ -1489,7 +1488,7 @@ export const PlanTrabajoPage: React.FC = () => {
                                                                 setAssigneeFilterSearch('');
                                                                 setCurrentPage(1);
                                                             }}
-                                                            className={`w - full text - left px - 4 py - 2 text - xs hover: bg - slate - 50 flex items - center justify - between group ${filterAssignee === '' ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600'} `}
+                                                            className={`w-full text-left px-4 py-2 text-xs hover:bg-slate-50 flex items-center justify-between group ${filterAssignee === '' ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600'}`}
                                                         >
                                                             <span>Todos</span>
                                                         </button>
@@ -1506,10 +1505,10 @@ export const PlanTrabajoPage: React.FC = () => {
                                                                             setAssigneeFilterSearch('');
                                                                             setCurrentPage(1);
                                                                         }}
-                                                                        className={`w - full text - left px - 4 py - 2 text - xs hover: bg - slate - 50 flex items - center justify - between group ${filterAssignee === member.idUsuario ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600'} `}
+                                                                        className={`w-full text-left px-4 py-2 text-xs hover:bg-slate-50 flex items-center justify-between group ${filterAssignee === member.idUsuario ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600'}`}
                                                                     >
                                                                         <span className="truncate">{member.nombre}</span>
-                                                                        <span className={`px - 1.5 py - 0.5 rounded text - [10px] ml - 2 font - bold ${filterAssignee === member.idUsuario ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'} `}>{count}</span>
+                                                                        <span className={`px-1.5 py-0.5 rounded text-[10px] ml-2 font-bold ${filterAssignee === member.idUsuario ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'}`}>{count}</span>
                                                                     </button>
                                                                 );
                                                             })}
@@ -1666,9 +1665,9 @@ export const PlanTrabajoPage: React.FC = () => {
                                                                         onClick={(e) => { e.stopPropagation(); openTaskDetails(t); }}
                                                                     >
                                                                         {/* Mobile/Compact View */}
-                                                                        <div className={`md:hidden p - 4 space - y - 3 ${isChild ? 'pl-8 border-l-4 border-slate-100' : ''} `}>
+                                                                        <div className={`md:hidden p-4 space-y-3 ${isChild ? 'pl-8 border-l-4 border-slate-100' : ''}`}>
                                                                             <div className="flex justify-between items-start gap-3">
-                                                                                <h4 className={`font - bold text - sm text - slate - 800 leading - snug ${t.estado === 'Hecha' ? 'line-through opacity-60' : ''} `}>
+                                                                                <h4 className={`font-bold text-sm text-slate-800 leading-snug ${t.estado === 'Hecha' ? 'line-through opacity-60' : ''}`}>
                                                                                     {isChild && <span className="text-slate-400 mr-1">↳</span>}
                                                                                     {t.titulo}
                                                                                 </h4>
@@ -1686,7 +1685,7 @@ export const PlanTrabajoPage: React.FC = () => {
                                                                                 <div className="flex flex-col min-w-0 flex-1">
                                                                                     <div className="flex items-center gap-2">
                                                                                         {hasChildren && <Link2 size={12} className="text-indigo-400 rotate-45 shrink-0" />}
-                                                                                        <p className={`truncate transition - colors ${t.estado === 'Hecha' ? 'text-slate-400 line-through decoration-slate-300' : 'text-slate-700 group-hover:text-indigo-700'} ${hasChildren ? 'font-black' : 'font-medium'} `}>
+                                                                                        <p className={`truncate transition-colors ${t.estado === 'Hecha' ? 'text-slate-400 line-through decoration-slate-300' : 'text-slate-700 group-hover:text-indigo-700'} ${hasChildren ? 'font-black' : 'font-medium'}`}>
                                                                                             {t.titulo}
                                                                                         </p>
                                                                                         <span className="text-[9px] text-slate-300 font-mono hidden xl:inline opacity-0 group-hover:opacity-100">#{t.idTarea}</span>
@@ -1712,11 +1711,11 @@ export const PlanTrabajoPage: React.FC = () => {
 
                                                                             <div className="col-span-2 flex items-center justify-start text-[10px] text-slate-500 font-semibold">
                                                                                 {t.fechaInicioPlanificada || t.fechaObjetivo ? (
-                                                                                    <div className={`flex items - center gap - 1 whitespace - nowrap ${isDelayed ? 'text-rose-600' : ''} `}>
+                                                                                    <div className={`flex items-center gap-1 whitespace-nowrap ${isDelayed ? 'text-rose-600' : ''}`}>
                                                                                         <CalendarIcon size={10} className={isDelayed ? 'text-rose-400' : 'text-slate-300'} />
                                                                                         <span>{t.fechaInicioPlanificada ? format(new Date(Number(String(t.fechaInicioPlanificada).split('-')[0]), Number(String(t.fechaInicioPlanificada).split('-')[1]) - 1, Number(String(t.fechaInicioPlanificada).split('-')[2].substring(0, 2))), 'd MMM', { locale: es }) : ''}</span>
                                                                                         {(t.fechaInicioPlanificada && t.fechaObjetivo) && <span className="text-slate-300">-</span>}
-                                                                                        <span className={`${daysDelayed > 0 ? 'text-rose-600 font-bold' : ''} `}>
+                                                                                        <span className={`${daysDelayed > 0 ? 'text-rose-600 font-bold' : ''}`}>
                                                                                             {t.fechaObjetivo ? format(new Date(Number(String(t.fechaObjetivo).split('-')[0]), Number(String(t.fechaObjetivo).split('-')[1]) - 1, Number(String(t.fechaObjetivo).split('-')[2].substring(0, 2))), 'd MMM', { locale: es }) : ''}
                                                                                         </span>
                                                                                     </div>
@@ -1726,8 +1725,8 @@ export const PlanTrabajoPage: React.FC = () => {
                                                                             <div className="col-span-2 flex items-center gap-2 pl-2 justify-end">
                                                                                 <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden max-w-[60px]">
                                                                                     <div
-                                                                                        className={`h - full rounded - full transition - all ${t.estado === 'Hecha' ? 'bg-emerald-500' : 'bg-indigo-500'} `}
-                                                                                        style={{ width: `${t.progreso}% ` }}
+                                                                                        className={`h-full rounded-full transition-all ${t.estado === 'Hecha' ? 'bg-emerald-500' : 'bg-indigo-500'}`}
+                                                                                        style={{ width: `${t.progreso}%` }}
                                                                                     ></div>
                                                                                 </div>
 
@@ -1735,7 +1734,7 @@ export const PlanTrabajoPage: React.FC = () => {
                                                                                     {/* Quick Subtask Button (Only for Roots/Parents) */}
                                                                                     {!isChild && (
                                                                                         <button
-                                                                                            className={`w - 6 h - 6 flex items - center justify - center rounded - md transition - colors ${creationParentId === t.idTarea ? 'bg-indigo-100 text-indigo-700' : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-100'} `}
+                                                                                            className={`w-6 h-6 flex items-center justify-center rounded-md transition-colors ${creationParentId === t.idTarea ? 'bg-indigo-100 text-indigo-700' : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-100'}`}
                                                                                             title="Agregar Subtarea"
                                                                                             onClick={(e) => {
                                                                                                 e.stopPropagation();
@@ -1776,8 +1775,8 @@ export const PlanTrabajoPage: React.FC = () => {
                                                                         {hasKids && (
                                                                             <button
                                                                                 onClick={(e) => { e.stopPropagation(); toggleExpand(rootTask.idTarea); }}
-                                                                                className={`absolute left - 0 md: left - 2 top - 6 z - 20 w - 6 h - 6 flex items - center justify - center text - slate - 400 hover: text - indigo - 600 hover: bg - slate - 100 rounded - full transition - colors 
-                                                                                    ${isExpanded ? 'bg-slate-50 text-indigo-500' : '-rotate-90'} `}
+                                                                                className={`absolute left-0 md:left-2 top-6 z-20 w-6 h-6 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-full transition-colors 
+                                                                                    ${isExpanded ? 'bg-slate-50 text-indigo-500' : '-rotate-90'}`}
                                                                             >
                                                                                 <ChevronDown size={14} />
                                                                             </button>
@@ -1894,15 +1893,21 @@ export const PlanTrabajoPage: React.FC = () => {
                                 )}
                                 {isManagerMode && (
                                     <button
-                                        onClick={() => {
+                                        onClick={async () => {
                                             const newStatus = !(selectedTask as any).isLockedByManager;
-                                            setSelectedTask({ ...selectedTask, isLockedByManager: newStatus } as any);
-                                            showToast(newStatus ? "Tarea bloqueada (Aprobada)" : "Tarea desbloqueada (Editable)", "success");
+                                            try {
+                                                await clarityService.toggleBloqueoTarea(selectedTask.idTarea, newStatus);
+                                                setSelectedTask({ ...selectedTask, isLockedByManager: newStatus } as any);
+                                                showToast(newStatus ? "Tarea bloqueada (Aprobada)" : "Tarea desbloqueada (Editable)", "success");
+                                            } catch (error) {
+                                                console.error("Error toggling task lock", error);
+                                                showToast("Error al actualizar el estado de la tarea", "error");
+                                            }
                                         }}
-                                        className={`px - 3 py - 1.5 rounded - lg text - [10px] font - bold border transition - colors flex items - center gap - 1 ${(selectedTask as any).isLockedByManager
+                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-colors flex items-center gap-1 ${(selectedTask as any).isLockedByManager
                                             ? 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'
                                             : 'bg-indigo-50 border-indigo-200 text-indigo-600 hover:bg-indigo-100'
-                                            } `}
+                                            }`}
                                     >
                                         {(selectedTask as any).isLockedByManager ? <Unlock size={12} /> : <Lock size={12} />}
                                         {(selectedTask as any).isLockedByManager ? 'Desbloquear' : 'Aprobar & Bloquear'}
@@ -1939,7 +1944,7 @@ export const PlanTrabajoPage: React.FC = () => {
                                     }}
                                 >
                                     <input
-                                        className={`text - xl font - bold text - slate - 900 leading - snug mb - 2 w - full bg - transparent border border - transparent rounded p - 1 outline - none transition - colors ${isManagerMode || !((selectedTask as any).isLockedByManager || (selectedProject as any)?.enllavado) ? 'hover:border-slate-200 focus:border-slate-300' : 'pointer-events-none opacity-80'} `}
+                                        className={`text-xl font-bold text-slate-900 leading-snug mb-2 w-full bg-transparent border border-transparent rounded p-1 outline-none transition-colors ${isManagerMode || !((selectedTask as any).isLockedByManager || (selectedProject as any)?.enllavado) ? 'hover:border-slate-200 focus:border-slate-300' : 'pointer-events-none opacity-80'}`}
                                         value={selectedTask.titulo}
                                         onChange={(e) => (isManagerMode || !((selectedTask as any).isLockedByManager || (selectedProject as any)?.enllavado)) && setSelectedTask({ ...selectedTask, titulo: e.target.value })}
                                         readOnly={!isManagerMode && ((selectedTask as any).isLockedByManager || (selectedProject as any)?.enllavado)}
@@ -1965,7 +1970,7 @@ export const PlanTrabajoPage: React.FC = () => {
                                     }}
                                 >
                                     <textarea
-                                        className={`text - sm text - slate - 600 leading - relaxed w - full min - h - [80px] bg - slate - 50 border border - slate - 100 rounded - lg p - 3 outline - none resize - none transition - all focus: shadow - sm ${isManagerMode || !((selectedTask as any).isLockedByManager || (selectedProject as any)?.enllavado) ? 'focus:bg-white focus:border-slate-300' : 'cursor-not-allowed bg-slate-50/50'} `}
+                                        className={`text-sm text-slate-600 leading-relaxed w-full min-h-[80px] bg-slate-50 border border-slate-100 rounded-lg p-3 outline-none resize-none transition-all focus:shadow-sm ${isManagerMode || !((selectedTask as any).isLockedByManager || (selectedProject as any)?.enllavado) ? 'focus:bg-white focus:border-slate-300' : 'cursor-not-allowed bg-slate-50/50'}`}
                                         value={selectedTask.descripcion || ''}
                                         onChange={(e) => (isManagerMode || !((selectedTask as any).isLockedByManager || (selectedProject as any)?.enllavado)) && setSelectedTask({ ...selectedTask, descripcion: e.target.value })}
                                         placeholder="Añadir a descripción..."
@@ -1998,7 +2003,7 @@ export const PlanTrabajoPage: React.FC = () => {
                                     <label className="text-[10px] font-bold text-slate-400 uppercase block mb-2">Prioridad</label>
                                     <div className="relative">
                                         <select
-                                            className={`w - full bg - white border border - slate - 200 rounded - lg py - 2 pl - 3 pr - 8 text - xs font - bold text - slate - 700 outline - none appearance - none ${isManagerMode ? 'focus:border-slate-500 cursor-pointer' : 'opacity-75 cursor-not-allowed bg-slate-100'} `}
+                                            className={`w-full bg-white border border-slate-200 rounded-lg py-2 pl-3 pr-8 text-xs font-bold text-slate-700 outline-none appearance-none ${isManagerMode ? 'focus:border-slate-500 cursor-pointer' : 'opacity-75 cursor-not-allowed bg-slate-100'}`}
                                             value={selectedTask.prioridad}
                                             onChange={(e) => isManagerMode && setSelectedTask({ ...selectedTask, prioridad: e.target.value as any })}
                                             disabled={!isManagerMode}
@@ -2041,7 +2046,7 @@ export const PlanTrabajoPage: React.FC = () => {
                                         >
                                             <input
                                                 type="date"
-                                                className={`w - full bg - white border border - slate - 200 rounded - lg px - 2 py - 1.5 text - xs text - slate - 700 outline - none ${isManagerMode || !((selectedTask as any).isLockedByManager || (selectedProject as any)?.enllavado) ? 'focus:border-slate-400' : 'cursor-not-allowed opacity-70'} `}
+                                                className={`w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 outline-none ${isManagerMode || !((selectedTask as any).isLockedByManager || (selectedProject as any)?.enllavado) ? 'focus:border-slate-400' : 'cursor-not-allowed opacity-70'}`}
                                                 value={selectedTask.fechaInicioPlanificada ? String(selectedTask.fechaInicioPlanificada).split('T')[0] : ''}
                                                 onChange={(e) => (isManagerMode || !((selectedTask as any).isLockedByManager || (selectedProject as any)?.enllavado)) && setSelectedTask({ ...selectedTask, fechaInicioPlanificada: e.target.value ? e.target.value : undefined })}
                                                 readOnly={!isManagerMode && ((selectedTask as any).isLockedByManager || (selectedProject as any)?.enllavado)}
@@ -2111,7 +2116,7 @@ export const PlanTrabajoPage: React.FC = () => {
                                 <div>
                                     <div className="flex justify-between mb-2">
                                         <label className="text-xs font-bold text-slate-700">Progreso</label>
-                                        <span className={`text - xs font - bold px - 2 py - 0.5 rounded ${selectedTask.estado === 'Bloqueada' ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-600'} `}>
+                                        <span className={`text-xs font-bold px-2 py-0.5 rounded ${selectedTask.estado === 'Bloqueada' ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-600'}`}>
                                             {selectedTask.progreso || 0}%
                                         </span>
                                     </div>
@@ -2119,7 +2124,7 @@ export const PlanTrabajoPage: React.FC = () => {
                                         type="range"
                                         min="0"
                                         max="100"
-                                        className={`w - full h - 2 bg - slate - 100 rounded - lg appearance - none cursor - pointer ${selectedTask.estado === 'Bloqueada' ? 'accent-red-500' : 'accent-slate-700'} `}
+                                        className={`w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer ${selectedTask.estado === 'Bloqueada' ? 'accent-red-500' : 'accent-slate-700'}`}
                                         value={selectedTask.progreso || 0}
                                         onChange={(e) => setSelectedTask({ ...selectedTask, progreso: parseInt(e.target.value) })}
                                     />

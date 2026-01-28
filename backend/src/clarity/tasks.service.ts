@@ -70,11 +70,20 @@ export class TasksService {
         // Obtener agenda recurrente
         const agendaRecurrente = await this.recurrenciaService.obtenerAgendaRecurrente(fecha, carnet);
 
+        // Obtener Backlog (Tareas Vencidas)
+        let backlog = await clarityRepo.obtenerBacklog(carnet);
+
+        // Excluir tareas que YA están en el checkin de hoy para no duplicar visualmente
+        if (checkinHoy && checkinHoy.tareas && checkinHoy.tareas.length > 0) {
+            const tareasEnCheckin = new Set(checkinHoy.tareas.map(t => t.idTarea));
+            backlog = backlog.filter(t => !tareasEnCheckin.has(t.idTarea));
+        }
+
         return {
             checkinHoy,
             tareasSugeridas: tareas,
             agendaRecurrente,
-            backlog: [],
+            backlog: backlog || [],
             bloqueosActivos: [],
             bloqueosMeCulpan: []
         };

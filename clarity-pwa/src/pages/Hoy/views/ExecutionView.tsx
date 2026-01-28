@@ -8,7 +8,7 @@ import { CheckinForm } from '../components/CheckinForm';
 import { clarityService } from '../../../services/clarity.service';
 import { useToast } from '../../../context/ToastContext';
 import type { CheckinUpsertDto, CheckinTarea } from '../../../types/modelos';
-import { AgendaTimeline } from '../components/AgendaTimeline';
+import { OverdueTimeline } from '../components/OverdueTimeline';
 
 export const ExecutionView: React.FC = () => {
     const {
@@ -22,6 +22,7 @@ export const ExecutionView: React.FC = () => {
         toggleTarea,
         isMutating,
         mutatingTaskId,
+        backlog // Added backlog
     } = useMiDiaContext();
 
     const { showToast } = useToast();
@@ -88,10 +89,10 @@ export const ExecutionView: React.FC = () => {
     const onTaskComplete = async (id: number) => {
         try {
             await clarityService.actualizarTarea(id, { estado: 'Hecha' } as any);
-            showToast('Tarea completada', 'success');
+            showToast('Tarea completada/restaurada', 'success');
             await queryClient.invalidateQueries({ queryKey: ['mi-dia'] });
         } catch (err) {
-            showToast('Error al completar tarea', 'error');
+            showToast('Error al actualizar tarea', 'error');
         }
     };
 
@@ -160,9 +161,10 @@ export const ExecutionView: React.FC = () => {
                 </div>
             </div>
 
-            {/* Sidebar de Bitácora (Timeline) - Solo visible en desktop o como sección final en mobile */}
+            {/* Sidebar de Backlog (Tareas Atrasadas) */}
             <div className="lg:w-[450px] shrink-0 h-full overflow-hidden border-l border-slate-100 hidden lg:flex flex-col">
-                <AgendaTimeline
+                <OverdueTimeline
+                    tasks={backlog}
                     onTaskComplete={onTaskComplete}
                     onTaskCancel={onTaskCancel}
                 />
@@ -171,8 +173,9 @@ export const ExecutionView: React.FC = () => {
             {/* Versión mobile si se desea al final (opcional, pero la pusimos hidden lg:flex arriba) */}
             <div className="lg:hidden mt-10">
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                    <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">Bitácora Reciente</h3>
-                    <AgendaTimeline
+                    <h3 className="text-sm font-black text-rose-400 uppercase tracking-widest mb-4">Tareas Atrasadas</h3>
+                    <OverdueTimeline
+                        tasks={backlog}
                         onTaskComplete={onTaskComplete}
                         onTaskCancel={onTaskCancel}
                     />

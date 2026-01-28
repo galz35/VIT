@@ -91,7 +91,7 @@ export const clarityService = {
     },
 
 
-    actualizarTarea: async (idTarea: number, dto: Partial<Pick<Tarea, 'titulo' | 'descripcion' | 'estado' | 'prioridad' | 'esfuerzo' | 'fechaObjetivo' | 'fechaInicioPlanificada' | 'linkEvidencia' | 'idTareaPadre' | 'idResponsable'>> & { motivo?: string }) => {
+    actualizarTarea: async (idTarea: number, dto: Partial<Pick<Tarea, 'titulo' | 'descripcion' | 'estado' | 'prioridad' | 'progreso' | 'tipo' | 'esfuerzo' | 'fechaObjetivo' | 'fechaInicioPlanificada' | 'linkEvidencia' | 'idTareaPadre' | 'idResponsable'>> & { motivo?: string }) => {
         const { data: response } = await api.patch<ApiResponse<Tarea>>(`/tareas/${idTarea}`, dto);
         return response.data;
     },
@@ -112,6 +112,11 @@ export const clarityService = {
         return response.data;
     },
 
+    toggleBloqueoTarea: async (idTarea: number, enllavado: boolean) => {
+        const { data: response } = await api.patch<ApiResponse<Tarea>>(`/tareas/${idTarea}/lock`, { enllavado });
+        return response.data;
+    },
+
     descartarTarea: async (idTarea: number) => {
         const { data: response } = await api.post<ApiResponse>(`/tareas/${idTarea}/descartar`, {});
         return response.data;
@@ -119,6 +124,11 @@ export const clarityService = {
 
     postAvance: async (idTarea: number, dto: TareaRegistrarAvanceDto) => {
         const { data: response } = await api.post<ApiResponse>(`/tareas/${idTarea}/avance`, dto);
+        return response.data;
+    },
+
+    deleteAvance: async (idLog: number) => {
+        const { data: response } = await api.delete<ApiResponse>(`/tareas/avance/${idLog}`);
         return response.data;
     },
 
@@ -138,11 +148,6 @@ export const clarityService = {
 
     deleteTarea: async (idTarea: number) => {
         const { data: response } = await api.delete<ApiResponse>(`/tareas/${idTarea}`);
-        return response.data;
-    },
-
-    deleteAvance: async (idLog: number) => {
-        const { data: response } = await api.delete<ApiResponse>(`/tareas/avance/${idLog}`);
         return response.data;
     },
 

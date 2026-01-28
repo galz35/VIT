@@ -383,3 +383,47 @@ export async function obtenerTareasMultiplesUsuarios(carnets: string[]) {
     });
 }
 
+export async function obtenerBacklog(carnet: string) {
+    const sqlQuery = `
+        SELECT 
+            t.idTarea, t.idProyecto,
+            t.nombre as titulo,
+            t.descripcion, t.estado, t.prioridad, t.esfuerzo, t.tipoTarea as tipo,
+            t.fechaCreacion, t.fechaObjetivo, t.fechaCompletado as fechaHecha,
+            t.porcentaje as progreso,
+            t.orden, t.idCreador, t.fechaInicioPlanificada,
+            p.nombre as proyectoNombre
+        FROM p_Tareas t
+        LEFT JOIN p_Proyectos p ON t.idProyecto = p.idProyecto
+        WHERE t.activo = 1
+          AND t.estado NOT IN ('Hecha', 'Descartada', 'Eliminada')
+          AND (
+            -- Criterio 1: Fecha Objetivo Vencida
+            t.fechaObjetivo < CAST(GETDATE() as DATE) 
+            
+            -- Criterio 2: Fecha Creación vieja (si no tiene objetivo)
+            OR (t.fechaObjetivo IS NULL AND t.fechaCreacion < CAST(GETDATE() as DATE))
+          )
+          AND (
+              -- CASO 1: Estoy asignado explícitamente
+              EXISTS (SELECT 1 FROM p_TareaAsignados ta WHERE ta.idTarea = t.idTarea AND ta.carnet = @carnet)
+              
+              -- CASO 2: Soy el creador Y nadie más está asignado (Tarea personal huérfana)
+              OR (
+                  t.creadorCarnet = @carnet 
+                  AND NOT EXISTS (SELECT 1 FROM p_TareaAsignados ta WHERE ta.idTarea = t.idTarea)
+              )
+              
+              -- CASO 3: Estuvo en mi checkin (implícitamente mía)
+              OR EXISTS (
+                  SELECT 1 
+                  FROM p_CheckinTareas ct
+                  INNER JOIN p_Checkins c ON ct.idCheckin = c.idCheckin
+                  WHERE ct.idTarea = t.idTarea AND c.usuarioCarnet = @carnet
+              )
+          )
+        ORDER BY COALESCE(t.fechaObjetivo, t.fechaCreacion) ASC
+    `;
+    return await ejecutarQuery(sqlQuery, { carnet: { valor: carnet, tipo: NVarChar } });
+}
+
