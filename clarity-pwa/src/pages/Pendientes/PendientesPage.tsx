@@ -5,7 +5,7 @@ import { Plus, Inbox, MoreHorizontal, Play, Search, Filter, ChevronLeft, Chevron
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { clarityService } from '../../services/clarity.service';
-import { TaskDetailModal as ReadTaskDetailModal } from '../../components/ui/TaskDetailModal';
+import { TaskDetailModalV2 as ReadTaskDetailModal } from '../../components/task-detail-v2/TaskDetailModalV2';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 
 export const PendientesPage: React.FC = () => {

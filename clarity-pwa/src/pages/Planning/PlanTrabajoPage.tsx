@@ -14,7 +14,7 @@ import { AvanceMensualModal } from './components/AvanceMensualModal';
 import {
     LayoutGrid, List, Calendar as CalendarIcon, ChevronDown, Plus,
     Briefcase, Lock, MoreVertical, Search, CheckCircle, ChevronLeft, ChevronRight,
-    User, Unlock, AlertCircle, Trash2, X, Map as MapIcon, Link2
+    User, Unlock, AlertCircle, Trash2, X, Map as MapIcon, Link2, Edit
 } from 'lucide-react';
 import {
     format,
@@ -687,8 +687,29 @@ export const PlanTrabajoPage: React.FC = () => {
     const [newProjectName, setNewProjectName] = useState('');
     const [isCreatingProject, setIsCreatingProject] = useState(false);
 
-    // Avance Mensual Modal State (para tareas LARGA)
     const [isAvanceMensualOpen, setIsAvanceMensualOpen] = useState(false);
+
+    // Editing Project Name
+    const [isEditingProjectName, setIsEditingProjectName] = useState(false);
+    const [tempProjectName, setTempProjectName] = useState('');
+
+    const handleSaveProjectName = async () => {
+        if (!selectedProject || !tempProjectName.trim()) {
+            setIsEditingProjectName(false);
+            return;
+        }
+
+        try {
+            await clarityService.updateProyecto(selectedProject.idProyecto, { nombre: tempProjectName });
+            setSelectedProject({ ...selectedProject, nombre: tempProjectName });
+            setProjects(projects.map(p => p.idProyecto === selectedProject.idProyecto ? { ...p, nombre: tempProjectName } : p));
+            showToast('Nombre del proyecto actualizado', 'success');
+        } catch (error) {
+            showToast('Error al actualizar el nombre', 'error');
+        } finally {
+            setIsEditingProjectName(false);
+        }
+    };
 
     // INLINE SUBTASK CREATION STATE
     const [creationParentId, setCreationParentId] = useState<number | null>(null);
@@ -1207,8 +1228,39 @@ export const PlanTrabajoPage: React.FC = () => {
                                 onClick={() => setIsProjectSelectorOpen(!isProjectSelectorOpen)}
                                 className="flex items-center justify-between gap-3 bg-white/80 border border-slate-200/80 text-slate-800 font-bold text-sm rounded-xl pl-4 pr-3 py-2 focus:outline-none focus:ring-4 focus:ring-slate-100 hover:bg-white hover:shadow-lg hover:shadow-indigo-500/10 transition-all cursor-pointer min-w-[260px] max-w-[420px] backdrop-blur-md shadow-sm"
                             >
-                                <div className="flex flex-col items-start truncate overflow-hidden">
-                                    <span className="font-black truncate w-full text-left">{selectedProject ? selectedProject.nombre : 'Seleccionar Proyecto...'}</span>
+                                <div className="flex flex-col items-start truncate overflow-hidden flex-1">
+                                    {isEditingProjectName ? (
+                                        <input
+                                            autoFocus
+                                            type="text"
+                                            className="w-full bg-slate-100 border-none rounded-lg py-1 px-2 text-sm font-black text-slate-900 outline-none"
+                                            value={tempProjectName}
+                                            onChange={(e) => setTempProjectName(e.target.value)}
+                                            onBlur={handleSaveProjectName}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') handleSaveProjectName();
+                                                if (e.key === 'Escape') setIsEditingProjectName(false);
+                                            }}
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                    ) : (
+                                        <div className="flex items-center gap-2 w-full group/title">
+                                            <span className="font-black truncate flex-1 text-left">{selectedProject ? selectedProject.nombre : 'Seleccionar Proyecto...'}</span>
+                                            {selectedProject && canManageProject && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setTempProjectName(selectedProject.nombre);
+                                                        setIsEditingProjectName(true);
+                                                    }}
+                                                    className="opacity-0 group-hover/title:opacity-100 p-1 hover:bg-slate-200 rounded transition-all"
+                                                    title="Editar nombre del proyecto"
+                                                >
+                                                    <Edit size={12} className="text-slate-400" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
                                     {selectedProject && (
                                         <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium">
                                             <span className={`flex items - center gap - 1 ${selectedProject.estado === 'Activo' ? 'text-emerald-600' : 'text-slate-500'} `}>

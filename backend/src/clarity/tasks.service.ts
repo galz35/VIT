@@ -556,6 +556,7 @@ export class TasksService {
         if (!original) throw new NotFoundException('Proyecto original no encontrado');
 
         // 2. Create new project (Clone metadata)
+        const carnet = await this.resolveCarnet(idUsuario);
         const idNuevo = await planningRepo.crearProyecto({
             nombre: nuevoNombre,
             descripcion: original.descripcion || undefined,
@@ -568,6 +569,10 @@ export class TasksService {
             idCreador: idUsuario,
             tipo: original.tipo || undefined
         });
+
+        if (carnet) {
+            await planningRepo.actualizarDatosProyecto(idNuevo, { creadorCarnet: carnet } as any);
+        }
 
         // 3. Get tasks
         const tareas = await clarityRepo.obtenerTareasPorProyecto(idOriginal);

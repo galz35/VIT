@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import type { Tarea, Proyecto } from '../../types/modelos';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { TaskDetailModal } from '../../components/ui/TaskDetailModal';
+import { TaskDetailModalV2 as TaskDetailModal } from '../../components/task-detail-v2/TaskDetailModalV2';
 import { CreateTaskModal } from '../../components/ui/CreateTaskModal';
 import {
     Calendar as CalendarIcon,

@@ -438,14 +438,14 @@ export class ProyectoCrearDto {
     @IsString()
     @IsNotEmpty()
     @Trim()
-    @MaxLength(100)
+    @MaxLength(300)
     nombre!: string;
 
     @ApiProperty({ required: false })
     @IsOptional()
     @IsString()
     @Trim()
-    @MaxLength(500)
+    @MaxLength(2000)
     descripcion?: string;
 
     @ApiProperty({ example: 1, required: false })
@@ -481,10 +481,10 @@ export class ProyectoCrearDto {
     @IsString()
     fechaFin?: string;
 
-    @ApiProperty({ required: false, enum: ['administrativo', 'Logistica', 'AMX', 'Estrategico'], default: 'administrativo' })
+    @ApiProperty({ required: false, enum: ['administrativo', 'Logistica', 'AMX', 'Estrategico', 'Operativo'], default: 'administrativo' })
     @IsOptional()
     @IsString()
-    @IsIn(['administrativo', 'Logistica', 'AMX', 'Estrategico'])
+    @IsIn(['administrativo', 'Logistica', 'AMX', 'Estrategico', 'Operativo'])
     tipo?: string;
 }
 

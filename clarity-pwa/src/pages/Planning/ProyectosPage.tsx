@@ -643,7 +643,9 @@ export const ProyectosPage: React.FC = () => {
 
         try {
             if (editingProject) {
-                await clarityService.updateProyecto(editingProject.idProyecto, payload);
+                const targetId = editingProject.idProyecto || (editingProject as any).id;
+                if (!targetId) throw new Error('No se pudo determinar el ID del proyecto');
+                await clarityService.updateProyecto(targetId, payload);
                 showToast('Proyecto actualizado', 'success');
             } else {
                 const newProj: any = await clarityService.postProyecto(formData.nombre, undefined, formData.descripcion, formData.tipo);
