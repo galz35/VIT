@@ -107,10 +107,10 @@ export const ExecutionView: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col lg:flex-row gap-6 h-full animate-fade-in">
+        <div className="flex flex-col xl:flex-row gap-4 h-full animate-fade-in overflow-hidden">
             {/* Contenido Principal (Checkin / Plan Activo) */}
             <div className="flex-1 overflow-auto">
-                <div className="w-full space-y-6">
+                <div className="w-full min-h-full flex flex-col">
                     {checkin && !isEditing ? (
                         <ActivePlanView
                             checkin={checkin}
@@ -120,9 +120,9 @@ export const ExecutionView: React.FC = () => {
                             mutatingTaskId={mutatingTaskId}
                         />
                     ) : (
-                        <div className="space-y-6 max-w-7xl mx-auto">
+                        <div className="flex-1 flex flex-col max-w-7xl mx-auto w-full gap-6">
                             {isEditing && (
-                                <div className="flex justify-end">
+                                <div className="flex justify-end pt-6 px-4 sm:px-0">
                                     <button
                                         onClick={onCancelEdit}
                                         className="text-sm text-slate-500 underline transition-colors hover:text-indigo-600"
@@ -134,7 +134,7 @@ export const ExecutionView: React.FC = () => {
                             )}
 
                             {hayAlertas && (
-                                <div className="bg-red-500 text-white px-4 py-2 rounded-lg flex items-center justify-between shadow-md mx-auto max-w-full animate-pulse">
+                                <div className="bg-red-500 text-white px-4 py-2 rounded-lg flex items-center justify-between shadow-md mx-auto w-full max-w-full animate-pulse">
                                     <div className="flex items-center gap-2 text-sm font-bold">
                                         <span>
                                             🛑 ¡ALERTA! Estás bloqueando el trabajo de {bloqueosMeCulpan.length} compañero(s).
@@ -143,43 +143,45 @@ export const ExecutionView: React.FC = () => {
                                 </div>
                             )}
 
-                            <CheckinForm
-                                disponibles={allDisponibles}
-                                checkinTasks={checkin?.tareas?.map((t: CheckinTarea) => t.tarea!).filter(Boolean) || []}
-                                onSubmit={handleSubmitCheckin}
-                                onTaskCreated={async () => {
-                                    await queryClient.invalidateQueries({ queryKey: ['mi-dia'] });
-                                }}
-                                userId={userId}
-                                userCarnet={user?.carnet}
-                                fecha={today}
-                                initialData={initialData}
-                                bloqueos={bloqueos}
-                            />
+                            <div className="flex-1 h-full">
+                                <CheckinForm
+                                    disponibles={allDisponibles}
+                                    checkinTasks={checkin?.tareas?.map((t: CheckinTarea) => t.tarea!).filter(Boolean) || []}
+                                    onSubmit={handleSubmitCheckin}
+                                    onTaskCreated={async () => {
+                                        await queryClient.invalidateQueries({ queryKey: ['mi-dia'] });
+                                    }}
+                                    userId={userId}
+                                    userCarnet={user?.carnet}
+                                    fecha={today}
+                                    initialData={initialData}
+                                    bloqueos={bloqueos}
+                                />
+                            </div>
                         </div>
                     )}
+
+                    {/* Versión mobile: Backlog al final del scroll */}
+                    <div className="xl:hidden mt-8 mb-8">
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                            <h3 className="text-sm font-black text-rose-400 uppercase tracking-widest mb-4">Tareas Atrasadas</h3>
+                            <OverdueTimeline
+                                tasks={backlog}
+                                onTaskComplete={onTaskComplete}
+                                onTaskCancel={onTaskCancel}
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* Sidebar de Backlog (Tareas Atrasadas) */}
-            <div className="lg:w-[450px] shrink-0 h-full overflow-hidden border-l border-slate-100 hidden lg:flex flex-col">
+            {/* Sidebar de Backlog (Tareas Atrasadas - Desktop) */}
+            <div className="xl:w-[420px] shrink-0 h-full overflow-hidden border-l border-slate-100 hidden xl:flex flex-col">
                 <OverdueTimeline
                     tasks={backlog}
                     onTaskComplete={onTaskComplete}
                     onTaskCancel={onTaskCancel}
                 />
-            </div>
-
-            {/* Versión mobile si se desea al final (opcional, pero la pusimos hidden lg:flex arriba) */}
-            <div className="lg:hidden mt-10">
-                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                    <h3 className="text-sm font-black text-rose-400 uppercase tracking-widest mb-4">Tareas Atrasadas</h3>
-                    <OverdueTimeline
-                        tasks={backlog}
-                        onTaskComplete={onTaskComplete}
-                        onTaskCancel={onTaskCancel}
-                    />
-                </div>
             </div>
         </div>
     );

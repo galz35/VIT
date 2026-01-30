@@ -30,7 +30,7 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
     // Default 1 Focus (Now "Objetivo Principal"), 3 Advance, 5 Extra.
     const [entregoIds, setEntregoIds] = useState<(number | null)[]>([null]);
     const [avanzoIds, setAvanzoIds] = useState<(number | null)[]>([null, null, null]);
-    const [extraIds, setExtraIds] = useState<(number | null)[]>([null, null, null, null, null]);
+    const [extraIds, setExtraIds] = useState<(number | null)[]>([]);
 
     // UI State
     const [selectingFor, setSelectingFor] = useState<{ type: 'Entrego' | 'Avanzo' | 'Extra', index: number } | null>(null);
@@ -73,9 +73,7 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
         }
 
         if (initialData?.extras && initialData.extras.length > 0) {
-            const newArr = [...initialData.extras];
-            while (newArr.length < 5) newArr.push(null as any);
-            setExtraIds(newArr);
+            setExtraIds([...initialData.extras]);
         }
     }, [initialData]);
 
@@ -435,10 +433,10 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
                     <div className="space-y-2 flex-1 overflow-y-auto max-h-[400px]">
                         {avanzoIds.map((id, idx) => renderCard('Avanzo', id, idx))}
                         {/* Hidden Column merged logic here if needed, but for now just showing Col 2 */}
-                        {extraIds.filter(id => id !== null).length > 0 && (
+                        {extraIds.length > 0 && (
                             <div className="pt-4 mt-2 border-t border-slate-50">
                                 <p className="text-[10px] font-bold text-slate-300 uppercase mb-2 tracking-widest px-1">Tareas Rápidas</p>
-                                {extraIds.map((id, idx) => id !== null && renderCard('Extra', id, idx))}
+                                {extraIds.map((id, idx) => renderCard('Extra', id, idx))}
                             </div>
                         )}
                     </div>

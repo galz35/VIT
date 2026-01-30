@@ -57,12 +57,12 @@ const MiDiaContent: React.FC = () => {
     );
 
     return (
-        <div className="pb-24 bg-clarity-bg dark:bg-slate-900 min-h-screen flex flex-col">
+        <div className="h-full bg-clarity-bg dark:bg-slate-900 flex flex-col overflow-hidden">
             <div className="md:hidden">
                 <TopBar title="Mi Agenda" subtitle={today} />
             </div>
 
-            <main className="p-4 w-full h-full mx-auto animate-fade-in flex-1 flex flex-col">
+            <main className="p-4 w-full mx-auto animate-fade-in flex-1 flex flex-col min-h-0">
                 <div className="bg-white dark:bg-slate-800 p-2 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 mb-3 flex flex-col md:flex-row justify-between items-center gap-2 shrink-0">
                     <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-900/50 p-1 rounded-lg">
                         <button
@@ -135,7 +135,7 @@ const MiDiaContent: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="flex-1 min-h-0 flex flex-col">
+                <div className="flex-1 min-h-0 flex flex-col relative overflow-hidden">
                     <Outlet />
                 </div>
             </main>

@@ -173,9 +173,9 @@ export const OverdueTimeline: React.FC<Props> = ({ tasks, onTaskComplete, onTask
     }
 
     return (
-        <div className="flex flex-col xl:flex-row gap-4 h-full overflow-hidden">
+        <div className="flex flex-col gap-4 h-full overflow-hidden">
             {/* Timeline */}
-            <div className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col transition-all ${selectedTask ? 'hidden xl:flex xl:flex-1' : 'w-full flex-1'}`}>
+            <div className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col transition-all ${selectedTask ? 'hidden' : 'w-full flex-1'}`}>
                 <div className="px-4 py-3 bg-rose-700 text-white shrink-0">
                     <h3 className="text-sm font-bold">🕰️ Tareas Atrasadas</h3>
                     <p className="text-xs text-rose-200">Pendientes de días anteriores</p>
@@ -253,7 +253,7 @@ export const OverdueTimeline: React.FC<Props> = ({ tasks, onTaskComplete, onTask
 
             {/* Panel de Tarea - Reusing logic, adapted colors for backlog context if needed, keeping similar to bitacora */}
             {selectedTask && (
-                <div className="w-full xl:w-[420px] bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden flex flex-col h-full lg:max-h-full">
+                <div className="w-full bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden flex flex-col h-full">
                     <div className={`px-4 py-3 ${getStatusColor(selectedTask.estado)} text-white flex justify-between items-center shrink-0`}>
                         <div>
                             <p className="text-xs font-bold uppercase">{selectedTask.estado}</p>
