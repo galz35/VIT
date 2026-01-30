@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { clarityService } from '../../../services/clarity.service';
-import { ChevronLeft, ChevronRight, Loader2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import type { Tarea } from '../../../types/modelos';
 import { useMiDiaContext } from '../context/MiDiaContext';
 
@@ -29,7 +29,7 @@ export const AgendaMensual: React.FC<Props> = ({ onSelectTask }) => {
         setLoading(true);
         try {
             const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-            const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+
 
             // Adjust to start on Monday
             const startDay = firstDayOfMonth.getDay();
@@ -176,7 +176,7 @@ export const AgendaMensual: React.FC<Props> = ({ onSelectTask }) => {
 
             {/* Calendar Grid */}
             <div className="grid grid-cols-7 flex-1 divide-x divide-y divide-gray-100 min-h-[600px] overflow-auto">
-                {monthData.map((day, idx) => (
+                {monthData.map((day) => (
                     <div
                         key={day.date}
                         className={`min-h-[100px] flex flex-col p-1.5 transition-colors relative 
@@ -186,8 +186,8 @@ export const AgendaMensual: React.FC<Props> = ({ onSelectTask }) => {
                     >
                         <div className="flex justify-between items-center mb-1 px-1">
                             <span className={`text-xs font-black ${day.isToday
-                                    ? 'bg-indigo-600 text-white w-6 h-6 rounded-full flex items-center justify-center -ml-1 shadow-md shadow-indigo-100'
-                                    : day.isCurrentMonth ? 'text-slate-700' : 'text-slate-300'
+                                ? 'bg-indigo-600 text-white w-6 h-6 rounded-full flex items-center justify-center -ml-1 shadow-md shadow-indigo-100'
+                                : day.isCurrentMonth ? 'text-slate-700' : 'text-slate-300'
                                 }`}>
                                 {day.dayNumber}
                             </span>
