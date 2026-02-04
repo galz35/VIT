@@ -5,7 +5,14 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { TasksService } from './tasks.service';
 import { RecurrenciaService } from './recurrencia.service';
-import { TareaCrearRapidaDto, CheckinUpsertDto, FechaQueryDto, TareaActualizarDto, ProyectoCrearDto, ProyectoFilterDto, TareaRevalidarDto, BloqueoCrearDto, TaskFilterDto, TareaMasivaDto } from './dto/clarity.dtos';
+import { FocoService } from './foco.service';
+import { ReportsService } from './reports.service';
+import {
+    TareaCrearRapidaDto, CheckinUpsertDto, FechaQueryDto, TareaActualizarDto,
+    ProyectoCrearDto, ProyectoFilterDto, TareaRevalidarDto, BloqueoCrearDto,
+    TaskFilterDto, TareaMasivaDto,
+    FocoAgregarDto, FocoActualizarDto, FocoReordenarDto, ReportFilterDto
+} from './dto/clarity.dtos';
 
 @ApiTags('Clarity Core (Migrated)')
 @ApiBearerAuth()
@@ -14,8 +21,23 @@ import { TareaCrearRapidaDto, CheckinUpsertDto, FechaQueryDto, TareaActualizarDt
 export class ClarityController {
     constructor(
         private readonly tasksService: TasksService,
-        private readonly recurrenciaService: RecurrenciaService
+        private readonly recurrenciaService: RecurrenciaService,
+        private readonly focoService: FocoService,
+        private readonly reportsService: ReportsService
     ) { }
+
+    @Get('config')
+    @ApiOperation({ summary: 'Obtener configuración usuario (Mock)' })
+    async getConfig(@Request() req) {
+        // TODO: Implementar persistencia real si se requiere
+        return { vistaPreferida: 'Cards', rutinas: '[]' };
+    }
+
+    @Post('config')
+    @ApiOperation({ summary: 'Actualizar configuración usuario (Mock)' })
+    async setConfig(@Request() req, @Body() body: any) {
+        return { success: true };
+    }
 
     @Get('mi-dia')
     @ApiOperation({ summary: 'Obtener snapshot del día para el empleado' })
@@ -186,6 +208,70 @@ export class ClarityController {
     @ApiOperation({ summary: 'Obtener todas las tareas de un proyecto' })
     async getProyectosTareas(@Param('id') id: number, @Request() req) {
         return this.tasksService.tareasDeProyecto(id, req.user.userId);
+    }
+
+    // ==========================================
+    // FOCO DIARIO
+    // ==========================================
+
+    @Get('foco')
+    @ApiOperation({ summary: 'Obtener foco del día' })
+    async getFocoDelDia(@Request() req, @Query() query: FechaQueryDto) {
+        return this.focoService.getFocoDelDia(req.user.userId, query.fecha);
+    }
+
+    @Post('foco')
+    @ApiOperation({ summary: 'Agregar tarea al foco del día' })
+    async agregarAlFoco(@Request() req, @Body() dto: FocoAgregarDto) {
+        return this.focoService.agregarAlFoco(req.user.userId, dto);
+    }
+
+    @Patch('foco/:id')
+    @ApiOperation({ summary: 'Actualizar foco' })
+    async actualizarFoco(@Request() req, @Param('id') id: number, @Body() dto: FocoActualizarDto, @Query() query: FechaQueryDto) {
+        return this.focoService.actualizarFoco(id, req.user.userId, dto, query.fecha);
+    }
+
+    @Delete('foco/:id')
+    @ApiOperation({ summary: 'Quitar tarea del foco' })
+    async quitarDelFoco(@Request() req, @Param('id') id: number) {
+        return this.focoService.quitarDelFoco(id, req.user.userId);
+    }
+
+    @Post('foco/reordenar')
+    @ApiOperation({ summary: 'Reordenar focos' })
+    async reordenarFocos(@Request() req, @Body() dto: FocoReordenarDto, @Query() query: FechaQueryDto) {
+        return this.focoService.reordenarFocos(req.user.userId, query.fecha, dto.ids);
+    }
+
+    @Get('foco/estadisticas')
+    async getEstadisticasFoco(@Request() req, @Query() filter: ReportFilterDto) {
+        const d = new Date();
+        return this.focoService.getEstadisticasFoco(req.user.userId, filter.month || d.getMonth() + 1, filter.year || d.getFullYear());
+    }
+
+    // ==========================================
+    // REPORTES
+    // ==========================================
+
+    @Get('reportes/productividad')
+    async getProductividad(@Request() req, @Query() filter: ReportFilterDto) {
+        return this.reportsService.getReporteProductividad(req.user.userId, filter);
+    }
+
+    @Get('reportes/bloqueos-trend')
+    async getBloqueosTrend(@Request() req, @Query() filter: ReportFilterDto) {
+        return this.reportsService.getReporteBloqueosTrend(req.user.userId, filter);
+    }
+
+    @Get('reportes/equipo-performance')
+    async getEquipoPerformance(@Request() req, @Query() filter: ReportFilterDto) {
+        return this.reportsService.getReporteEquipoPerformance(req.user.userId, filter);
+    }
+
+    @Get('gerencia/resumen')
+    async getGerenciaResumen(@Request() req, @Query() query: FechaQueryDto) {
+        return this.reportsService.gerenciaResumen(req.user.userId, query.fecha);
     }
 
     // ==========================================

@@ -1,0 +1,15 @@
+﻿mejora codex 5.2/README_GEMINI.md
+mejora codex 5.2/REPORTE_GENERAL.md
+mejora codex 5.2/endpoints/01_clarity_core.md
+mejora codex 5.2/endpoints/02_planning.md
+mejora codex 5.2/endpoints/03_admin.md
+mejora codex 5.2/endpoints/04_acceso_visibilidad.md
+mejora codex 5.2/endpoints/05_kpis_software_diagnostico.md
+mejora codex 5.2/paginas/01_login.md
+mejora codex 5.2/paginas/02_mi_dia.md
+mejora codex 5.2/paginas/03_planificacion.md
+mejora codex 5.2/paginas/04_equipo_gerencia.md
+mejora codex 5.2/paginas/05_reportes.md
+mejora codex 5.2/paginas/06_admin.md
+mejora codex 5.2/paginas/07_notas_archivo_automation.md
+proyecto/mejoras/ESCENARIOS_CAMBIOS_EMPLEADOS.md

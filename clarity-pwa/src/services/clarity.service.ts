@@ -392,7 +392,7 @@ export const clarityService = {
     },
 
     importEmpleados: async (empleados: any[]) => {
-        const { data: response } = await api.post<ApiResponse>('/admin/empleados/import', { empleados });
+        const { data: response } = await api.post<ApiResponse>('/admin/import/empleados', { empleados });
         return response.data;
     },
 

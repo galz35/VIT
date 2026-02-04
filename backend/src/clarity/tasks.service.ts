@@ -302,16 +302,7 @@ export class TasksService {
 
         // Validar acceso si se proporciona idSolicitante
         if (idSolicitante) {
-            const user = await authRepo.obtenerUsuarioPorId(idSolicitante);
-            const isAdmin = ['Admin', 'Administrador', 'SuperAdmin'].includes(user?.rolGlobal || '');
-
-            if (!isAdmin) {
-                const idResponsable = tarea.idAsignado;
-                if (idResponsable && idResponsable !== idSolicitante) {
-                    const canView = await this.visibilidadService.verificarAccesoPorId(idSolicitante, idResponsable);
-                    if (!canView) throw new ForbiddenException('No tienes permiso para ver esta tarea');
-                }
-            }
+            await this.planningService.verificarAccesoTarea(idSolicitante, tarea);
         }
 
         return tarea;

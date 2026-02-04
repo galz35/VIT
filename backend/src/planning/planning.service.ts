@@ -107,13 +107,34 @@ export class PlanningService {
         return true;
     }
 
-    private async assertPuedeVerTarea(idSolicitante: number, tarea: any) {
-        // Si el repo trae dueño/asignado, valida visibilidad
+    public async verificarAccesoTarea(idSolicitante: number, tarea: any) {
+        // Si el usuario es el mismo que el dueño/asignado
         const idOwner = tarea?.idUsuario ?? tarea?.idUsuarioAsignado ?? tarea?.planIdUsuario;
+        if (idOwner === idSolicitante) return true;
+
+        // Admin siempre puede
+        if (await this.isAdminUser(idSolicitante)) return true;
+
+        // 1. Visibilidad Jerárquica
         if (idOwner && typeof idOwner === 'number') {
-            await this.assertPuedeVerUsuario(idSolicitante, idOwner);
+            const jerarquiaOk = await this.visibilidadService.verificarAccesoPorId(idSolicitante, idOwner);
+            if (jerarquiaOk) return true;
+        } else {
+            // Si no hay dueño, asumimos que es pública o asignable? 
+            // Mejor verificar proyecto
         }
-        return true;
+
+        // 2. Visibilidad por Proyecto (Colaboración)
+        // Si la tarea pertenece a un proyecto visible para el usuario, permite acceso.
+        if (tarea.idProyecto) {
+            const user = await authRepo.obtenerUsuarioPorId(idSolicitante);
+            const proyectos = await planningRepo.obtenerProyectosVisibles(idSolicitante, user);
+            const accesoProyecto = proyectos.some((p: any) => p.idProyecto === tarea.idProyecto);
+            if (accesoProyecto) return true;
+        }
+
+        // Si falló todo
+        throw new ForbiddenException('No tienes permisos para ver/editar esta tarea (Restringido por Jerarquía y Proyecto).');
     }
 
     // ============================
@@ -128,7 +149,7 @@ export class PlanningService {
         if (!tarea) throw new NotFoundException('Tarea no encontrada');
 
         // Seguridad: si es tarea de alguien más, debo poder verlo (jerarquía o admin)
-        await this.assertPuedeVerTarea(idUsuario, tarea);
+        await this.verificarAccesoTarea(idUsuario, tarea);
 
         // Si no tiene proyecto, tarea personal -> Libre
         if (!tarea.idProyecto) {
@@ -160,7 +181,7 @@ export class PlanningService {
         const tarea = await planningRepo.obtenerTareaPorId(idTarea);
         if (!tarea) throw new NotFoundException('Tarea no encontrada');
 
-        await this.assertPuedeVerTarea(idUsuario, tarea);
+        await this.verificarAccesoTarea(idUsuario, tarea);
 
         const campoRaw = String(campo || '').trim();
         if (!this.CAMPOS_PERMITIDOS_SOLICITUD.has(campoRaw)) {
@@ -259,7 +280,7 @@ export class PlanningService {
         // Seguridad extra: validar que resolutor puede ver la tarea (por dueño)
         const tarea = await planningRepo.obtenerTareaPorId(solicitud.idTarea);
         if (!tarea) throw new NotFoundException('Tarea no encontrada');
-        await this.assertPuedeVerTarea(idUsuarioResolutor, tarea);
+        await this.verificarAccesoTarea(idUsuarioResolutor, tarea);
 
         // MIGRACION v2.1: Usar tasksRepo para asegurar Roll-up
         await tasksRepo.actualizarTarea(solicitud.idTarea, { [campoDb]: valorDb });
@@ -286,7 +307,7 @@ export class PlanningService {
         const tarea = await planningRepo.obtenerTareaPorId(idTarea);
         if (!tarea) throw new NotFoundException('Tarea no encontrada');
 
-        await this.assertPuedeVerTarea(idUsuario, tarea);
+        await this.verificarAccesoTarea(idUsuario, tarea);
 
         const permiso = await this.checkEditPermission(idTarea, idUsuario);
 
@@ -406,7 +427,7 @@ export class PlanningService {
     async cloneTask(idUsuario: number, idTarea: number) {
         const tarea = await planningRepo.obtenerTareaPorId(idTarea);
         if (!tarea) throw new NotFoundException('Tarea no encontrada');
-        await this.assertPuedeVerTarea(idUsuario, tarea);
+        await this.verificarAccesoTarea(idUsuario, tarea);
 
         const carnet = await this.visibilidadService.obtenerCarnetPorId(idUsuario);
         if (!carnet) throw new ForbiddenException('No se pudo resolver el carnet del usuario');
@@ -448,7 +469,7 @@ export class PlanningService {
     async getTaskHistory(idTarea: number, idSolicitante: number) {
         const tarea = await planningRepo.obtenerTareaPorId(idTarea);
         if (!tarea) throw new NotFoundException('Tarea no encontrada');
-        await this.assertPuedeVerTarea(idSolicitante, tarea);
+        await this.verificarAccesoTarea(idSolicitante, tarea);
 
         return await this.auditService.getHistorialEntidad('Tarea', String(idTarea));
     }
@@ -480,7 +501,7 @@ export class PlanningService {
         // Validar que el usuario pueda ver la tarea
         const tarea = await planningRepo.obtenerTareaPorId(idTarea);
         if (!tarea) throw new NotFoundException('Tarea no encontrada');
-        await this.assertPuedeVerTarea(idUsuario, tarea);
+        await this.verificarAccesoTarea(idUsuario, tarea);
 
         await avanceMensualRepo.upsertAvanceMensual(idTarea, anio, mes, porcentajeMes, comentario, idUsuario);
 
@@ -498,7 +519,7 @@ export class PlanningService {
     async obtenerHistorialMensual(idTarea: number, idSolicitante: number) {
         const tarea = await planningRepo.obtenerTareaPorId(idTarea);
         if (!tarea) throw new NotFoundException('Tarea no encontrada');
-        await this.assertPuedeVerTarea(idSolicitante, tarea);
+        await this.verificarAccesoTarea(idSolicitante, tarea);
 
         return await avanceMensualRepo.obtenerHistorialMensual(idTarea);
     }
@@ -509,7 +530,7 @@ export class PlanningService {
     async crearGrupo(idTarea: number, idUsuario: number) {
         const tarea = await planningRepo.obtenerTareaPorId(idTarea);
         if (!tarea) throw new NotFoundException('Tarea no encontrada');
-        await this.assertPuedeVerTarea(idUsuario, tarea);
+        await this.verificarAccesoTarea(idUsuario, tarea);
 
         await grupoRepo.crearGrupoInicial(idTarea);
 
@@ -528,11 +549,11 @@ export class PlanningService {
         // Validar visibilidad sobre ambas tareas
         const grupo = await planningRepo.obtenerTareaPorId(idGrupo);
         if (!grupo) throw new NotFoundException('Grupo no encontrado');
-        await this.assertPuedeVerTarea(idUsuario, grupo);
+        await this.verificarAccesoTarea(idUsuario, grupo);
 
         const fase = await planningRepo.obtenerTareaPorId(idTareaNueva);
         if (!fase) throw new NotFoundException('Tarea fase no encontrada');
-        await this.assertPuedeVerTarea(idUsuario, fase);
+        await this.verificarAccesoTarea(idUsuario, fase);
 
         await grupoRepo.agregarFase(idGrupo, idTareaNueva);
 
@@ -550,7 +571,7 @@ export class PlanningService {
     async obtenerGrupo(idGrupo: number, idSolicitante: number) {
         const grupo = await planningRepo.obtenerTareaPorId(idGrupo);
         if (!grupo) throw new NotFoundException('Grupo no encontrado');
-        await this.assertPuedeVerTarea(idSolicitante, grupo);
+        await this.verificarAccesoTarea(idSolicitante, grupo);
 
         return await grupoRepo.obtenerTareasGrupo(idGrupo);
     }
