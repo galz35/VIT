@@ -11,9 +11,11 @@ import { cacheGet, cacheSet } from '../common/cache.service';
 // ==========================================
 
 export async function obtenerProyectosPorUsuario(carnet: string) {
-    // Obtener proyectos donde el usuario tiene tareas asignadas
-    // V2: Uso de SP carnet-first
-    return await ejecutarQuery<ProyectoDb>('EXEC sp_ObtenerProyectos @carnet = @carnet', { carnet: { valor: carnet, tipo: NVarChar } });
+    return await ejecutarSP<ProyectoDb>('sp_ObtenerProyectos', {
+        carnet: { valor: carnet, tipo: NVarChar },
+        filtroNombre: { valor: null, tipo: NVarChar },
+        filtroEstado: { valor: null, tipo: NVarChar }
+    });
 }
 
 export async function obtenerTodosProyectos(filter?: any) {
@@ -111,11 +113,11 @@ export async function crearTarea(dto: {
     return res[0]?.idTarea;
 }
 
-export async function crearProyecto(dto: { nombre: string, descripcion?: string, idNodoDuenio?: number, area?: string, subgerencia?: string, gerencia?: string, fechaInicio?: Date, fechaFin?: Date, idCreador: number, tipo?: string }) {
+export async function crearProyecto(dto: { nombre: string, descripcion?: string, idNodoDuenio?: number, area?: string, subgerencia?: string, gerencia?: string, fechaInicio?: Date, fechaFin?: Date, idCreador: number, tipo?: string, creadorCarnet?: string, responsableCarnet?: string }) {
     const res = await ejecutarQuery<{ idProyecto: number }>(`
-        INSERT INTO p_Proyectos (nombre, descripcion, idNodoDuenio, area, subgerencia, gerencia, fechaInicio, fechaFin, fechaCreacion, idCreador, estado, tipo)
+        INSERT INTO p_Proyectos (nombre, descripcion, idNodoDuenio, area, subgerencia, gerencia, fechaInicio, fechaFin, fechaCreacion, idCreador, creadorCarnet, responsableCarnet, estado, tipo)
         OUTPUT INSERTED.idProyecto
-        VALUES (@nombre, @descripcion, @idNodoDuenio, @area, @subgerencia, @gerencia, @fechaInicio, @fechaFin, GETDATE(), @idCreador, 'Activo', @tipo)
+        VALUES (@nombre, @descripcion, @idNodoDuenio, @area, @subgerencia, @gerencia, @fechaInicio, @fechaFin, GETDATE(), @idCreador, @creadorCarnet, @responsableCarnet, 'Activo', @tipo)
     `, {
         nombre: { valor: dto.nombre, tipo: NVarChar },
         descripcion: { valor: dto.descripcion, tipo: NVarChar },
@@ -126,6 +128,8 @@ export async function crearProyecto(dto: { nombre: string, descripcion?: string,
         fechaInicio: { valor: dto.fechaInicio, tipo: DateTime },
         fechaFin: { valor: dto.fechaFin, tipo: DateTime },
         idCreador: { valor: dto.idCreador, tipo: Int },
+        creadorCarnet: { valor: dto.creadorCarnet, tipo: NVarChar },
+        responsableCarnet: { valor: dto.responsableCarnet, tipo: NVarChar },
         tipo: { valor: dto.tipo || 'administrativo', tipo: NVarChar }
     });
     return res[0].idProyecto;
@@ -160,7 +164,8 @@ export async function eliminarProyecto(idProyecto: number, forceCascade: boolean
 
 export async function obtenerProyectoPorId(idProyecto: number) {
     const res = await ejecutarQuery<ProyectoDb>(`
-        SELECT *, 
+        SELECT p.*, 
+            creadorNombre = u.nombre,
             progreso = ISNULL((
                 SELECT ROUND(AVG(CAST(CASE WHEN t.estado = 'Hecha' THEN 100 ELSE ISNULL(t.porcentaje, 0) END AS FLOAT)), 0)
                 FROM p_Tareas t
@@ -170,7 +175,8 @@ export async function obtenerProyectoPorId(idProyecto: number) {
                   AND t.estado NOT IN ('Descartada', 'Eliminada', 'Anulada', 'Cancelada')
             ), 0)
         FROM p_Proyectos p
-        WHERE idProyecto = @idProyecto
+        LEFT JOIN p_Usuarios u ON p.idCreador = u.idUsuario
+        WHERE p.idProyecto = @idProyecto
     `, { idProyecto: { valor: idProyecto, tipo: Int } });
     return res[0];
 }

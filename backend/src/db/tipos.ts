@@ -84,6 +84,10 @@ export interface ProyectoDb {
     subgerencia: string | null;
     gerencia: string | null;
     idCreador?: number;
+    creadorNombre?: string;
+    creadorCarnet?: string;
+    responsableCarnet?: string;
+    responsableNombre?: string;
     progreso?: number;
 }
 

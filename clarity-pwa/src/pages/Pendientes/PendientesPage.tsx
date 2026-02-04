@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { format } from 'date-fns';
 import { TopBar } from '../../components/layout/TopBar';
 import type { Tarea, Proyecto } from '../../types/modelos';
 import { Plus, Inbox, MoreHorizontal, Play, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -21,6 +22,7 @@ export const PendientesPage: React.FC = () => {
     const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
     const [menuPos, setMenuPos] = useState<{ top: number, right: number } | null>(null);
     const [isCreating, setIsCreating] = useState(false);
+    const [movingTaskIds, setMovingTaskIds] = useState<number[]>([]); // Loading state for individual tasks
 
     // Filters & Pagination
     const [searchTerm, setSearchTerm] = useState('');
@@ -347,16 +349,65 @@ export const PendientesPage: React.FC = () => {
                                                 <button
                                                     onClick={async (e) => {
                                                         e.stopPropagation();
+                                                        if (movingTaskIds.includes(task.idTarea)) return;
+
                                                         try {
-                                                            await clarityService.actualizarTarea(task.idTarea, { estado: 'EnCurso' });
-                                                            showToast('Tarea movida a Agenda', 'success');
+                                                            setMovingTaskIds(prev => [...prev, task.idTarea]);
+                                                            const hoyStr = format(new Date(), 'yyyy-MM-dd');
+
+                                                            // 1. Mover la tarea a hoy
+                                                            await clarityService.actualizarTarea(task.idTarea, {
+                                                                estado: 'EnCurso',
+                                                                fechaInicioPlanificada: hoyStr
+                                                            });
+
+                                                            // 2. Intentar agregar al Checkin Activo (Foco)
+                                                            try {
+                                                                if (user) {
+                                                                    const miDia = await clarityService.getMiDia(hoyStr);
+                                                                    const checkin = miDia?.checkinHoy;
+
+                                                                    if (checkin) {
+                                                                        const existing = checkin.tareas || [];
+                                                                        const entregoIds = existing.filter(t => t.tipo === 'Entrego').map(t => t.idTarea);
+                                                                        const avanzoIds = existing.filter(t => t.tipo === 'Avanzo').map(t => t.idTarea);
+                                                                        const extrasIds = existing.filter(t => t.tipo === 'Extra').map(t => t.idTarea);
+
+                                                                        // Solo agregar si no está ya en listas
+                                                                        if (![...entregoIds, ...avanzoIds, ...extrasIds].includes(task.idTarea)) {
+                                                                            await clarityService.postCheckin({
+                                                                                idUsuario: user.idUsuario,
+                                                                                fecha: hoyStr,
+                                                                                entregableTexto: checkin.entregableTexto || '',
+                                                                                estadoAnimo: checkin.estadoAnimo as any,
+                                                                                entrego: [...entregoIds, task.idTarea], // Agregar a FOCO
+                                                                                avanzo: avanzoIds,
+                                                                                extras: extrasIds
+                                                                            });
+                                                                        }
+                                                                    }
+                                                                }
+                                                            } catch (subErr) {
+                                                                console.warn('Auto-add checkin failed', subErr);
+                                                            }
+
+                                                            showToast('Tarea movida a Foco de Hoy', 'success');
                                                             fetchInitialData();
-                                                        } catch (err) { showToast('Error al mover', 'error'); }
+                                                        } catch (err) {
+                                                            showToast('Error al mover', 'error');
+                                                        } finally {
+                                                            setMovingTaskIds(prev => prev.filter(id => id !== task.idTarea));
+                                                        }
                                                     }}
-                                                    className="p-2 rounded-full text-indigo-600 hover:bg-indigo-50 transition-colors"
+                                                    disabled={movingTaskIds.includes(task.idTarea)}
+                                                    className="p-2 rounded-full text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-50"
                                                     title="Mover a Mi Agenda"
                                                 >
-                                                    <Play size={20} />
+                                                    {movingTaskIds.includes(task.idTarea) ? (
+                                                        <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                                                    ) : (
+                                                        <Play size={20} />
+                                                    )}
                                                 </button>
                                                 <button
                                                     onClick={(e) => {
@@ -442,8 +493,11 @@ export const PendientesPage: React.FC = () => {
                         <button
                             onClick={async () => {
                                 try {
-                                    await clarityService.actualizarTarea(activeMenuId, { estado: 'EnCurso' });
-                                    showToast('Tarea movida a Agenda', 'success');
+                                    await clarityService.actualizarTarea(activeMenuId, {
+                                        estado: 'EnCurso',
+                                        fechaInicioPlanificada: format(new Date(), 'yyyy-MM-dd')
+                                    });
+                                    showToast('Tarea movida a Mi Agenda (Hoy)', 'success');
                                     fetchInitialData();
                                 } catch (err) { showToast('Error al mover', 'error'); }
                                 setActiveMenuId(null);

@@ -58,6 +58,10 @@ export interface Proyecto {
     area?: string;
     subgerencia?: string;
     gerencia?: string;
+    creadorNombre?: string;
+    creadorCarnet?: string;
+    responsableCarnet?: string;
+    responsableNombre?: string;
     progreso?: number;
     requiereAprobacion?: boolean;
     tipo?: string;

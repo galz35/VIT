@@ -486,6 +486,12 @@ export class ProyectoCrearDto {
     @IsString()
     @IsIn(['administrativo', 'Logistica', 'AMX', 'Estrategico', 'Operativo'])
     tipo?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    @MaxLength(50)
+    responsableCarnet?: string;
 }
 
 

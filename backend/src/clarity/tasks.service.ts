@@ -543,6 +543,7 @@ export class TasksService {
     }
 
     async proyectoCrear(dto: ProyectoCrearDto, idUsuario: number) {
+        const carnet = await this.resolveCarnet(idUsuario);
         const idProyecto = await planningRepo.crearProyecto({
             nombre: dto.nombre,
             descripcion: dto.descripcion,
@@ -553,6 +554,8 @@ export class TasksService {
             fechaInicio: dto.fechaInicio ? new Date(dto.fechaInicio) : undefined,
             fechaFin: dto.fechaFin ? new Date(dto.fechaFin) : undefined,
             idCreador: idUsuario,
+            creadorCarnet: carnet,
+            responsableCarnet: dto.responsableCarnet,
             tipo: dto.tipo
         });
         return await planningRepo.obtenerProyectoPorId(idProyecto);
@@ -618,6 +621,7 @@ export class TasksService {
         const updates: any = { ...dto };
         if (dto.fechaInicio) updates.fechaInicio = new Date(dto.fechaInicio);
         if (dto.fechaFin) updates.fechaFin = new Date(dto.fechaFin);
+        // responsableCarnet comes in dto, ensure it's handled by repo
 
         await planningRepo.actualizarDatosProyecto(id, updates);
         return await planningRepo.obtenerProyectoPorId(id);

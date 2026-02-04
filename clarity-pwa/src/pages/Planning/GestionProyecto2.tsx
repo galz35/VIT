@@ -30,6 +30,7 @@ import { clarityService } from '../../services/clarity.service';
 import { planningService } from '../../services/planning.service';
 import type { Proyecto } from '../../types/modelos';
 import { useToast } from '../../context/ToastContext';
+import { UserSelector } from '../../components/ui/UserSelector';
 
 const LIMITES = [5, 10, 12, 20, 50];
 
@@ -111,7 +112,22 @@ export const GestionProyecto2: React.FC = () => {
     // =========================
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProject, setEditingProject] = useState<Proyecto | null>(null);
-    const [formData, setFormData] = useState({
+    const [isUserSelectorOpen, setIsUserSelectorOpen] = useState(false);
+
+    interface ProjectFormData {
+        nombre: string;
+        descripcion: string;
+        fechaInicio: string;
+        fechaFin: string;
+        area: string;
+        subgerencia: string;
+        gerencia: string;
+        tipo: string;
+        responsableCarnet: string;
+        responsableNombre: string;
+    }
+
+    const [formData, setFormData] = useState<ProjectFormData>({
         nombre: '',
         descripcion: '',
         fechaInicio: '',
@@ -120,7 +136,42 @@ export const GestionProyecto2: React.FC = () => {
         subgerencia: '',
         gerencia: '',
         tipo: 'administrativo',
+        responsableCarnet: '',
+        responsableNombre: ''
     });
+
+    const openModal = (p?: Proyecto) => {
+        if (p) {
+            setEditingProject(p);
+            setFormData({
+                nombre: p.nombre,
+                descripcion: p.descripcion || '',
+                gerencia: p.gerencia || '',
+                subgerencia: p.subgerencia || '',
+                area: p.area || '',
+                fechaInicio: p.fechaInicio ? format(new Date(p.fechaInicio), 'yyyy-MM-dd') : '',
+                fechaFin: p.fechaFin ? format(new Date(p.fechaFin), 'yyyy-MM-dd') : '',
+                tipo: p.tipo || 'administrativo',
+                responsableCarnet: p.responsableCarnet || '',
+                responsableNombre: p.responsableNombre || ''
+            });
+        } else {
+            setEditingProject(null);
+            setFormData({
+                nombre: '',
+                descripcion: '',
+                gerencia: '',
+                subgerencia: '',
+                area: '',
+                fechaInicio: '',
+                fechaFin: '',
+                tipo: 'administrativo',
+                responsableCarnet: '',
+                responsableNombre: ''
+            });
+        }
+        setIsModalOpen(true);
+    };
 
     // Estructura org (para selects)
     const [orgStructure, setOrgStructure] = useState<{ gerencia: string; subgerencia: string; area: string }[]>([]);
@@ -401,82 +452,73 @@ export const GestionProyecto2: React.FC = () => {
             return;
         }
 
-        const headers = [
-            'ID',
-            'Proyecto',
-            'Descripción',
-            'OrgGerencia',
-            'OrgSubgerencia',
-            'OrgArea',
-            'Tipo',
-            'Estado',
-            'Progreso',
-            'F. Inicio',
-            'F. Fin',
-        ];
+        const tableContent = `
+            <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+            <head>
+                <meta charset="utf-8">
+                <style>
+                    table { border-collapse: collapse; width: 100%; }
+                    th { background-color: #4f46e5; color: white; border: 1px solid #ddd; padding: 8px; font-weight: bold; text-align: center; }
+                    td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                </style>
+            </head>
+            <body>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Proyecto</th>
+                            <th>Creador</th>
+                            <th>Responsable</th>
+                            <th>Descripción</th>
+                            <th>Gerencia</th>
+                            <th>Subgerencia</th>
+                            <th>Área</th>
+                            <th>Tipo</th>
+                            <th>Estado</th>
+                            <th>Progreso</th>
+                            <th>Inicio</th>
+                            <th>Fin</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${projects.map(p => `
+                            <tr>
+                                <td>${p.idProyecto}</td>
+                                <td>${p.nombre}</td>
+                                <td>${p.creadorNombre || (p as any).creadorCarnet || 'N/A'}</td>
+                                <td>${p.responsableNombre || p.responsableCarnet || 'N/A'}</td>
+                                <td>${(p.descripcion || '').replace(/(\r\n|\n|\r)/gm, ' ')}</td>
+                                <td>${p.gerencia || ''}</td>
+                                <td>${p.subgerencia || ''}</td>
+                                <td>${p.area || ''}</td>
+                                <td>${p.tipo || 'administrativo'}</td>
+                                <td>${p.estado || ''}</td>
+                                <td>${(p.progreso || 0)}%</td>
+                                <td>${(p as any).fechaInicio ? format(new Date((p as any).fechaInicio), 'yyyy-MM-dd') : ''}</td>
+                                <td>${(p as any).fechaFin ? format(new Date((p as any).fechaFin), 'yyyy-MM-dd') : ''}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </body>
+            </html>
+        `;
 
-        const rows = projects.map(p => [
-            p.idProyecto,
-            p.nombre,
-            (p as any).descripcion || '',
-            p.gerencia || '',
-            p.subgerencia || '',
-            p.area || '',
-            p.tipo || 'administrativo',
-            p.estado || '',
-            (p.progreso || 0) + '%',
-            (p as any).fechaInicio ? format(new Date((p as any).fechaInicio), 'yyyy-MM-dd') : '',
-            (p as any).fechaFin ? format(new Date((p as any).fechaFin), 'yyyy-MM-dd') : '',
-        ]);
-
-        const csvContent = [
-            headers.join(','),
-            ...rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')),
-        ].join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob([tableContent], { type: 'application/vnd.ms-excel' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', `Proyectos_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`);
-        link.style.visibility = 'hidden';
+        link.href = url;
+        link.download = `Proyectos_${format(new Date(), 'yyyyMMdd_HHmm')}.xls`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        showToast('Archivo CSV generado', 'success');
+        showToast('Archivo Excel generado', 'success');
     };
 
     // =========================
     // MODAL: CRUD
     // =========================
-    const openModal = (p?: Proyecto) => {
-        if (p) {
-            setEditingProject(p);
-            setFormData({
-                nombre: p.nombre,
-                descripcion: (p as any).descripcion || '',
-                fechaInicio: (p as any).fechaInicio ? format(new Date((p as any).fechaInicio), 'yyyy-MM-dd') : '',
-                fechaFin: (p as any).fechaFin ? format(new Date((p as any).fechaFin), 'yyyy-MM-dd') : '',
-                area: p.area || '',
-                subgerencia: p.subgerencia || '',
-                gerencia: p.gerencia || '',
-                tipo: p.tipo || 'administrativo',
-            });
-        } else {
-            setEditingProject(null);
-            setFormData({
-                nombre: '',
-                descripcion: '',
-                fechaInicio: '',
-                fechaFin: '',
-                area: '',
-                subgerencia: '',
-                gerencia: '',
-                tipo: 'administrativo',
-            });
-        }
-        setIsModalOpen(true);
-    };
 
     const handleCreateOrUpdate = async () => {
         if (!formData.nombre.trim()) return;
@@ -491,7 +533,8 @@ export const GestionProyecto2: React.FC = () => {
             area: formData.area || undefined,
             subgerencia: formData.subgerencia || undefined,
             gerencia: formData.gerencia || undefined,
-            tipo: formData.tipo || 'administrativo',
+            tipo: formData.tipo,
+            responsableCarnet: formData.responsableCarnet || undefined,
         };
 
         try {
@@ -763,6 +806,17 @@ export const GestionProyecto2: React.FC = () => {
                                                                 <LockIcon size={14} className="text-amber-500 shrink-0" />
                                                             ) : null}
                                                         </div>
+
+                                                        {(p.creadorNombre || (p as any).creadorCarnet) && (
+                                                            <div className="mt-1.5 flex items-center gap-1.5">
+                                                                <div className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-tight">
+                                                                    Creado por
+                                                                </div>
+                                                                <span className="text-[10px] font-bold text-slate-600 truncate max-w-[150px]">
+                                                                    {(p.creadorNombre || (p as any).creadorCarnet).toUpperCase()}
+                                                                </span>
+                                                            </div>
+                                                        )}
 
                                                         {/* ORG inline en mobile */}
                                                         <div className="mt-1 lg:hidden">
@@ -1039,6 +1093,26 @@ export const GestionProyecto2: React.FC = () => {
                             </div>
 
                             <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Responsable</label>
+                                <button
+                                    onClick={() => setIsUserSelectorOpen(true)}
+                                    className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 flex items-center justify-between hover:bg-slate-50 transition-colors text-left border-2 border-transparent hover:border-indigo-100"
+                                >
+                                    {formData.responsableNombre || formData.responsableCarnet ? (
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                                {(formData.responsableNombre || formData.responsableCarnet || '#').charAt(0)}
+                                            </div>
+                                            <span className="truncate">{formData.responsableNombre || formData.responsableCarnet}</span>
+                                        </div>
+                                    ) : (
+                                        <span className="text-slate-400 font-normal">Asignar responsable...</span>
+                                    )}
+                                    <ChevronDown size={14} className="text-slate-400" />
+                                </button>
+                            </div>
+
+                            <div className="space-y-1.5">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Descripción</label>
                                 <textarea
                                     className="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium text-slate-700 outline-none focus:border-indigo-500 focus:bg-white transition-all resize-none shadow-inner"
@@ -1159,6 +1233,16 @@ export const GestionProyecto2: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <UserSelector
+                isOpen={isUserSelectorOpen}
+                onClose={() => setIsUserSelectorOpen(false)}
+                onSelect={(u) => {
+                    setFormData(prev => ({ ...prev, responsableCarnet: u.carnet || '', responsableNombre: u.nombre || '' }));
+                    setIsUserSelectorOpen(false);
+                }}
+                title="Seleccionar Responsable"
+            />
         </div>
     );
 };

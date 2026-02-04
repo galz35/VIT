@@ -34,6 +34,7 @@ import { clarityService } from '../../services/clarity.service';
 import { planningService } from '../../services/planning.service';
 import type { Proyecto } from '../../types/modelos';
 import { useToast } from '../../context/ToastContext';
+import { UserSelector } from '../../components/ui/UserSelector';
 
 const LIMITES = [5, 10, 12, 20, 50];
 
@@ -134,7 +135,8 @@ export const ProyectosPage: React.FC = () => {
     // =========================
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProject, setEditingProject] = useState<Proyecto | null>(null);
-    const [formData, setFormData] = useState({
+    const [isUserSelectorOpen, setIsUserSelectorOpen] = useState(false);
+    const [formData, setFormData] = useState<Partial<Proyecto> & { responsableNombre?: string }>({
         nombre: '',
         descripcion: '',
         fechaInicio: '',
@@ -143,6 +145,8 @@ export const ProyectosPage: React.FC = () => {
         subgerencia: '',
         gerencia: '',
         tipo: 'administrativo',
+        responsableCarnet: '',
+        responsableNombre: ''
     });
 
     // Estructura org (para selects)
@@ -274,7 +278,11 @@ export const ProyectosPage: React.FC = () => {
 
         if (searchTerm) {
             const low = searchTerm.toLowerCase();
-            filtered = filtered.filter(x => x.nombre.toLowerCase().includes(low));
+            filtered = filtered.filter(x =>
+                x.nombre.toLowerCase().includes(low) ||
+                (x.creadorNombre || '').toLowerCase().includes(low) ||
+                ((x as any).creadorCarnet || '').toLowerCase().includes(low)
+            );
         }
         if (filters.estado) {
             filtered = filtered.filter(x => (x.estado || '').toLowerCase().includes(filters.estado.toLowerCase()));
@@ -570,36 +578,68 @@ export const ProyectosPage: React.FC = () => {
             return;
         }
 
-        const headers = ['ID', 'Proyecto', 'Descripción', 'Estado', 'Progreso', 'Tipo', 'Gerencia', 'Subgerencia', 'Área', 'F. Inicio', 'F. Fin'];
-        const rows = projects.map(p => [
-            p.idProyecto,
-            p.nombre,
-            (p as any).descripcion || '',
-            p.estado || '',
-            (p.progreso || 0) + '%',
-            p.tipo || 'administrativo',
-            p.gerencia || '',
-            p.subgerencia || '',
-            p.area || '',
-            (p as any).fechaInicio ? format(new Date((p as any).fechaInicio), 'yyyy-MM-dd') : '',
-            (p as any).fechaFin ? format(new Date((p as any).fechaFin), 'yyyy-MM-dd') : ''
-        ]);
+        const tableContent = `
+            <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+            <head>
+                <meta charset="utf-8">
+                <style>
+                    table { border-collapse: collapse; width: 100%; }
+                    th { background-color: #4f46e5; color: white; border: 1px solid #ddd; padding: 8px; font-weight: bold; text-align: center; }
+                    td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                </style>
+            </head>
+            <body>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Proyecto</th>
+                            <th>Creador</th>
+                            <th>Responsable</th>
+                            <th>Descripción</th>
+                            <th>Gerencia</th>
+                            <th>Subgerencia</th>
+                            <th>Área</th>
+                            <th>Tipo</th>
+                            <th>Estado</th>
+                            <th>Progreso</th>
+                            <th>Inicio</th>
+                            <th>Fin</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${projects.map(p => `
+                            <tr>
+                                <td>${p.idProyecto}</td>
+                                <td>${p.nombre}</td>
+                                <td>${p.creadorNombre || (p as any).creadorCarnet || 'N/A'}</td>
+                                <td>${p.responsableNombre || p.responsableCarnet || 'N/A'}</td>
+                                <td>${(p.descripcion || '').replace(/(\r\n|\n|\r)/gm, ' ')}</td>
+                                <td>${p.gerencia || ''}</td>
+                                <td>${p.subgerencia || ''}</td>
+                                <td>${p.area || ''}</td>
+                                <td>${p.tipo || 'administrativo'}</td>
+                                <td>${p.estado || ''}</td>
+                                <td>${(p.progreso || 0)}%</td>
+                                <td>${(p as any).fechaInicio ? format(new Date((p as any).fechaInicio), 'yyyy-MM-dd') : ''}</td>
+                                <td>${(p as any).fechaFin ? format(new Date((p as any).fechaFin), 'yyyy-MM-dd') : ''}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </body>
+            </html>
+        `;
 
-        const csvContent = [
-            headers.join(','),
-            ...rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
-        ].join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob([tableContent], { type: 'application/vnd.ms-excel' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', `Proyectos_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`);
-        link.style.visibility = 'hidden';
+        link.href = url;
+        link.download = `Proyectos_${format(new Date(), 'yyyyMMdd_HHmm')}.xls`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        showToast('Archivo CSV generado', 'success');
+        showToast('Archivo Excel generado', 'success');
     };
 
     // =========================
@@ -610,23 +650,40 @@ export const ProyectosPage: React.FC = () => {
             setEditingProject(p);
             setFormData({
                 nombre: p.nombre,
-                descripcion: (p as any).descripcion || '',
-                fechaInicio: (p as any).fechaInicio ? format(new Date((p as any).fechaInicio), 'yyyy-MM-dd') : '',
-                fechaFin: (p as any).fechaFin ? format(new Date((p as any).fechaFin), 'yyyy-MM-dd') : '',
-                area: p.area || '',
-                subgerencia: p.subgerencia || '',
+                descripcion: p.descripcion || '',
                 gerencia: p.gerencia || '',
+                subgerencia: p.subgerencia || '',
+                area: p.area || '',
+                fechaInicio: p.fechaInicio ? format(new Date(p.fechaInicio), 'yyyy-MM-dd') : '',
+                fechaFin: p.fechaFin ? format(new Date(p.fechaFin), 'yyyy-MM-dd') : '',
                 tipo: p.tipo || 'administrativo',
+                responsableCarnet: p.responsableCarnet || '',
+                responsableNombre: p.responsableNombre || ''
             });
         } else {
             setEditingProject(null);
-            setFormData({ nombre: '', descripcion: '', fechaInicio: '', fechaFin: '', area: '', subgerencia: '', gerencia: '', tipo: 'administrativo' });
+            setFormData({
+                nombre: '',
+                descripcion: '',
+                gerencia: '',
+                subgerencia: '',
+                area: '',
+                fechaInicio: '',
+                fechaFin: '',
+                tipo: 'administrativo',
+                responsableCarnet: '',
+                responsableNombre: ''
+            });
         }
         setIsModalOpen(true);
     };
 
     const handleCreateOrUpdate = async () => {
-        if (!formData.nombre.trim()) return;
+        // Validación básica
+        if (!formData.nombre?.trim()) {
+            showToast('El nombre del proyecto es obligatorio', 'warning');
+            return;
+        }
 
         setSaving(true);
 
@@ -639,6 +696,7 @@ export const ProyectosPage: React.FC = () => {
             subgerencia: formData.subgerencia || undefined,
             gerencia: formData.gerencia || undefined,
             tipo: formData.tipo || 'administrativo',
+            responsableCarnet: formData.responsableCarnet || undefined,
         };
 
         try {
@@ -648,7 +706,14 @@ export const ProyectosPage: React.FC = () => {
                 await clarityService.updateProyecto(targetId, payload);
                 showToast('Proyecto actualizado', 'success');
             } else {
-                const newProj: any = await clarityService.postProyecto(formData.nombre, undefined, formData.descripcion, formData.tipo);
+                // Crear proyecto (nombre es obligatorio)
+                const newProj: any = await clarityService.postProyecto(
+                    formData.nombre,
+                    undefined,
+                    formData.descripcion,
+                    formData.tipo
+                );
+                // Actualizar inmediatamente con el resto de datos (responsable, fechas, etc.)
                 await clarityService.updateProyecto(newProj.idProyecto, payload);
                 showToast('Proyecto creado', 'success');
             }
@@ -1089,6 +1154,12 @@ export const ProyectosPage: React.FC = () => {
                                                                 <div className="lg:hidden text-[10px] text-slate-500 mt-1 uppercase">
                                                                     {(p as any).fechaInicio ? format(new Date((p as any).fechaInicio), 'dd MMM yyyy', { locale: es }) : '-'}
                                                                 </div>
+
+                                                                {(p.creadorNombre || (p as any).creadorCarnet) && (
+                                                                    <div className="mt-0.5 text-[10px] font-black text-blue-600 uppercase tracking-wide opacity-80">
+                                                                        {(p.creadorNombre || (p as any).creadorCarnet).toUpperCase()}
+                                                                    </div>
+                                                                )}
                                                             </div>
 
                                                             {/* SUB-INFO PARA MÓVILES O PANTALLAS PEQUEÑAS */}
@@ -1286,7 +1357,9 @@ export const ProyectosPage: React.FC = () => {
             {
                 isModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                        {/* ... existing modal content ... */}
                         <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 scale-in-center animate-in zoom-in-95">
+                            {/* ... content ... */}
                             <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100">
@@ -1311,6 +1384,26 @@ export const ProyectosPage: React.FC = () => {
                                         onChange={e => setFormData({ ...formData, nombre: e.target.value })}
                                         placeholder="Ej: Transformación Digital 2026"
                                     />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Responsable</label>
+                                    <button
+                                        onClick={() => setIsUserSelectorOpen(true)}
+                                        className="w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 flex items-center justify-between hover:bg-slate-50 transition-colors text-left border-2 border-transparent hover:border-indigo-100"
+                                    >
+                                        {formData.responsableNombre || formData.responsableCarnet ? (
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                                    {(formData.responsableNombre || formData.responsableCarnet || '#').charAt(0)}
+                                                </div>
+                                                <span className="truncate">{formData.responsableNombre || formData.responsableCarnet}</span>
+                                            </div>
+                                        ) : (
+                                            <span className="text-slate-400 font-normal">Asignar responsable...</span>
+                                        )}
+                                        <ChevronDown size={14} className="text-slate-400" />
+                                    </button>
                                 </div>
 
                                 <div className="space-y-1.5">
@@ -1436,7 +1529,17 @@ export const ProyectosPage: React.FC = () => {
                     </div>
                 )
             }
-        </div >
+
+            <UserSelector
+                isOpen={isUserSelectorOpen}
+                onClose={() => setIsUserSelectorOpen(false)}
+                onSelect={(u) => {
+                    setFormData(prev => ({ ...prev, responsableCarnet: u.carnet || '', responsableNombre: u.nombre || '' }));
+                    setIsUserSelectorOpen(false);
+                }}
+                title="Seleccionar Responsable"
+            />
+        </div>
     );
 };
 
