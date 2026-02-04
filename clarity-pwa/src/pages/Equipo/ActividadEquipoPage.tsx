@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import {
     Search, RefreshCw, Eye,
     ChevronLeft, ChevronRight,
-    History, X, Filter
+    History, X
 } from 'lucide-react';
 import { clarityService } from '../../services/clarity.service';
 import { format } from 'date-fns';
