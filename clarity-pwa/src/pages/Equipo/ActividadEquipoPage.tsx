@@ -127,6 +127,18 @@ export const ActividadEquipoPage: React.FC = () => {
         fetchLogs(1, searchTerm);
     };
 
+    // Helper seguro para fechas
+    const formatDateSafe = (dateVal: any, fmt: string) => {
+        if (!dateVal) return '--';
+        try {
+            const d = new Date(dateVal);
+            if (isNaN(d.getTime())) return 'Fecha inválida';
+            return format(d, fmt);
+        } catch {
+            return 'Error fecha';
+        }
+    };
+
     // Render Helpers
     const getCambiosResumen = (next: string | null) => {
         try {
@@ -170,7 +182,7 @@ export const ActividadEquipoPage: React.FC = () => {
                         </div>
                         <div>
                             <span className="block font-bold text-slate-500 uppercase text-[10px]">Fecha</span>
-                            <span className="text-slate-800 font-medium">{format(new Date(fullDetail.fecha), 'dd MMM yyyy, HH:mm:ss')}</span>
+                            <span className="text-slate-800 font-medium">{formatDateSafe(fullDetail.fecha, 'dd MMM yyyy, HH:mm:ss')}</span>
                         </div>
                         <div className="col-span-2">
                             <span className="block font-bold text-slate-500 uppercase text-[10px]">Recurso</span>
@@ -339,7 +351,7 @@ export const ActividadEquipoPage: React.FC = () => {
                                         <tr key={log.idAuditLog} className="hover:bg-indigo-50/40 transition-colors group">
                                             <td className="px-6 py-3 align-top whitespace-nowrap">
                                                 <div className="flex flex-col">
-                                                    <span className="text-xs font-bold text-slate-700">{format(new Date(log.fecha), 'dd MMM, HH:mm')}</span>
+                                                    <span className="text-xs font-bold text-slate-700">{formatDateSafe(log.fecha, 'dd MMM, HH:mm')}</span>
                                                     <span className="text-[10px] text-slate-400 mt-1 flex items-center gap-1 font-medium bg-slate-100 px-1.5 py-0.5 rounded w-fit">
                                                         {log.usuario}
                                                     </span>
