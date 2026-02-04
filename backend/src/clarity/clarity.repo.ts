@@ -56,6 +56,17 @@ export async function eliminarTarea(idTarea: number, carnet: string, motivo: str
     });
 }
 
+export async function eliminarTareaAdmin(idTarea: number, motivo: string = 'Eliminación Admin') {
+    await ejecutarQuery(`
+        UPDATE p_Tareas 
+        SET activo = 0, 
+            estado = 'Eliminada'
+        WHERE idTarea = @idTarea
+    `, {
+        idTarea: { valor: idTarea, tipo: Int }
+    });
+}
+
 export async function getTareasUsuario(carnet: string, estado?: string, idProyecto?: number, startDate?: Date, endDate?: Date, query?: string) {
     return await ejecutarSP('sp_Tareas_ObtenerPorUsuario', {
         carnet: { valor: carnet, tipo: NVarChar },

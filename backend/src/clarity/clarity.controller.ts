@@ -125,7 +125,7 @@ export class ClarityController {
     @ApiOperation({ summary: 'Eliminar tarea (Físico si es hoy y creador, sino Soft Delete)' })
     async eliminarTarea(@Param('id') id: number, @Request() req) {
         const carnet = req.user.carnet || await this.tasksService.resolveCarnet(req.user.userId);
-        return this.tasksService.tareaEliminar(id, carnet);
+        return this.tasksService.tareaEliminar(id, carnet, undefined, req.user.rolGlobal);
     }
 
     @Post('tareas/:id/descartar')
@@ -133,7 +133,7 @@ export class ClarityController {
     async descartarTarea(@Param('id') id: number, @Body() body: { motivo?: string }, @Request() req) {
         const motivo = body?.motivo || 'Descarte manual';
         const carnet = req.user.carnet || await this.tasksService.resolveCarnet(req.user.userId);
-        return this.tasksService.tareaEliminar(id, carnet, motivo);
+        return this.tasksService.tareaEliminar(id, carnet, motivo, req.user.rolGlobal);
     }
 
     @Post('tareas/:id/avance')

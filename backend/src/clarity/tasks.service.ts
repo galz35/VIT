@@ -304,8 +304,12 @@ export class TasksService {
         return await planningRepo.obtenerTareaPorId(idTarea);
     }
 
-    async tareaEliminar(idTarea: number, carnet: string, motivo?: string) {
-        await clarityRepo.eliminarTarea(idTarea, carnet, motivo);
+    async tareaEliminar(idTarea: number, carnet: string, motivo?: string, rolGlobal?: string) {
+        if (rolGlobal === 'Admin' || rolGlobal === 'Administrador') {
+            await clarityRepo.eliminarTareaAdmin(idTarea, motivo || 'Eliminación Admin');
+        } else {
+            await clarityRepo.eliminarTarea(idTarea, carnet, motivo);
+        }
         return { success: true };
     }
 

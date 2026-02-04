@@ -1,6 +1,6 @@
 
 import { Injectable } from '@nestjs/common';
-import { ejecutarQuery, Int, Bit, Date as SqlDate, NVarChar } from '../db/base.repo';
+import { ejecutarQuery, Int, Bit, SqlDate, NVarChar } from '../db/base.repo';
 import { FocoAgregarDto, FocoActualizarDto } from './dto/clarity.dtos';
 
 @Injectable()
@@ -63,7 +63,7 @@ export class FocoService {
     }
 
     async actualizarFoco(idFoco: number, idUsuario: number, dto: FocoActualizarDto, fecha?: string) {
-        let updates = [];
+        let updates: string[] = [];
         let params: any = { idFoco: { valor: idFoco, tipo: Int }, idUsuario: { valor: idUsuario, tipo: Int } };
 
         if (dto.esEstrategico !== undefined) {
@@ -97,7 +97,7 @@ export class FocoService {
     }
 
     async reordenarFocos(idUsuario: number, fecha: string, ids: number[]) {
-        let queries = [];
+        let queries: string[] = [];
         for (let i = 0; i < ids.length; i++) {
             queries.push(`UPDATE p_FocoDiario SET orden = ${i + 1} WHERE idFoco = ${ids[i]} AND idUsuario = @idUsuario`);
         }
