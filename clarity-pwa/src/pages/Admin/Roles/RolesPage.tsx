@@ -9,6 +9,7 @@ import {
 import { PermissionsEditor } from '../components';
 import { MenuBuilder } from '../../../components/admin/MenuBuilder';
 import { clarityService } from '../../../services/clarity.service';
+import { alerts } from '../../../utils/alerts';
 import { useToast } from '../../../context/ToastContext';
 import type { RoleDefinition } from '../../../types/permissions';
 
@@ -57,8 +58,8 @@ export const RolesPage: React.FC = () => {
         loadRoles();
     }, []);
 
-    const handleSelectRole = (role: ExtendedRoleDefinition) => {
-        if (isEditing && confirm("Tienes cambios sin guardar. ¿Descartar?")) {
+    const handleSelectRole = async (role: ExtendedRoleDefinition) => {
+        if (isEditing && (await alerts.confirm('Cambios sin guardar', 'Tienes cambios pendientes. ¿Deseas descartarlos para cambiar de rol?', 'question'))) {
             setSelectedRole(role);
             setDefaultMenuJson(role.defaultMenu || '');
             setIsEditing(false);
@@ -133,7 +134,7 @@ export const RolesPage: React.FC = () => {
     };
 
     const handleDeleteRole = async (id: string) => {
-        if (confirm("¿Seguro que deseas eliminar este rol? Los usuarios asignados perderán sus permisos.")) {
+        if (await alerts.confirm('¿Eliminar Rol?', '¿Seguro que deseas eliminar este rol? Los usuarios asignados perderán sus permisos.')) {
             try {
                 await clarityService.deleteRol(Number(id));
                 showToast("Rol eliminado", "success");

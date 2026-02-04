@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Save, Plus, Trash2, Folder, ArrowRight, Sparkles, CheckCircle2, ListTodo, X } from 'lucide-react';
 import { clarityService } from '../../services/clarity.service';
+import { alerts } from '../../utils/alerts';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import type { Proyecto } from '../../types/modelos';
@@ -154,7 +155,7 @@ export const MeetingNotesPage: React.FC = () => {
 
     const handleDeleteNote = async (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
-        if (confirm('¿Eliminar nota permanentemente?')) {
+        if (await alerts.confirm('¿Eliminar nota?', '¿Seguro que deseas eliminar esta nota permanentemente?')) {
             try {
                 await clarityService.deleteNote(id);
                 const updated = notes.filter(n => n.id !== id);

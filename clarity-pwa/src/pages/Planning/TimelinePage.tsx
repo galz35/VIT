@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { clarityService } from '../../services/clarity.service';
+import { alerts } from '../../utils/alerts';
 import { useParams } from 'react-router-dom';
 import type { Tarea, Proyecto } from '../../types/modelos';
 import { useAuth } from '../../context/AuthContext';
@@ -306,7 +307,7 @@ export const TimelinePage: React.FC = () => {
 
     const handleArchiveProject = async () => {
         if (!selectedProjectId) return;
-        if (!window.confirm('¿Estás seguro de que deseas archivar este proyecto?')) return;
+        if (!(await alerts.confirm('¿Archivar proyecto?', '¿Estás seguro de que deseas archivar este proyecto?'))) return;
         try {
             await clarityService.deleteProyecto(selectedProjectId);
             showToast('Proyecto archivado exitosamente', 'success');

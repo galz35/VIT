@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Plus, Search, X, Users, Calendar, Link2, ChevronDown, Check, Briefcase } from 'lucide-react';
 import { clarityService } from '../../services/clarity.service';
+import { alerts } from '../../utils/alerts';
 import { useAuth } from '../../context/AuthContext';
 import type { Proyecto, Prioridad, Esfuerzo, ComportamientoTarea, TipoTarea } from '../../types/modelos';
 import type { Empleado } from '../../types/acceso';
@@ -177,14 +178,13 @@ export const CreateTaskModal: React.FC<Props> = ({ isOpen, onClose, currentProje
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!titulo.trim()) return alert('El título es requerido');
-        if (!idProyecto) return alert('No hay proyecto seleccionado');
-        if (!idProyecto) return alert('No hay proyecto seleccionado');
+        if (!titulo.trim()) return alerts.error('Falta título', 'El título es requerido');
+        if (!idProyecto) return alerts.error('Falta proyecto', 'No hay proyecto seleccionado');
 
         // Logic Auto-select Area if empty
         let targets = [...selectedAsignados];
         if (targets.length === 0 && selectedArea && filteredResults.length > 0) {
-            if (window.confirm(`¿Asignar tarea automáticamente a los ${filteredResults.length} miembros del área "${selectedArea}"?`)) {
+            if (await alerts.confirm('Asignación Grupal', `¿Asignar tarea automáticamente a los ${filteredResults.length} miembros del área "${selectedArea}"?`)) {
                 targets = [...filteredResults];
                 setSelectedAsignados(targets);
             } else {
@@ -192,7 +192,7 @@ export const CreateTaskModal: React.FC<Props> = ({ isOpen, onClose, currentProje
             }
         }
 
-        if (targets.length === 0) return alert('Debes seleccionar al menos un responsable o un área con miembros.');
+        if (targets.length === 0) return alerts.error('Sin responsables', 'Debes seleccionar al menos un responsable o un área con miembros.');
 
         setLoading(true);
         try {
@@ -216,13 +216,14 @@ export const CreateTaskModal: React.FC<Props> = ({ isOpen, onClose, currentProje
             });
 
             await Promise.all(promises);
+            alerts.success('Tarea Creada', `Se han creado ${targets.length} tareas correctamente.`);
 
             if (onTaskCreated) onTaskCreated();
             if (onSuccess) onSuccess();
             onClose();
         } catch (error: any) {
             console.error(error);
-            alert('Error: ' + (error.response?.data?.message || error.message));
+            alerts.error('Error', error.response?.data?.message || error.message);
         } finally {
             setLoading(false);
         }

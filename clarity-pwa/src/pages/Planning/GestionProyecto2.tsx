@@ -25,6 +25,7 @@ import {
     Download,
 } from 'lucide-react';
 
+import { alerts } from '../../utils/alerts';
 import { clarityService } from '../../services/clarity.service';
 import { planningService } from '../../services/planning.service';
 import type { Proyecto } from '../../types/modelos';
@@ -514,7 +515,7 @@ export const GestionProyecto2: React.FC = () => {
     };
 
     const handleDelete = async (p: Proyecto) => {
-        if (!window.confirm(`¿Eliminar proyecto "${p.nombre}"?`)) return;
+        if (!(await alerts.confirm('¿Eliminar Proyecto?', `¿Estás seguro de que deseas eliminar "${p.nombre}"?`))) return;
 
         try {
             await clarityService.deleteProyecto(p.idProyecto);

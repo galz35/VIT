@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { Usuario } from '../../types/modelos';
+import { alerts } from '../../utils/alerts';
 import { clarityService } from '../../services/clarity.service';
 import { X, Shield, Users, Plus, Search, Globe, Trash2 } from 'lucide-react';
 
@@ -73,18 +74,18 @@ export const VisibilityModal: React.FC<Props> = ({ user, onClose }) => {
         if (!user.carnet) return;
 
         if (activeTab === 'people' && !item.carnet) {
-            alert('Error: La persona seleccionada no tiene un carnet válido.');
+            alerts.error('Carnet inválido', 'La persona seleccionada no tiene un carnet válido.');
             return;
         }
         if (activeTab === 'areas' && !item.idOrg) {
-            alert('Error: El área seleccionada no tiene un ID válido.');
+            alerts.error('ID inválido', 'El área seleccionada no tiene un ID válido.');
             return;
         }
 
         try {
             if (activeTab === 'areas') {
                 if (actionType === 'DENY') {
-                    alert('La restricción por Área no está soportada aún. Solo por Persona.');
+                    alerts.error('No soportado', 'La restricción por Área no está soportada aún. Solo por Persona.');
                     return;
                 }
                 await clarityService.crearPermisoArea({
@@ -102,14 +103,15 @@ export const VisibilityModal: React.FC<Props> = ({ user, onClose }) => {
             setSearchQuery('');
             setSearchResults([]);
             fetchPermissions();
+            alerts.success('Agregado', 'Permiso configurado correctamente.');
         } catch (error) {
             console.error(error);
-            alert('Error al agregar permiso/restricción');
+            alerts.error('Error', 'Error al agregar permiso/restricción');
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('¿Quitar este permiso/restricción?')) return;
+        if (!(await alerts.confirm('¿Revocar acceso?', '¿Estás seguro de quitar este permiso/restricción?'))) return;
         try {
             if (activeTab === 'areas') {
                 await clarityService.eliminarPermisoArea(id);
@@ -117,8 +119,10 @@ export const VisibilityModal: React.FC<Props> = ({ user, onClose }) => {
                 await clarityService.eliminarPermisoEmpleado(id);
             }
             fetchPermissions();
+            alerts.success('Revocado', 'Registro eliminado exitosamente.');
         } catch (error) {
             console.error(error);
+            alerts.error('Error', 'No se pudo eliminar el registro.');
         }
     };
 

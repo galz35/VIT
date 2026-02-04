@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { clarityService } from '../../../services/clarity.service';
 import { CheckCircle2, Circle, AlertTriangle, PlayCircle, Pause, ChevronDown, ChevronUp, Check, X, Save, Loader2 } from 'lucide-react';
 import type { Tarea } from '../../../types/modelos';
@@ -26,8 +27,9 @@ const ALCANCES = ['Local', 'Regional', 'AMX'];
 const ESFUERZOS = ['S', 'M', 'L'];
 
 export const OverdueTimeline: React.FC<Props> = ({ tasks, onTaskComplete, onTaskCancel }) => {
+    const queryClient = useQueryClient(); // ✅ Hook
+
     // Removed unused context and state
-    const [loading] = useState(false);
     const [days, setDays] = useState<DayGroup[]>([]);
     const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set(['0', '1', '2', '3'])); // Expand more by default for backlog
     const [selectedTask, setSelectedTask] = useState<Tarea | null>(null);
@@ -70,9 +72,6 @@ export const OverdueTimeline: React.FC<Props> = ({ tasks, onTaskComplete, onTask
             });
         }
 
-        // Sort by date ascending (oldest first for backlog usually makes sense, but user might want newest overdue first? 
-        // Let's stick to standard timeline sort: Descending (newest first) or Ascending? Backlog usually implies "clean up old stuff".
-        // Bitácora uses descending. Let's keep descending to match design.
         const sortedGroups = Array.from(groupsMap.values())
             .sort((a, b) => b.date.localeCompare(a.date));
 
@@ -104,13 +103,36 @@ export const OverdueTimeline: React.FC<Props> = ({ tasks, onTaskComplete, onTask
         setIsEditing(false);
     };
 
+    const [loadingTasks, setLoadingTasks] = useState<Set<number>>(new Set());
+    const [successTasks, setSuccessTasks] = useState<Set<number>>(new Set());
+
     const handleComplete = async (taskId: number) => {
+        setLoadingTasks(prev => new Set(prev).add(taskId));
         setSaving(true);
         try {
-            await onTaskComplete?.(taskId);
+            // 1. Update DB directly
+            await clarityService.actualizarTarea(taskId, { estado: 'Hecha' } as any);
+
+            // 2. Show Success (stop loading)
+            setLoadingTasks(prev => { const n = new Set(prev); n.delete(taskId); return n; });
+            setSuccessTasks(prev => new Set(prev).add(taskId));
+
+            // 3. Wait for feedback
+            await new Promise(resolve => setTimeout(resolve, 800));
+
+            // 4. Refresh Data
+            await queryClient.invalidateQueries({ queryKey: ['mi-dia'] });
+
             setSelectedTask(null);
+        } catch (e) {
+            console.error(e);
+            setLoadingTasks(prev => { const n = new Set(prev); n.delete(taskId); return n; });
         } finally {
             setSaving(false);
+            // Cleanup success state if component still alive
+            setTimeout(() => {
+                setSuccessTasks(prev => { const n = new Set(prev); n.delete(taskId); return n; });
+            }, 500);
         }
     };
 
@@ -129,13 +151,10 @@ export const OverdueTimeline: React.FC<Props> = ({ tasks, onTaskComplete, onTask
         setSaving(true);
         try {
             await clarityService.actualizarTarea(selectedTask.idTarea, editForm as any);
-            // Propagate update via context refresh hopefully handled by parent
             setIsEditing(false);
             const updated = { ...selectedTask, ...editForm } as Tarea;
             setSelectedTask(updated);
-            // We might need to refresh parent list
-            if (onTaskComplete) await onTaskComplete(0); // Hacky trigger to refresh if parent handles it generically, otherwise parent needs to listen to updates.
-            // Better: assume parent refreshes context when props change or via context invalidation.
+            if (onTaskComplete) await onTaskComplete(0);
         } catch (e) {
             console.error(e);
         } finally {
@@ -163,25 +182,18 @@ export const OverdueTimeline: React.FC<Props> = ({ tasks, onTaskComplete, onTask
         return colors[estado] || 'bg-gray-400';
     };
 
-    if (loading) {
-        return (
-            <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-200 text-center">
-                <Loader2 className="animate-spin mx-auto text-indigo-500 mb-2" size={24} />
-                <p className="text-gray-400 text-sm">Cargando backlog...</p>
-            </div>
-        );
-    }
-
     return (
         <div className="flex flex-col gap-4 h-full overflow-hidden">
             {/* Timeline */}
             <div className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col transition-all ${selectedTask ? 'hidden' : 'w-full flex-1'}`}>
+                {/* ... Header ... */}
                 <div className="px-4 py-3 bg-rose-700 text-white shrink-0">
                     <h3 className="text-sm font-bold">🕰️ Tareas Atrasadas</h3>
                     <p className="text-xs text-rose-200">Pendientes de días anteriores</p>
                 </div>
 
                 <div className="flex-1 divide-y divide-gray-100 overflow-y-auto">
+                    {/* ... Empty and Days map ... */}
                     {days.length === 0 && (
                         <div className="p-8 text-center">
                             <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -198,6 +210,7 @@ export const OverdueTimeline: React.FC<Props> = ({ tasks, onTaskComplete, onTask
                         return (
                             <div key={day.date}>
                                 <button onClick={() => toggleDay(String(idx))} className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50">
+                                    {/* ... Group Header ... */}
                                     <div className="flex items-center gap-3">
                                         <div className="relative">
                                             <div className={`w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold ${hasActivity ? 'bg-rose-500' : 'bg-gray-200'
@@ -217,28 +230,59 @@ export const OverdueTimeline: React.FC<Props> = ({ tasks, onTaskComplete, onTask
 
                                 {isExpanded && hasActivity && (
                                     <div className="pl-12 pr-4 pb-3 space-y-1.5">
-                                        {day.tasks.map(task => (
-                                            <button key={task.idTarea} onClick={() => selectTask(task)}
-                                                className={`w-full text-left flex items-center gap-3 p-2.5 rounded-lg transition-all ${selectedTask?.idTarea === task.idTarea ? 'ring-2 ring-rose-500 bg-rose-50' : 'bg-gray-50 hover:bg-gray-100'
-                                                    } ${task.estado === 'Hecha' || task.estado === 'Descartada' ? 'opacity-60' : ''}`}
-                                            >
-                                                {getStatusIcon(task.estado)}
-                                                <div className="flex-1 min-w-0">
-                                                    <span className={`text-sm ${task.estado === 'Hecha' ? 'line-through text-gray-400' : 'text-gray-700'}`}>{task.titulo}</span>
-                                                    {task.progreso > 0 && task.progreso < 100 && (
-                                                        <div className="mt-1 h-1 bg-gray-200 rounded-full overflow-hidden w-20">
-                                                            <div className={`h-full ${getStatusColor(task.estado)}`} style={{ width: `${task.progreso}%` }}></div>
+                                        {day.tasks.map(task => {
+                                            const isTaskLoading = loadingTasks.has(task.idTarea);
+                                            const isSuccess = successTasks.has(task.idTarea);
+
+                                            return (
+                                                <div key={task.idTarea}
+                                                    className={`w-full text-left flex items-center gap-3 p-2.5 rounded-lg transition-all ${selectedTask?.idTarea === task.idTarea ? 'ring-2 ring-rose-500 bg-rose-50' : 'bg-gray-50 hover:bg-gray-100'
+                                                        } ${task.estado === 'Hecha' || task.estado === 'Descartada' ? 'opacity-60' : ''}`}
+                                                >
+                                                    {/* 1. Área de Check - Completar Directo */}
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation(); // Evitar abrir popup
+                                                            if (!isTaskLoading && !isSuccess && task.estado !== 'Hecha' && task.estado !== 'Descartada') {
+                                                                handleComplete(task.idTarea);
+                                                            }
+                                                        }}
+                                                        disabled={isTaskLoading || isSuccess}
+                                                        className={`p-1 rounded-full hover:bg-black/5 transition-colors ${task.estado === 'Hecha' ? 'cursor-default' : 'cursor-pointer'}`}
+                                                        title={task.estado === 'Hecha' ? 'Completada' : 'Marcar como Completada'}
+                                                    >
+                                                        {isTaskLoading ? (
+                                                            <Loader2 size={14} className="animate-spin text-rose-500" />
+                                                        ) : isSuccess ? (
+                                                            <Check size={14} className="text-green-500 font-bold" />
+                                                        ) : (
+                                                            getStatusIcon(task.estado)
+                                                        )}
+                                                    </button>
+
+                                                    {/* 2. Área de Contenido - Abrir Popup */}
+                                                    <button
+                                                        onClick={() => selectTask(task)}
+                                                        className="flex-1 flex items-center gap-3 min-w-0 text-left"
+                                                    >
+                                                        <div className="flex-1 min-w-0">
+                                                            <span className={`text-sm ${task.estado === 'Hecha' ? 'line-through text-gray-400' : 'text-gray-700'}`}>{task.titulo}</span>
+                                                            {task.progreso > 0 && task.progreso < 100 && (
+                                                                <div className="mt-1 h-1 bg-gray-200 rounded-full overflow-hidden w-20">
+                                                                    <div className={`h-full ${getStatusColor(task.estado)}`} style={{ width: `${task.progreso}%` }}></div>
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                    )}
+                                                        <div className="flex items-center gap-1">
+                                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${task.prioridad === 'Alta' ? 'bg-red-100 text-red-600' :
+                                                                task.prioridad === 'Media' ? 'bg-yellow-100 text-yellow-600' : 'bg-gray-100 text-gray-500'
+                                                                }`}>{task.prioridad}</span>
+                                                            <TipoBadge tipo={task.tipo} size="sm" />
+                                                        </div>
+                                                    </button>
                                                 </div>
-                                                <div className="flex items-center gap-1">
-                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${task.prioridad === 'Alta' ? 'bg-red-100 text-red-600' :
-                                                        task.prioridad === 'Media' ? 'bg-yellow-100 text-yellow-600' : 'bg-gray-100 text-gray-500'
-                                                        }`}>{task.prioridad}</span>
-                                                    <TipoBadge tipo={task.tipo} size="sm" />
-                                                </div>
-                                            </button>
-                                        ))}
+                                            )
+                                        })}
                                     </div>
                                 )}
                             </div>
@@ -251,7 +295,7 @@ export const OverdueTimeline: React.FC<Props> = ({ tasks, onTaskComplete, onTask
                 </div>
             </div>
 
-            {/* Panel de Tarea - Reusing logic, adapted colors for backlog context if needed, keeping similar to bitacora */}
+            {/* Panel de Tarea */}
             {selectedTask && (
                 <div className="w-full bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden flex flex-col h-full">
                     <div className={`px-4 py-3 ${getStatusColor(selectedTask.estado)} text-white flex justify-between items-center shrink-0`}>
@@ -265,9 +309,6 @@ export const OverdueTimeline: React.FC<Props> = ({ tasks, onTaskComplete, onTask
                     <div className="flex-1 overflow-y-auto p-4">
                         {isEditing ? (
                             <div className="space-y-3">
-                                {/* Same edit form as AgendaTimeline - Simplified for brevity in this create tool, but logic implies full copy if user wants exact same design. 
-                                     I will include the full form from AgendaTimeline to ensure "mismo diseño".
-                                 */}
                                 <div>
                                     <label className="text-[10px] text-gray-400 uppercase font-bold">Título</label>
                                     <input type="text" value={editForm.titulo || ''} onChange={(e) => setEditForm({ ...editForm, titulo: e.target.value })}
@@ -375,3 +416,6 @@ export const OverdueTimeline: React.FC<Props> = ({ tasks, onTaskComplete, onTask
         </div>
     );
 };
+
+
+

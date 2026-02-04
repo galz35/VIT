@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '../context/ToastContext';
 import { clarityService } from '../services/clarity.service';
+import { alerts } from '../utils/alerts';
 import { planningService } from '../services/planning.service';
 import type { Tarea, Usuario } from '../types/modelos';
 import { useAuth } from '../context/AuthContext';
@@ -137,9 +138,9 @@ export const useTaskController = (task: Tarea, onClose: () => void, onUpdate: ()
         } catch (error: any) {
             console.error(error);
             if (error.response?.data?.message?.includes('requiere aprobación')) {
-                alert('⚠️ CAMBIO BLOQUEADO: Tarea estratégica. Requiere aprobación.');
+                alerts.error('Cambio Bloqueado', 'Tarea estratégica. Requiere aprobación previa.');
             } else {
-                alert('Error al guardar: ' + (error.response?.data?.message || error.message));
+                alerts.error('Error al guardar', error.response?.data?.message || error.message);
             }
         } finally {
             setSubmitting(false);
@@ -165,7 +166,7 @@ export const useTaskController = (task: Tarea, onClose: () => void, onUpdate: ()
             onUpdate();
             onClose();
         } catch (error: any) {
-            alert('Error: ' + (error.message));
+            alerts.error('Error', error.message);
         } finally {
             setSubmitting(false);
             setShowChangeModal(false);
@@ -191,7 +192,7 @@ export const useTaskController = (task: Tarea, onClose: () => void, onUpdate: ()
             if (updated) setFullTask(updated);
             onUpdate();
         } catch (e) {
-            alert('Error al crear subtarea');
+            alerts.error('Error', 'No se pudo crear la subtarea');
         }
     };
 
@@ -211,12 +212,12 @@ export const useTaskController = (task: Tarea, onClose: () => void, onUpdate: ()
             if (updated) setFullTask(updated);
             onUpdate();
         } catch (e) {
-            alert('Error actualizando subtarea');
+            alerts.error('Error', 'No se pudo actualizar la subtarea');
         }
     };
 
     const handleCreateBlocker = async (params: { reason: string; who: string; userId: number | null }) => {
-        if (!params.reason.trim()) return alert('Indica el motivo del bloqueo');
+        if (!params.reason.trim()) return alerts.error('Falta motivo', 'Indica el motivo del bloqueo');
         setSubmitting(true);
         try {
             await clarityService.postBloqueo({
@@ -230,7 +231,7 @@ export const useTaskController = (task: Tarea, onClose: () => void, onUpdate: ()
             onUpdate();
             onClose();
         } catch {
-            alert('Error al crear bloqueo');
+            alerts.error('Error', 'No se pudo registrar el bloqueo');
         } finally {
             setSubmitting(false);
         }
@@ -238,14 +239,14 @@ export const useTaskController = (task: Tarea, onClose: () => void, onUpdate: ()
 
     const handleAction = async (accion: 'HechaPorOtro' | 'NoAplica' | 'Posponer', targetUserId?: number) => {
         if (accion === 'Posponer') {
-            if (!confirm('¿Posponer al backlog? Se quitará de tu día.')) return;
+            if (!(await alerts.confirm('¿Posponer?', '¿Deseas mover esta tarea al backlog? Se quitará de tu día.', 'question'))) return;
             await clarityService.actualizarTarea(task.idTarea, { estado: 'Pendiente', fechaObjetivo: null, fechaInicioPlanificada: null });
             onUpdate();
             onClose();
             return;
         }
 
-        if (!confirm('¿Seguro? Esta acción cerrará la tarea.')) return;
+        if (!(await alerts.confirm('Confirmar acción', '¿Seguro? Esta acción cerrará la tarea permanentemente.'))) return;
         setSubmitting(true);
         try {
             if (accion === 'NoAplica') await clarityService.descartarTarea(task.idTarea);
@@ -255,14 +256,14 @@ export const useTaskController = (task: Tarea, onClose: () => void, onUpdate: ()
             onUpdate();
             onClose();
         } catch (e: any) {
-            alert('Error: ' + (e.response?.data?.message || e.message));
+            alerts.error('Error', e.response?.data?.message || e.message);
         } finally {
             setSubmitting(false);
         }
     };
 
     const handleReassign = async (targetUserId: number) => {
-        if (!targetUserId) return alert('Selecciona un responsable');
+        if (!targetUserId) return alerts.error('Falta usuario', 'Debes seleccionar un nuevo responsable');
         setSubmitting(true);
         try {
             await clarityService.revalidarTarea(task.idTarea, 'Reasignar', targetUserId);
@@ -270,28 +271,28 @@ export const useTaskController = (task: Tarea, onClose: () => void, onUpdate: ()
             onUpdate();
             onClose();
         } catch {
-            alert('Error al reasignar');
+            alerts.error('Error', 'No se pudo completar la reasignación');
         } finally {
             setSubmitting(false);
         }
     };
 
     const handleSubmitStrategicChange = async (field: 'fechaObjetivo' | 'fechaInicioPlanificada', value: string, reason: string) => {
-        if (!reason.trim()) return alert('Debes justificar el cambio.');
+        if (!reason.trim()) return alerts.error('Motivo requerido', 'Debes justificar el motivo del cambio estratégico.');
         setSubmitting(true);
         try {
             await planningService.requestChange(task.idTarea, field, value, reason);
             showToast('Solicitud enviada al gerente', 'success');
             setView('Main');
         } catch {
-            alert('Error al enviar solicitud.');
+            alerts.error('Error', 'No se pudo enviar la solicitud.');
         } finally {
             setSubmitting(false);
         }
     };
 
     const deleteComment = async (idLog: number) => {
-        if (!confirm('¿Eliminar este comentario?')) return;
+        if (!(await alerts.confirm('¿Eliminar comentario?', '¿Estás seguro de que deseas eliminar este avance?'))) return;
         try {
             await clarityService.deleteAvance(idLog);
             showToast('Comentario eliminado', 'success');
@@ -301,7 +302,7 @@ export const useTaskController = (task: Tarea, onClose: () => void, onUpdate: ()
             if (updated) setFullTask(updated);
             onUpdate();
         } catch (e: any) {
-            alert('Error eliminando comentario');
+            alerts.error('Error', 'No se pudo eliminar el comentario');
         }
     };
 

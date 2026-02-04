@@ -9,6 +9,7 @@ import type { Tarea, Proyecto } from '../../types/modelos';
 import { CreateTaskModal } from '../../components/ui/CreateTaskModal';
 import { TipoBadge } from '../../components/ui/TipoBadge';
 import { StatusBadge } from '../../components/ui/StatusBadge';
+import { alerts } from '../../utils/alerts';
 
 import { AvanceMensualModal } from './components/AvanceMensualModal';
 import {
@@ -796,7 +797,7 @@ export const PlanTrabajoPage: React.FC = () => {
     };
 
     const handleDeleteComment = async (commentId: number) => {
-        if (!window.confirm('¿Eliminar comentario?')) return;
+        if (!(await alerts.confirm('¿Eliminar comentario?'))) return;
         try {
             await clarityService.deleteAvance(commentId);
             setComments(prev => ({
@@ -867,9 +868,11 @@ export const PlanTrabajoPage: React.FC = () => {
 
             // Check if approval is required
             if (msg && String(msg).toLowerCase().includes('requieren aprobación') || String(msg).toLowerCase().includes('approval')) {
-                if (window.confirm('🔒 Esta tarea requiere aprobación para cambios sensibles.\n\n¿Deseas enviar una solicitud de cambio oficial?')) {
-                    const motivo = prompt('Motivo del cambio (Opcional):') || 'Actualización de planificación';
+                if (await alerts.confirm('🔒 Tarea Protegida', 'Esta tarea requiere aprobación para cambios sensibles. ¿Deseas enviar una solicitud de cambio oficial?', 'info')) {
+                    const motivo = await alerts.prompt('Motivo del cambio', 'Ej: Cambio de fecha por disponibilidad de equipo');
                     const original = tasks.find(t => t.idTarea === selectedTask.idTarea);
+
+                    const finalMotivo = motivo || 'Actualización de planificación';
 
                     if (original) {
                         let sent = 0;
@@ -879,7 +882,7 @@ export const PlanTrabajoPage: React.FC = () => {
                                     selectedTask.idTarea,
                                     'fechaInicioPlanificada',
                                     selectedTask.fechaInicioPlanificada || '',
-                                    motivo
+                                    finalMotivo
                                 );
                                 sent++;
                             }
@@ -888,7 +891,7 @@ export const PlanTrabajoPage: React.FC = () => {
                                     selectedTask.idTarea,
                                     'fechaObjetivo',
                                     selectedTask.fechaObjetivo || '',
-                                    motivo
+                                    finalMotivo
                                 );
                                 sent++;
                             }
@@ -1069,7 +1072,7 @@ export const PlanTrabajoPage: React.FC = () => {
     };
 
     const handleDeleteTask = async (taskId: number) => {
-        if (!window.confirm('¿Eliminar esta tarea definitivamente?')) return;
+        if (!(await alerts.confirm('¿Eliminar tarea?', '¿Estás seguro de eliminar esta tarea definitivamente?'))) return;
 
         try {
             await clarityService.descartarTarea(taskId);
@@ -1353,9 +1356,9 @@ export const PlanTrabajoPage: React.FC = () => {
                                                         </button>
                                                         {canManageProject && (
                                                             <button
-                                                                onClick={(e) => {
+                                                                onClick={async (e) => {
                                                                     e.stopPropagation();
-                                                                    if (window.confirm(`¿Estás seguro de eliminar el proyecto "${p.nombre}" ? Esta acción no se puede deshacer.`)) {
+                                                                    if (await alerts.confirm('¿Eliminar Proyecto?', `¿Estás seguro de eliminar "${p.nombre}"? Esta acción no se puede deshacer.`)) {
                                                                         clarityService.deleteProyecto(p.idProyecto).then(() => {
                                                                             setProjects(prev => prev.filter(proj => proj.idProyecto !== p.idProyecto));
                                                                             if (selectedProject?.idProyecto === p.idProyecto) setSelectedProject(null);
@@ -1806,9 +1809,9 @@ export const PlanTrabajoPage: React.FC = () => {
                                                                                     )}
                                                                                     <button
                                                                                         className="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-md transition-colors"
-                                                                                        onClick={(e) => {
+                                                                                        onClick={async (e) => {
                                                                                             e.stopPropagation();
-                                                                                            if (window.confirm('Esta seguro?')) handleDeleteTask(t.idTarea);
+                                                                                            if (await alerts.confirm('¿Eliminar tarea?', '¿Estás seguro?')) handleDeleteTask(t.idTarea);
                                                                                         }}
                                                                                     >
                                                                                         <Trash2 size={14} />
