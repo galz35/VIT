@@ -666,4 +666,11 @@ export class PlanningService {
 
         return { overdue, today };
     }
+
+    // ==========================================
+    // MI ASIGNACIÓN - Vista Unificada
+    // ==========================================
+    async getMiAsignacion(carnet: string, filtros?: { estado?: string }) {
+        return await planningRepo.obtenerMiAsignacion(carnet, filtros);
+    }
 }

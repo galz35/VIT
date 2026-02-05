@@ -286,4 +286,13 @@ export class PlanningController {
     async getDashboardAlerts(@Request() req: any) {
         return await this.planningService.getDashboardAlerts(this.getUserId(req));
     }
+
+    // ==========================================
+    // MI ASIGNACIÓN - Vista Unificada
+    // ==========================================
+    @Get('mi-asignacion')
+    @ApiOperation({ summary: 'Obtener proyectos y tareas asignadas al usuario actual' })
+    async getMiAsignacion(@Request() req: any, @Query('estado') estado?: string) {
+        return await this.planningService.getMiAsignacion(req.user.carnet, { estado });
+    }
 }

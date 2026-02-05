@@ -58,6 +58,7 @@ const PermisosPage = React.lazy(() => import('../pages/Admin/Acceso/PermisosPage
 const VisibilidadPage = React.lazy(() => import('../pages/Admin/Acceso/VisibilidadPage').then(module => ({ default: module.VisibilidadPage })));
 const SecurityManagementPage = React.lazy(() => import('../pages/Admin/SecurityManagementPage'));
 const RecycleBinPage = React.lazy(() => import('../pages/Admin/RecycleBinPage').then(module => ({ default: module.RecycleBinPage })));
+const MiAsignacionPage = React.lazy(() => import('../pages/Admin/MiAsignacionPage'));
 
 // Layout Components
 import { Sidebar } from '../components/layout/Sidebar';
@@ -154,6 +155,7 @@ export const AppRoutes = () => {
                         <Route path="admin/import" element={<ImportPage />} />
                         <Route path="admin/seguridad" element={<SecurityManagementPage />} />
                         <Route path="admin/papelera" element={<RecycleBinPage />} />
+                        <Route path="admin/mi-asignacion" element={<MiAsignacionPage />} />
                     </Route>
 
                     {/* DEFAULT REDIRECT */}

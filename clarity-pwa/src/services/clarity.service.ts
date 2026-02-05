@@ -607,6 +607,13 @@ export const clarityService = {
     changePassword: async (oldPassword: string, newPassword: string) => {
         const { data: response } = await api.post<ApiResponse>('/auth/change-password', { oldPassword, newPassword });
         return response.data;
+    },
+
+    // --- MI ASIGNACIÓN ---
+    getMiAsignacion: async (estado?: string) => {
+        const params = estado ? { estado } : {};
+        const { data: response } = await api.get<ApiResponse<any>>('/planning/mi-asignacion', { params });
+        return response.data;
     }
 };
 

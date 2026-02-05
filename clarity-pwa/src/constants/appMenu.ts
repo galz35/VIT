@@ -2,7 +2,7 @@
 import {
     Sun, CheckSquare, FileText, LayoutDashboard, Eye, Shield, BarChart, FileCheck,
     PieChart, Users, KeyRound, ShieldCheck, Database, Terminal, Archive, BookOpen, ClipboardList,
-    History, Trash2
+    History, Trash2, Briefcase
 } from 'lucide-react';
 
 export const APP_MENU = [
@@ -49,7 +49,8 @@ export const APP_MENU = [
             { path: '/app/admin/audit', label: 'Auditar Acciones', icon: 'ShieldCheck' },
             { path: '/app/admin/import', label: 'Importar Datos', icon: 'Database' },
             { path: '/app/admin/logs', label: 'Monitor Sistema', icon: 'Terminal' },
-            { path: '/app/admin/papelera', label: 'Papelera', icon: 'Trash2' }
+            { path: '/app/admin/papelera', label: 'Papelera', icon: 'Trash2' },
+            { path: '/app/admin/mi-asignacion', label: 'Mi Asignación', icon: 'Briefcase' }
         ]
     },
     /* {
@@ -69,5 +70,5 @@ export const APP_MENU = [
 export const ICON_MAP: any = {
     Sun, CheckSquare, FileText, LayoutDashboard, Eye, Shield, BarChart, FileCheck,
     PieChart, Users, KeyRound, ShieldCheck, Database, Terminal, Archive, BookOpen, ClipboardList,
-    History, Trash2
+    History, Trash2, Briefcase
 };

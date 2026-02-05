@@ -663,3 +663,106 @@ export async function obtenerTareasCriticas(carnets: string[]) {
         ORDER BY t.fechaObjetivo ASC;
     `);
 }
+
+// ==========================================
+// MI ASIGNACIÓN - Vista Unificada
+// ==========================================
+
+export async function obtenerMiAsignacion(carnet: string, filtros?: { estado?: string }) {
+    // 1. Obtener proyectos donde tengo tareas asignadas
+    const proyectos = await ejecutarQuery<any>(`
+        SELECT DISTINCT
+            p.idProyecto,
+            p.nombre,
+            p.estado,
+            p.tipo,
+            p.gerencia,
+            p.subgerencia,
+            p.area,
+            p.fechaInicio,
+            p.fechaFin,
+            ISNULL((
+                SELECT AVG(CAST(CASE WHEN t2.estado = 'Hecha' THEN 100 ELSE ISNULL(t2.porcentaje, 0) END AS FLOAT))
+                FROM p_Tareas t2
+                WHERE t2.idProyecto = p.idProyecto 
+                  AND t2.activo = 1 
+                  AND t2.idTareaPadre IS NULL
+                  AND t2.estado NOT IN ('Descartada', 'Eliminada')
+            ), 0) AS progresoProyecto
+        FROM p_Proyectos p
+        INNER JOIN p_Tareas t ON p.idProyecto = t.idProyecto
+        INNER JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea
+        WHERE ta.carnet = @carnet
+          AND t.activo = 1
+          AND p.activo = 1
+        ORDER BY p.fechaFin ASC
+    `, { carnet: { valor: carnet, tipo: NVarChar } });
+
+    // 2. Obtener mis tareas en esos proyectos
+    let estadoFilter = '';
+    if (filtros?.estado && filtros.estado !== 'todas') {
+        estadoFilter = filtros.estado === 'pendientes'
+            ? "AND t.estado NOT IN ('Hecha', 'Completada', 'Descartada', 'Eliminada')"
+            : `AND t.estado = '${filtros.estado}'`;
+    }
+
+    const tareas = await ejecutarQuery<any>(`
+        SELECT 
+            t.idTarea,
+            t.idProyecto,
+            t.nombre AS titulo,
+            t.descripcion,
+            t.estado,
+            t.prioridad,
+            t.porcentaje AS progreso,
+            t.fechaObjetivo,
+            t.fechaInicioPlanificada,
+            t.fechaCreacion,
+            t.linkEvidencia,
+            CASE 
+                WHEN t.fechaObjetivo < CAST(GETDATE() AS DATE) 
+                     AND t.estado NOT IN ('Hecha', 'Completada', 'Descartada', 'Eliminada')
+                THEN DATEDIFF(day, t.fechaObjetivo, GETDATE())
+                ELSE 0
+            END AS diasAtraso,
+            CASE 
+                WHEN t.fechaObjetivo < CAST(GETDATE() AS DATE) 
+                     AND t.estado NOT IN ('Hecha', 'Completada', 'Descartada', 'Eliminada')
+                THEN 1 ELSE 0
+            END AS esAtrasada,
+            p.nombre AS proyectoNombre
+        FROM p_Tareas t
+        INNER JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea
+        LEFT JOIN p_Proyectos p ON t.idProyecto = p.idProyecto
+        WHERE ta.carnet = @carnet
+          AND t.activo = 1
+          ${estadoFilter}
+        ORDER BY 
+            CASE WHEN t.estado NOT IN ('Hecha', 'Completada') THEN 0 ELSE 1 END,
+            CASE WHEN t.fechaObjetivo < CAST(GETDATE() AS DATE) THEN 0 ELSE 1 END,
+            t.fechaObjetivo ASC
+    `, { carnet: { valor: carnet, tipo: NVarChar } });
+
+    // 3. Calcular resumen
+    const tareasAtrasadas = tareas.filter((t: any) => t.esAtrasada === 1 || t.esAtrasada === true).length;
+    const tareasHoy = tareas.filter((t: any) => {
+        if (!t.fechaObjetivo) return false;
+        const hoy = new Date().toISOString().split('T')[0];
+        const fecha = new Date(t.fechaObjetivo).toISOString().split('T')[0];
+        return hoy === fecha;
+    }).length;
+
+    return {
+        proyectos: proyectos.map((p: any) => ({
+            ...p,
+            misTareas: tareas.filter((t: any) => t.idProyecto === p.idProyecto)
+        })),
+        resumen: {
+            totalProyectos: proyectos.length,
+            totalTareas: tareas.length,
+            tareasAtrasadas,
+            tareasHoy,
+            tareasCompletadas: tareas.filter((t: any) => t.estado === 'Hecha' || t.estado === 'Completada').length
+        }
+    };
+}
