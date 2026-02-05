@@ -698,14 +698,7 @@ export async function obtenerMiAsignacion(carnet: string, filtros?: { estado?: s
         ORDER BY p.fechaFin ASC
     `, { carnet: { valor: carnet, tipo: NVarChar } });
 
-    // 2. Obtener mis tareas en esos proyectos
-    let estadoFilter = '';
-    if (filtros?.estado && filtros.estado !== 'todas') {
-        estadoFilter = filtros.estado === 'pendientes'
-            ? "AND t.estado NOT IN ('Hecha', 'Completada', 'Descartada', 'Eliminada')"
-            : `AND t.estado = '${filtros.estado}'`;
-    }
-
+    // 2. Obtener mis tareas en esos proyectos - SIN FILTRO DE ESTADO EN QUERY
     const tareas = await ejecutarQuery<any>(`
         SELECT 
             t.idTarea,
@@ -736,16 +729,27 @@ export async function obtenerMiAsignacion(carnet: string, filtros?: { estado?: s
         LEFT JOIN p_Proyectos p ON t.idProyecto = p.idProyecto
         WHERE ta.carnet = @carnet
           AND t.activo = 1
-          ${estadoFilter}
         ORDER BY 
             CASE WHEN t.estado NOT IN ('Hecha', 'Completada') THEN 0 ELSE 1 END,
             CASE WHEN t.fechaObjetivo < CAST(GETDATE() AS DATE) THEN 0 ELSE 1 END,
             t.fechaObjetivo ASC
     `, { carnet: { valor: carnet, tipo: NVarChar } });
 
-    // 3. Calcular resumen
-    const tareasAtrasadas = tareas.filter((t: any) => t.esAtrasada === 1 || t.esAtrasada === true).length;
-    const tareasHoy = tareas.filter((t: any) => {
+    // 3. Filtrar en memoria según el estado solicitado
+    let tareasFiltradas = tareas;
+    if (filtros?.estado && filtros.estado !== 'todas') {
+        if (filtros.estado === 'pendientes') {
+            tareasFiltradas = tareas.filter((t: any) =>
+                !['Hecha', 'Completada', 'Descartada', 'Eliminada'].includes(t.estado)
+            );
+        } else {
+            tareasFiltradas = tareas.filter((t: any) => t.estado === filtros.estado);
+        }
+    }
+
+    // 4. Calcular resumen
+    const tareasAtrasadas = tareasFiltradas.filter((t: any) => t.esAtrasada === 1 || t.esAtrasada === true).length;
+    const tareasHoy = tareasFiltradas.filter((t: any) => {
         if (!t.fechaObjetivo) return false;
         const hoy = new Date().toISOString().split('T')[0];
         const fecha = new Date(t.fechaObjetivo).toISOString().split('T')[0];
@@ -755,14 +759,14 @@ export async function obtenerMiAsignacion(carnet: string, filtros?: { estado?: s
     return {
         proyectos: proyectos.map((p: any) => ({
             ...p,
-            misTareas: tareas.filter((t: any) => t.idProyecto === p.idProyecto)
-        })),
+            misTareas: tareasFiltradas.filter((t: any) => t.idProyecto === p.idProyecto)
+        })).filter((p: any) => p.misTareas.length > 0), // Solo proyectos con tareas filtradas
         resumen: {
             totalProyectos: proyectos.length,
-            totalTareas: tareas.length,
+            totalTareas: tareasFiltradas.length,
             tareasAtrasadas,
             tareasHoy,
-            tareasCompletadas: tareas.filter((t: any) => t.estado === 'Hecha' || t.estado === 'Completada').length
+            tareasCompletadas: tareasFiltradas.filter((t: any) => t.estado === 'Hecha' || t.estado === 'Completada').length
         }
     };
 }
