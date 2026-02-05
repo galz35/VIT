@@ -148,8 +148,16 @@ export async function actualizarRol(idRol: number, rol: Partial<RolDb>) {
 }
 
 export async function eliminarRol(idRol: number) {
-    // Validar si hay usuarios asignados antes de borrar?
-    // Por ahora simple delete
+    // 1. Validar si hay usuarios asignados
+    const check = await ejecutarQuery<{ total: number }>(`
+        SELECT COUNT(*) as total FROM p_Usuarios WHERE idRol = @idRol AND activo = 1
+    `, { idRol: { valor: idRol, tipo: Int } });
+
+    if (check[0].total > 0) {
+        throw new Error(`No se puede eliminar el rol: Hay ${check[0].total} usuarios activos asignados a él.`);
+    }
+
+    // 2. Si está libre, proceder (Fisico o Soft, aqui Fisico está bien si está limpio)
     await ejecutarQuery(`DELETE FROM p_Roles WHERE idRol = @idRol`, { idRol: { valor: idRol, tipo: Int } });
 }
 
@@ -262,4 +270,49 @@ export async function listarAuditLogs(filtro: { page?: number, limit?: number, i
         page: pagina,
         totalPages: Math.ceil(totalRes[0].total / limite)
     };
+}
+
+// ==========================================
+// PAPELERA DE RECICLAJE
+// ==========================================
+
+export async function getDeletedItems() {
+    const proyectos = await ejecutarQuery<any>(`
+        SELECT idProyecto as id, 'Proyecto' as tipo, nombre, 
+               fechaActualizacion as fechaEliminacion, NULL as proyecto,
+               u.nombre as eliminadoPor
+        FROM p_Proyectos p
+        LEFT JOIN p_Usuarios u ON p.idCreador = u.idUsuario
+        WHERE p.activo = 0 OR p.estado IN ('Cancelado', 'Eliminado')
+    `);
+
+    const tareas = await ejecutarQuery<any>(`
+        SELECT t.idTarea as id, 'Tarea' as tipo, t.nombre, 
+               t.fechaActualizacion as fechaEliminacion, p.nombre as proyecto,
+               u.nombre as eliminadoPor
+        FROM p_Tareas t
+        LEFT JOIN p_Proyectos p ON t.idProyecto = p.idProyecto
+        LEFT JOIN p_Usuarios u ON t.idCreador = u.idUsuario
+        WHERE t.activo = 0 OR t.estado IN ('Eliminada', 'Descartada')
+    `);
+
+    return [...proyectos, ...tareas].sort((a, b) =>
+        new Date(b.fechaEliminacion || 0).getTime() - new Date(a.fechaEliminacion || 0).getTime()
+    );
+}
+
+export async function restoreItem(tipo: 'Proyecto' | 'Tarea', id: number) {
+    if (tipo === 'Proyecto') {
+        await ejecutarQuery(`
+            UPDATE p_Proyectos 
+            SET estado = 'Activo', activo = 1 
+            WHERE idProyecto = @id
+        `, { id: { valor: id, tipo: Int } });
+    } else {
+        await ejecutarQuery(`
+            UPDATE p_Tareas 
+            SET estado = 'Pendiente', activo = 1, fechaActualizacion = GETDATE()
+            WHERE idTarea = @id
+        `, { id: { valor: id, tipo: Int } });
+    }
 }

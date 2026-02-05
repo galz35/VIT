@@ -49,10 +49,23 @@ export async function reasignarResponsable(idTarea: number, carnet: string | num
 }
 
 export async function eliminarTarea(idTarea: number, carnet: string, motivo: string = 'Eliminación manual') {
-    await ejecutarSP('sp_Tarea_Eliminar', {
-        idTarea: { valor: idTarea, tipo: Int },
-        carnetSolicitante: { valor: carnet, tipo: NVarChar },
-        motivo: { valor: motivo, tipo: NVarChar }
+    // FORCE SOFT DELETE
+    await ejecutarQuery(`
+        UPDATE p_Tareas 
+        SET activo = 0, estado = 'Eliminada', fechaActualizacion = GETDATE()
+        WHERE idTarea = @idTarea
+    `, {
+        idTarea: { valor: idTarea, tipo: Int }
+    });
+}
+
+export async function restaurarTarea(idTarea: number) {
+    await ejecutarQuery(`
+        UPDATE p_Tareas 
+        SET activo = 1, estado = 'Pendiente', fechaActualizacion = GETDATE()
+        WHERE idTarea = @idTarea
+    `, {
+        idTarea: { valor: idTarea, tipo: Int }
     });
 }
 

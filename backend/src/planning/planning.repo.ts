@@ -156,9 +156,23 @@ export async function actualizarDatosProyecto(idProyecto: number, updates: Parti
 }
 
 export async function eliminarProyecto(idProyecto: number, forceCascade: boolean = false) {
-    await ejecutarSP('sp_Proyecto_Eliminar_V2', {
-        idProyecto: { valor: idProyecto, tipo: Int },
-        forceCascade: { valor: forceCascade ? 1 : 0, tipo: Bit }
+    // FORCE SOFT DELETE (No se usa el SP para evitar borrado físico)
+    await ejecutarQuery(`
+        UPDATE p_Proyectos 
+        SET estado = 'Cancelado', activo = 0 
+        WHERE idProyecto = @idProyecto
+    `, {
+        idProyecto: { valor: idProyecto, tipo: Int }
+    });
+}
+
+export async function restaurarProyecto(idProyecto: number) {
+    await ejecutarQuery(`
+        UPDATE p_Proyectos 
+        SET estado = 'Activo', activo = 1 
+        WHERE idProyecto = @idProyecto
+    `, {
+        idProyecto: { valor: idProyecto, tipo: Int }
     });
 }
 
@@ -537,6 +551,16 @@ export async function obtenerSolicitudesPorCarnets(carnets: string[]) {
         AND u.carnet IN (${carnetsStr})
         ORDER BY s.fechaSolicitud DESC
     `);
+}
+
+export async function obtenerSolicitudesPendientesPorProyecto(idProyecto: number) {
+    return await ejecutarQuery<{ idTarea: number, total: number }>(`
+        SELECT s.idTarea, COUNT(*) as total
+        FROM p_SolicitudesCambio s
+        JOIN p_Tareas t ON s.idTarea = t.idTarea
+        WHERE s.estado = 'Pendiente' AND t.idProyecto = @idProyecto
+        GROUP BY s.idTarea
+    `, { idProyecto: { valor: idProyecto, tipo: Int } });
 }
 
 export async function obtenerSolicitudPorId(id: number) {

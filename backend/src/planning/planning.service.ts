@@ -126,15 +126,43 @@ export class PlanningService {
 
         // 2. Visibilidad por Proyecto (Colaboración)
         // Si la tarea pertenece a un proyecto visible para el usuario, permite acceso.
+        const user = await authRepo.obtenerUsuarioPorId(idSolicitante);
         if (tarea.idProyecto) {
-            const user = await authRepo.obtenerUsuarioPorId(idSolicitante);
             const proyectos = await planningRepo.obtenerProyectosVisibles(idSolicitante, user);
             const accesoProyecto = proyectos.some((p: any) => p.idProyecto === tarea.idProyecto);
             if (accesoProyecto) return true;
+
+            // 3. NUEVO: Fallback Estructural (Gerencia/Subgerencia)
+            // Si el proyecto pertenece a mi gerencia/area y soy Gerente/Jefe/Director
+            // Consultamos el proyecto para ver su metadata
+            try {
+                const proyecto = await planningRepo.obtenerProyectoPorId(tarea.idProyecto);
+                if (proyecto && user) {
+                    const rol = (user.rolGlobal || '').trim();
+
+                    // A. Gerentes/Directores ven todo lo de su Gerencia
+                    if ((rol === 'Gerente' || rol === 'Director') && user.gerencia && proyecto.gerencia === user.gerencia) {
+                        return true;
+                    }
+
+                    // B. Jefes ven todo lo de su Subgerencia/Area (si coincide)
+                    if (rol === 'Jefe' || rol === 'Coordinador' || rol === 'Lider') {
+                        if (user.subgerencia && proyecto.subgerencia === user.subgerencia) return true;
+                        if (user.area && proyecto.area === user.area) return true;
+                    }
+
+                    // C. Proyectos Públicos o de mi Nodo Organizacional (Si idNodoDuenio coincide con un nodo que lidero)
+                    // Esto requeriría consultar mis nodos liderados, asumiendo idOrg en usuario o query extra
+                    // Por ahora la coincidencia de nombres es un buen proxy.
+                }
+            } catch (e) {
+                console.warn('[PlanningService] Error checking project structure visibility', e);
+            }
         }
 
         // Si falló todo
-        throw new ForbiddenException('No tienes permisos para ver/editar esta tarea (Restringido por Jerarquía y Proyecto).');
+        console.warn(`[Access Denied] User ${idSolicitante} tried to access Task ${tarea.idTarea} (Project ${tarea.idProyecto}). Role: ${user?.rolGlobal}`);
+        throw new ForbiddenException(`No tienes permisos para ver/editar esta tarea (Restringido por Jerarquía y Proyecto: ${tarea.idProyecto || 'N/A'}).`);
     }
 
     // ============================
@@ -159,11 +187,27 @@ export class PlanningService {
         // Proyectos estratégicos requieren aprobación
         if (tarea.proyectoTipo === 'Estrategico' || tarea.proyectoRequiereAprobacion) {
             const usuario = await authRepo.obtenerUsuarioPorId(idUsuario);
+
+            // 1. Admin siempre libre
             if (this.isAdminRole(usuario?.rolGlobal)) {
                 return { puedeEditar: true, requiereAprobacion: false, tipoProyecto: tarea.proyectoTipo || 'Estrategico' };
             }
 
-            // Permitimos editar pero con flujo de aprobación
+            // 2. Si soy el CREADOR de la tarea, puedo editarla libremente (agilidad para "cosa vieja")
+            if (tarea.idCreador === idUsuario) {
+                return { puedeEditar: true, requiereAprobacion: false, tipoProyecto: tarea.proyectoTipo || 'Estrategico' };
+            }
+
+            // 3. Si soy el DUEÑO o RESPONSABLE del proyecto completo
+            const proyecto = await planningRepo.obtenerProyectoPorId(tarea.idProyecto);
+            if (proyecto) {
+                const esDuenio = proyecto.idCreador === idUsuario || proyecto.responsableCarnet === usuario?.carnet;
+                if (esDuenio) {
+                    return { puedeEditar: true, requiereAprobacion: false, tipoProyecto: tarea.proyectoTipo || 'Estrategico' };
+                }
+            }
+
+            // Permitimos editar pero con flujo de aprobación para otros
             return { puedeEditar: true, requiereAprobacion: true, tipoProyecto: tarea.proyectoTipo || 'Estrategico' };
         }
 

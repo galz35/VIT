@@ -101,4 +101,23 @@ export class AdminService {
 
         return visibleEmployees;
     }
+
+    // ==========================================
+    // PAPELERA DE RECICLAJE
+    // ==========================================
+    async getDeletedItems() {
+        const items = await adminRepo.getDeletedItems();
+        return { data: items };
+    }
+
+    async restoreItem(tipo: 'Proyecto' | 'Tarea', id: number, idAdmin: number) {
+        await adminRepo.restoreItem(tipo, id);
+        await this.crearLog({
+            idUsuario: idAdmin,
+            accion: 'RESTORE_ITEM',
+            entidad: tipo,
+            datos: `Restaurado ${tipo} #${id}`
+        });
+        return { success: true };
+    }
 }

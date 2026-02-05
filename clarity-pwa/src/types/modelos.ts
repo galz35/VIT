@@ -130,6 +130,7 @@ export interface Tarea {
     idTareaPadre?: number;
     subtareas?: Tarea[];
     avances?: TareaAvance[];
+    pendingRequests?: number;
 }
 
 export interface TareaAvance {

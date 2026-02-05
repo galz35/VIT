@@ -155,4 +155,18 @@ export class AdminController {
         const actorId = this.getUserId(req);
         return this.adminService.usuarioAsignarANodo(dto, actorId);
     }
+
+    // ==========================================
+    // PAPELERA DE RECICLAJE
+    // ==========================================
+    @Get('recycle-bin')
+    async getDeletedItems() {
+        return this.adminService.getDeletedItems();
+    }
+
+    @Post('recycle-bin/restore')
+    async restoreItem(@Body() body: { tipo: 'Proyecto' | 'Tarea'; id: number }, @Req() req: any) {
+        const actorId = this.getUserId(req);
+        return this.adminService.restoreItem(body.tipo, body.id, actorId);
+    }
 }

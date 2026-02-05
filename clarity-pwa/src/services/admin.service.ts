@@ -37,5 +37,15 @@ export const adminService = {
     getProfiles: async (): Promise<SecurityProfile[]> => {
         const { data } = await api.get<any>('/admin/security/profiles');
         return data.data;
+    },
+
+    // Recycle Bin
+    getDeletedItems: async (): Promise<any[]> => {
+        const { data } = await api.get<any>('/admin/recycle-bin');
+        return data.data || [];
+    },
+
+    restoreItem: async (tipo: 'Proyecto' | 'Tarea', id: number): Promise<void> => {
+        await api.post(`/admin/recycle-bin/restore`, { tipo, id });
     }
 };

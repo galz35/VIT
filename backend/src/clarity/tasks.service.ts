@@ -677,9 +677,22 @@ export class TasksService {
     }
 
     async tareasDeProyecto(idProyecto: number, idUsuario: number) {
-        // Por ahora devolvemos todas las tareas del proyecto. 
-        // En el futuro se puede filtrar por visibilidad segun idUsuario
-        return await clarityRepo.obtenerTareasPorProyecto(idProyecto);
+        const tareas = await clarityRepo.obtenerTareasPorProyecto(idProyecto);
+
+        // Merge with Pending Requests counts
+        try {
+            const requests = await planningRepo.obtenerSolicitudesPendientesPorProyecto(idProyecto);
+            const reqMap = new Map<number, number>();
+            requests.forEach((r: any) => reqMap.set(r.idTarea, r.total));
+
+            return tareas.map((t: any) => ({
+                ...t,
+                pendingRequests: reqMap.get(t.idTarea) || 0
+            }));
+        } catch (e) {
+            console.warn('Error fetching pending requests for project tasks', e);
+            return tareas;
+        }
     }
 
     async getEquipoBacklog(idUsuarioLider: number) {

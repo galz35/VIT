@@ -15,7 +15,7 @@ import { AvanceMensualModal } from './components/AvanceMensualModal';
 import {
     LayoutGrid, List, Calendar as CalendarIcon, ChevronDown, Plus,
     Briefcase, Lock, MoreVertical, Search, CheckCircle, ChevronLeft, ChevronRight,
-    User, Unlock, AlertCircle, Trash2, X, Map as MapIcon, Link2, Edit
+    User, Unlock, AlertCircle, Trash2, X, Map as MapIcon, Link2, Edit, GitPullRequest
 } from 'lucide-react';
 import {
     format,
@@ -1442,6 +1442,17 @@ export const PlanTrabajoPage: React.FC = () => {
                 <div className="flex items-center gap-2">
                     {/* VIEW SWITCHER & ACTIONS */}
                     <div className="flex items-center gap-3">
+                        {/* Approvals Link (Git-like) */}
+                        {tasks.some(t => (t.pendingRequests || 0) > 0) && (
+                            <button
+                                onClick={() => navigate('/app/planning/approvals')}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-purple-100 text-purple-700 font-bold text-xs rounded-lg hover:bg-purple-200 shadow-sm border border-purple-200 animate-pulse"
+                            >
+                                <GitPullRequest size={14} />
+                                <span className="hidden md:inline">{tasks.reduce((sum, t) => sum + (t.pendingRequests || 0), 0)} Cambios</span>
+                            </button>
+                        )}
+
                         {/* Selector de Vistas Optimizado */}
                         <ViewTabs value={viewMode} onChange={setViewMode} />
 
@@ -1620,16 +1631,17 @@ export const PlanTrabajoPage: React.FC = () => {
                                             {/* Table Header - Compact */}
                                             {/* Table Header - Compact */}
                                             <div className="hidden md:grid grid-cols-12 gap-2 px-4 py-3 bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider shrink-0 sticky top-0 z-30">
-                                                <div className="col-span-4 pl-2">Tarea</div>
+                                                <div className="col-span-3 pl-2">Tarea</div>
                                                 <div className="col-span-2">Estado</div>
                                                 <div className="col-span-2">Asignado</div>
                                                 <div className="col-span-2">Fechas</div>
+                                                <div className="col-span-1 text-center">Tiempo</div>
                                                 <div className="col-span-2 text-right pr-2">Acciones</div>
                                             </div>
 
                                             {/* FILTER ROW */}
                                             <div className="hidden md:grid grid-cols-12 gap-2 px-4 py-2 bg-slate-50/50 border-b border-slate-100 shrink-0 z-20">
-                                                <div className="col-span-4 pl-2">
+                                                <div className="col-span-3 pl-2">
                                                     <input
                                                         placeholder="Filtrar tarea..."
                                                         className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs focus:border-indigo-400 outline-none"
@@ -1665,6 +1677,7 @@ export const PlanTrabajoPage: React.FC = () => {
                                                         onChange={e => setColFilters(prev => ({ ...prev, fecha: e.target.value }))}
                                                     />
                                                 </div>
+                                                <div className="col-span-1"></div>
                                                 <div className="col-span-2 flex justify-end pr-2">
                                                     {(colFilters.titulo || colFilters.estado || colFilters.asignado || colFilters.fecha) && (
                                                         <button
@@ -1737,7 +1750,7 @@ export const PlanTrabajoPage: React.FC = () => {
 
                                                                         {/* Desktop Grid View - Premium Redesign */}
                                                                         <div className="hidden md:grid grid-cols-12 gap-2 px-4 py-2 items-center text-xs h-10">
-                                                                            <div className="col-span-4 flex items-center gap-2 pr-2 min-w-0">
+                                                                            <div className="col-span-3 flex items-center gap-2 pr-2 min-w-0">
                                                                                 {/* Indentation Spacer */}
                                                                                 {isChild && <div className="w-6 shrink-0 flex justify-end"><div className="w-3 h-px bg-slate-300 rounded-full"></div></div>}
 
@@ -1747,6 +1760,11 @@ export const PlanTrabajoPage: React.FC = () => {
                                                                                         <p className={`truncate transition-colors ${t.estado === 'Hecha' ? 'text-slate-400 line-through decoration-slate-300' : 'text-slate-700 group-hover:text-indigo-700'} ${hasChildren ? 'font-black' : 'font-medium'}`}>
                                                                                             {t.titulo}
                                                                                         </p>
+                                                                                        {(t.pendingRequests || 0) > 0 && (
+                                                                                            <span className="flex items-center gap-1 bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded text-[9px] font-black border border-purple-200" title={`${t.pendingRequests} cambios pendientes de aprobación`}>
+                                                                                                <GitPullRequest size={8} /> {t.pendingRequests}
+                                                                                            </span>
+                                                                                        )}
                                                                                         <span className="text-[9px] text-slate-300 font-mono hidden xl:inline opacity-0 group-hover:opacity-100">#{t.idTarea}</span>
                                                                                     </div>
                                                                                 </div>
@@ -1779,6 +1797,35 @@ export const PlanTrabajoPage: React.FC = () => {
                                                                                         </span>
                                                                                     </div>
                                                                                 ) : <span className="text-slate-200">--</span>}
+                                                                            </div>
+
+                                                                            {/* Time Column */}
+                                                                            <div className="col-span-1 flex items-center justify-center text-[10px] font-bold">
+                                                                                {(() => {
+                                                                                    if (t.estado === 'Hecha') return <span className="text-emerald-500">Hecha</span>;
+                                                                                    const now = startOfDay(new Date());
+
+                                                                                    // Helper to parse
+                                                                                    const parseD = (d: string) => new Date(Number(d.split('-')[0]), Number(d.split('-')[1]) - 1, Number(d.split('-')[2].substring(0, 2)));
+
+                                                                                    if (t.fechaObjetivo) {
+                                                                                        const deadline = parseD(String(t.fechaObjetivo));
+                                                                                        if (isAfter(now, deadline)) {
+                                                                                            const days = differenceInDays(now, deadline);
+                                                                                            return <span className="text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap">+{days}d</span>;
+                                                                                        }
+                                                                                    }
+
+                                                                                    if (t.fechaInicioPlanificada) {
+                                                                                        const start = parseD(String(t.fechaInicioPlanificada));
+                                                                                        if (isAfter(start, now)) {
+                                                                                            const days = differenceInDays(start, now);
+                                                                                            return <span className="text-sky-500 bg-sky-50 px-1.5 py-0.5 rounded whitespace-nowrap">-{days}d</span>;
+                                                                                        }
+                                                                                    }
+
+                                                                                    return <span className="text-slate-300">-</span>;
+                                                                                })()}
                                                                             </div>
 
                                                                             <div className="col-span-2 flex items-center gap-2 pl-2 justify-end">
