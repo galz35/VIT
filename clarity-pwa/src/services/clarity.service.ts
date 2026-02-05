@@ -281,6 +281,11 @@ export const clarityService = {
         return response.data;
     },
 
+    getProyecto: async (id: number) => {
+        const { data: response } = await api.get<ApiResponse<Proyecto>>(`/proyectos/${id}`);
+        return response.data;
+    },
+
     updateProyecto: async (id: number, dto: { nombre?: string, descripcion?: string, idNodoDuenio?: number, fechaInicio?: string, fechaFin?: string, tipo?: string }) => {
         const { data: response } = await api.patch<ApiResponse>(`/proyectos/${id}`, dto);
         return response.data;
@@ -303,6 +308,11 @@ export const clarityService = {
 
     getProyectosTareas: async (idProyecto: number) => {
         const { data: response } = await api.get<ApiResponse<Tarea[]>>(`/proyectos/${idProyecto}/tareas`);
+        return response.data;
+    },
+
+    getProyectoHistorial: async (idProyecto: number, page: number = 1, limit: number = 50) => {
+        const { data: response } = await api.get<ApiResponse<any>>(`/proyectos/${idProyecto}/historial`, { params: { page, limit } });
         return response.data;
     },
 

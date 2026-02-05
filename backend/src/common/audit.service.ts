@@ -227,4 +227,30 @@ export class AuditService {
     async getAuditLogDetalle(id: number) {
         return await auditRepo.obtenerAuditLogPorId(id);
     }
+
+    async getHistorialProyecto(idProyecto: number, page: number = 1, limit: number = 50) {
+        const offset = (page - 1) * limit;
+        const items = await auditRepo.listarAuditLogsProyecto(idProyecto, limit, offset);
+        const total = await auditRepo.contarAuditLogsProyecto(idProyecto);
+
+        const mappedItems = items.map((i: any) => ({
+            ...i,
+            idAudit: i.id || i.idAudit,
+            usuario: i.nombreUsuario || i.usuario || 'Sistema',
+            correo: i.correoUsuario,
+            recurso: i.entidad,
+            recursoId: i.entidadId,
+            tareaTitulo: i.tareaNombre, // Enriched info
+            datosAnteriores: i.datosAnteriores,
+            datosNuevos: i.datosNuevos,
+            detalles: i.datosNuevos
+        }));
+
+        return {
+            items: mappedItems,
+            total,
+            page,
+            totalPages: Math.ceil(total / limit),
+        };
+    }
 }

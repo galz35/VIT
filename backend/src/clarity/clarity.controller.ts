@@ -7,6 +7,7 @@ import { TasksService } from './tasks.service';
 import { RecurrenciaService } from './recurrencia.service';
 import { FocoService } from './foco.service';
 import { ReportsService } from './reports.service';
+import { AuditService } from '../common/audit.service';
 import {
     TareaCrearRapidaDto, CheckinUpsertDto, FechaQueryDto, TareaActualizarDto,
     ProyectoCrearDto, ProyectoFilterDto, TareaRevalidarDto, BloqueoCrearDto,
@@ -23,7 +24,8 @@ export class ClarityController {
         private readonly tasksService: TasksService,
         private readonly recurrenciaService: RecurrenciaService,
         private readonly focoService: FocoService,
-        private readonly reportsService: ReportsService
+        private readonly reportsService: ReportsService,
+        private readonly auditService: AuditService
     ) { }
 
     @Get('config')
@@ -208,6 +210,12 @@ export class ClarityController {
     @ApiOperation({ summary: 'Obtener todas las tareas de un proyecto' })
     async getProyectosTareas(@Param('id') id: number, @Request() req) {
         return this.tasksService.tareasDeProyecto(id, req.user.userId);
+    }
+
+    @Get('proyectos/:id/historial')
+    @ApiOperation({ summary: 'Obtener historial completo (timeline) del proyecto' })
+    async getProyectoHistorial(@Param('id') id: number, @Query('page') page: number = 1, @Query('limit') limit: number = 50) {
+        return this.auditService.getHistorialProyecto(id, page, limit);
     }
 
     // ==========================================

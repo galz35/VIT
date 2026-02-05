@@ -27,6 +27,7 @@ import {
     MoreHorizontal,
     Download,
     AlertCircle,
+    History, // Added
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 
@@ -1507,6 +1508,19 @@ export const ProyectosPage: React.FC = () => {
                             className="w-full text-left px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                         >
                             <span>✏️</span> Editar
+                        </button>
+
+                        <button
+                            onClick={() => {
+                                const p = projects.find(x => Number(x.idProyecto) === Number(activeMenuId));
+                                if (p) {
+                                    closeMenu();
+                                    navigate(`/app/planning/proyectos/${p.idProyecto}/historial`);
+                                }
+                            }}
+                            className="w-full text-left px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2 border-t border-slate-50"
+                        >
+                            <History size={14} className="text-slate-400" /> Historial
                         </button>
 
                         <button

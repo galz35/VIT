@@ -138,6 +138,7 @@ export async function obtenerResumenActividad(dias: number) {
     };
 }
 
+
 export async function obtenerAuditLogPorId(id: number) {
     const res = await ejecutarQuery<any>(`
         SELECT 
@@ -151,3 +152,32 @@ export async function obtenerAuditLogPorId(id: number) {
     `, { id: { valor: id, tipo: Int } });
     return res[0] || null;
 }
+
+// Historial Completo de Proyecto (Timeline)
+export async function listarAuditLogsProyecto(idProyecto: number, limit: number, offset: number) {
+    return await ejecutarQuery<any>(`
+        SELECT a.*, 
+               u.nombre as nombreUsuario, 
+               u.correo as correoUsuario,
+               CASE WHEN a.entidad = 'Proyecto' THEN 'Proyecto' ELSE 'Tarea' END as tipoEntidad,
+               t.nombre as tareaNombre
+        FROM p_Auditoria a
+        LEFT JOIN p_Usuarios u ON a.idUsuario = u.idUsuario
+        LEFT JOIN p_Tareas t ON (a.entidad = 'Tarea' AND TRY_CAST(a.entidadId AS INT) = t.idTarea)
+        WHERE (a.entidad = 'Proyecto' AND a.entidadId = @pid)
+           OR (a.entidad = 'Tarea' AND a.entidadId IN (SELECT CAST(idTarea AS NVARCHAR) FROM p_Tareas WHERE idProyecto = @pid))
+        ORDER BY a.fecha DESC
+        OFFSET ${Math.floor(offset)} ROWS FETCH NEXT ${Math.floor(limit)} ROWS ONLY
+    `, { pid: { valor: String(idProyecto), tipo: NVarChar } });
+}
+
+export async function contarAuditLogsProyecto(idProyecto: number) {
+    const res = await ejecutarQuery<{ total: number }>(`
+        SELECT COUNT(*) as total
+        FROM p_Auditoria a
+        WHERE (a.entidad = 'Proyecto' AND a.entidadId = @pid)
+           OR (a.entidad = 'Tarea' AND a.entidadId IN (SELECT CAST(idTarea AS NVARCHAR) FROM p_Tareas WHERE idProyecto = @pid))
+    `, { pid: { valor: String(idProyecto), tipo: NVarChar } });
+    return res[0].total;
+}
+

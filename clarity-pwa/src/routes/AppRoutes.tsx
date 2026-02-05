@@ -32,6 +32,7 @@ import { WorkloadPage } from '../pages/Planning/WorkloadPage';
 import { ProjectSimulationPage } from '../pages/Planning/ProjectSimulationPage';
 import { PlanTrabajoPage } from '../pages/Planning/PlanTrabajoPage';
 import { TeamPlanningPage } from '../pages/Planning/TeamPlanningPage';
+import { ProjectHistoryPage } from '../pages/Planning/ProjectHistoryPage';
 
 // Team Pages
 // import { ManagerDashboard } from '../pages/Equipo/ManagerDashboard';
@@ -99,6 +100,7 @@ export const AppRoutes = () => {
                     <Route path="planning/approvals" element={<ApprovalsPage />} />
                     <Route path="planning/timeline" element={<PlanningTimelinePage />} />
                     <Route path="planning/roadmap" element={<RoadmapPage />} />
+                    <Route path="planning/proyectos/:id/historial" element={<ProjectHistoryPage />} />
                     <Route path="proyectos/:id" element={<PlanningTimelinePage />} />
                     <Route path="planning/carga" element={<WorkloadPage />} />
                     <Route path="planning/simulation" element={<ProjectSimulationPage />} />
