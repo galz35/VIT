@@ -81,6 +81,7 @@ export const ProyectosPage: React.FC = () => {
         area: searchParams.get('area') || '',
         tipo: searchParams.get('tipo') || '',
         fechaInicio: searchParams.get('fechaInicio') || '',
+        fechaFin: searchParams.get('fechaFin') || '', // Added fechaFin
         minProgreso: searchParams.get('minProgreso') || '',
         soloConAtraso: searchParams.get('soloConAtraso') || '',
     });
@@ -248,6 +249,10 @@ export const ProyectosPage: React.FC = () => {
 
         if (totalDuration <= 0) return today > end ? 100 - progress : 0;
 
+        // FIX: Si el proyecto YA terminó (estado final), no mostrar atraso aunque el cálculo matemático lo diga
+        const estado = ((p as any).estado || '').toLowerCase();
+        if (estado.includes('termin') || estado.includes('final') || estado.includes('complet')) return 0;
+
         const expected = Math.min(100, (elapsed / totalDuration) * 100);
         const delay = Math.max(0, expected - progress);
         return Math.round(delay);
@@ -304,6 +309,9 @@ export const ProyectosPage: React.FC = () => {
         if (filters.fechaInicio) {
             filtered = filtered.filter(x => (x as any).fechaInicio && (x as any).fechaInicio >= filters.fechaInicio);
         }
+        if (filters.fechaFin) {
+            filtered = filtered.filter(x => (x as any).fechaFin && (x as any).fechaFin <= filters.fechaFin);
+        }
         if (filters.minProgreso) {
             const min = Number(filters.minProgreso);
             filtered = filtered.filter(x => Number((x as any).progreso ?? 0) >= min);
@@ -311,6 +319,15 @@ export const ProyectosPage: React.FC = () => {
         if (filters.soloConAtraso === 'true') {
             filtered = filtered.filter(x => calculateDelay(x) > 0);
         }
+
+        // Default Sort by Fecha Inicio (Ascending - Oldest first to track timeline)
+        filtered.sort((a, b) => {
+            const dateA = (a as any).fechaInicio ? new Date((a as any).fechaInicio).getTime() : 0;
+            const dateB = (b as any).fechaInicio ? new Date((b as any).fechaInicio).getTime() : 0;
+            return dateA - dateB;
+            // Note: If user requested descending, swap a and b.
+            // Currently requested: "ordenarlo la informacion por fecha" -> usually implies chronological
+        });
 
         const totalItems = filtered.length;
         const lp = Math.max(1, Math.ceil(totalItems / lim));
@@ -862,7 +879,7 @@ export const ProyectosPage: React.FC = () => {
                                 <button
                                     onClick={() => {
                                         setSearchTerm('');
-                                        setFilters({ estado: '', gerencia: '', subgerencia: '', area: '', tipo: '', fechaInicio: '', minProgreso: '', soloConAtraso: '' });
+                                        setFilters({ estado: '', gerencia: '', subgerencia: '', area: '', tipo: '', fechaInicio: '', fechaFin: '', minProgreso: '', soloConAtraso: '' });
                                     }}
                                     className="text-[10px] font-black text-rose-600 uppercase hover:underline"
                                 >
@@ -960,7 +977,8 @@ export const ProyectosPage: React.FC = () => {
                                         <th className="px-3 py-4 hidden xl:table-cell">Subgerencia</th>
                                         <th className="px-3 py-4 hidden xl:table-cell">Área</th>
                                         <th className="px-3 py-4 hidden lg:table-cell">Tipo</th>
-                                        <th className="px-3 py-4 hidden lg:table-cell w-[120px]">Fecha</th>
+                                        <th className="px-3 py-4 hidden lg:table-cell w-[120px]">Inicio</th>
+                                        <th className="px-3 py-4 hidden lg:table-cell w-[120px]">Fin</th>
                                         <th className="px-3 py-4 hidden md:table-cell w-[120px]">Estado</th>
                                         <th className="px-3 py-4 hidden lg:table-cell w-[100px]">Progreso</th>
                                         <th className="px-3 py-4 hidden xl:table-cell w-[100px]">% Atraso</th>
@@ -1040,6 +1058,14 @@ export const ProyectosPage: React.FC = () => {
                                                 onChange={e => setFilters({ ...filters, fechaInicio: e.target.value })}
                                             />
                                         </th>
+                                        <th className="px-3 py-2 hidden lg:table-cell">
+                                            <input
+                                                type="date"
+                                                className="w-full h-8 px-1 bg-slate-50 border border-slate-200 rounded-lg text-[9px] font-black text-slate-600 outline-none"
+                                                value={filters.fechaFin}
+                                                onChange={e => setFilters({ ...filters, fechaFin: e.target.value })}
+                                            />
+                                        </th>
                                         <th className="px-3 py-2 hidden md:table-cell">
                                             <select
                                                 className="w-full h-8 px-2 bg-slate-50 border border-slate-200 rounded-lg text-[9px] font-black text-slate-600 outline-none"
@@ -1076,7 +1102,7 @@ export const ProyectosPage: React.FC = () => {
                                             <button
                                                 onClick={() => {
                                                     setSearchTerm('');
-                                                    setFilters({ estado: '', gerencia: '', subgerencia: '', area: '', tipo: '', fechaInicio: '', minProgreso: '', soloConAtraso: '' });
+                                                    setFilters({ estado: '', gerencia: '', subgerencia: '', area: '', tipo: '', fechaInicio: '', fechaFin: '', minProgreso: '', soloConAtraso: '' });
                                                 }}
                                                 className="p-1 px-2 text-[8px] font-black bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-md transition-colors"
                                                 title="Limpiar"
@@ -1090,14 +1116,14 @@ export const ProyectosPage: React.FC = () => {
                                 <tbody className="divide-y divide-slate-100">
                                     {loading ? (
                                         <tr>
-                                            <td colSpan={11} className="px-6 py-20 text-center">
+                                            <td colSpan={12} className="px-6 py-20 text-center">
                                                 <div className="inline-block w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
                                                 <p className="mt-3 text-slate-400 font-bold text-sm uppercase tracking-widest">Sincronizando...</p>
                                             </td>
                                         </tr>
                                     ) : projects.length === 0 ? (
                                         <tr>
-                                            <td colSpan={11} className="px-6 py-20 text-center text-slate-400 italic font-medium">
+                                            <td colSpan={12} className="px-6 py-20 text-center text-slate-400 italic font-medium">
                                                 No se encontraron proyectos bajo estos criterios.
                                             </td>
                                         </tr>
@@ -1192,11 +1218,28 @@ export const ProyectosPage: React.FC = () => {
                                                         )}
                                                     </td>
 
-                                                    {/* FECHA (New) */}
+                                                    {/* FECHA INICIO (New) */}
                                                     <td className="px-3 py-5 hidden lg:table-cell">
-                                                        <span className="text-xs font-bold text-slate-600 uppercase">
-                                                            {(p as any).fechaInicio ? format(new Date((p as any).fechaInicio), 'dd MMM yyyy', { locale: es }) : '-'}
-                                                        </span>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Fecha Inicio</span>
+                                                            <div className="flex items-center gap-1.5 mt-0.5">
+                                                                <span className="text-xs font-bold text-slate-700">
+                                                                    {(p as any).fechaInicio ? format(new Date((p as any).fechaInicio), 'dd MMM yyyy', { locale: es }) : 'N/A'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+
+                                                    {/* FECHA FIN (Nueva Columna Solicitada) */}
+                                                    <td className="px-3 py-5 hidden lg:table-cell">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Fecha Fin</span>
+                                                            <div className="flex items-center gap-1.5 mt-0.5">
+                                                                <span className="text-xs font-bold text-slate-700">
+                                                                    {(p as any).fechaFin ? format(new Date((p as any).fechaFin), 'dd MMM yyyy', { locale: es }) : 'N/A'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
                                                     </td>
 
                                                     <td className="px-3 py-5 hidden md:table-cell">
