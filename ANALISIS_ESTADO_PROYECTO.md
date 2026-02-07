@@ -39,6 +39,13 @@ El proyecto **Clarity** es una plataforma integral de productividad con tres fre
 - Documentar el mapa de rutas con el estado por módulo y dependencias de API, usando la estructura ya definida en el router principal.【F:clarity-pwa/src/App.tsx†L118-L190】
 - Añadir checklist de QA visual por vistas “Mi Día”, “Pendientes”, “Planning” y “Admin” para consistencia UI.
 
+#### 2.1.1 ¿Qué le falta a la web (lista concreta)?
+1. **README funcional real**: reemplazar el template de Vite por documentación de producto (módulos, rutas, arquitectura y despliegue).【F:clarity-pwa/README.md†L1-L45】
+2. **Mapa de rutas + permisos + dependencias de API**: documento único que detalle cada ruta, rol permitido y endpoints consumidos para soporte y QA.【F:clarity-pwa/src/App.tsx†L118-L190】
+3. **Checklist de QA visual**: guía de validación UI por módulo clave para asegurar coherencia de UX y evitar regresiones visuales.
+4. **Estandarización de estados vacíos/errores**: definir comportamiento y mensajes uniformes para módulos críticos (Mi Día, Pendientes, Planning, Admin).
+5. **Criterios de salida por módulo**: definir “done” técnico y funcional por cada área (incluye métricas mínimas y comportamiento esperado).
+
 ---
 
 ### 2.2 Backend (NestJS)
