@@ -11,6 +11,8 @@ import { PlanningService } from '../planning/planning.service';
 import { VisibilidadService } from '../acceso/visibilidad.service';
 import { RecurrenciaService } from './recurrencia.service';
 import { ProyectoFilterDto, ProyectoCrearDto } from './dto/clarity.dtos';
+import { NotificationService } from '../common/notification.service';
+
 
 import { Int, NVarChar } from '../db/base.repo';
 
@@ -21,7 +23,9 @@ export class TasksService {
         private auditService: AuditService,
         private visibilidadService: VisibilidadService,
         private recurrenciaService: RecurrenciaService,
+        private notificationService: NotificationService,
     ) { }
+
 
     // ===============================================
     // COMPATIBILIDAD CON CONTROLLER (Métodos mapeados)
@@ -141,7 +145,16 @@ export class TasksService {
             idTareaPadre: dto.idTareaPadre
         });
 
+
+
+
+        // NOTIFICACIÓN: Si se asignó a otra persona
+        if (dto.idResponsable && dto.idResponsable !== dto.idUsuario) {
+            this.enviarNotificacionAsignacion(idTarea, dto.idUsuario, dto.idResponsable, dto.titulo, dto.descripcion);
+        }
+
         return await planningRepo.obtenerTareaPorId(idTarea);
+
     }
 
     async crearTareaMasiva(dto: TareaMasivaDto, idCreador: number) {
@@ -165,9 +178,15 @@ export class TasksService {
                 idResponsable: idTarget
             });
             createdIds.push(idTarea);
+
+            // NOTIFICACIÓN (Individual por cada miembro)
+            if (idTarget !== idCreador) {
+                this.enviarNotificacionAsignacion(idTarea, idCreador, idTarget, dto.tareaBase.titulo, dto.tareaBase.descripcion);
+            }
         }
         return { created: createdIds.length, ids: createdIds };
     }
+
 
     async getAgendaCompliance(userId: number, roles: string[], fechaStr?: string) {
         const carnet = await this.resolveCarnet(userId);
@@ -876,7 +895,36 @@ export class TasksService {
         await clarityRepo.eliminarNota(idNota);
         return { success: true };
     }
+
+    private async enviarNotificacionAsignacion(idTarea: number, idCreador: number, idDestino: number, titulo: string, descripcion?: string) {
+        try {
+            // Obtener nombre del creador
+            const creador = await authRepo.obtenerUsuarioPorId(idCreador);
+            const nombreCreador = creador?.nombre || 'Alguien';
+
+            // Obtener tokens del destino
+            const tokens = await this.notificationService.getTokensForUser(idDestino);
+            if (!tokens || tokens.length === 0) return;
+
+            // Enviar Push
+            const body = descripcion ? `${descripcion.substring(0, 50)}${descripcion.length > 50 ? '...' : ''}` : 'Nueva tarea asignada';
+
+            await this.notificationService.sendPushToUser(
+                tokens,
+                `📝 ${nombreCreador} te asignó: ${titulo}`,
+                body,
+                {
+                    type: 'ASSIGNMENT',
+                    taskId: idTarea,
+                    creatorId: idCreador
+                }
+            );
+        } catch (error) {
+            console.error('[TasksService] Error enviando notificacion:', error);
+        }
+    }
 }
+
 
 
 

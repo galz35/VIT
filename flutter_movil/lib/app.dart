@@ -24,7 +24,7 @@ class MomentusMobileApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Momentus Mobile',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.light(),
+        theme: MomentusTheme.theme, // Solo modo claro
         home: const _AppRoot(),
       ),
     );

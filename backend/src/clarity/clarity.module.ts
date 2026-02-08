@@ -8,6 +8,8 @@ import { FocoService } from './foco.service';
 import { ReportsService } from './reports.service';
 import { PlanningModule } from '../planning/planning.module';
 import { AccesoModule } from '../acceso/acceso.module';
+import { NotificationModule } from '../common/notification.module';
+
 
 // NOTA: ClarityService, ReportsService, FocoService, SeedService
 // han sido removidos o migrados a SQL directo
@@ -15,7 +17,9 @@ import { AccesoModule } from '../acceso/acceso.module';
 @Module({
     imports: [
         PlanningModule,
-        AccesoModule
+        AccesoModule,
+        NotificationModule,
+
     ],
     controllers: [ClarityController, OrganizacionController, KpisController, EquipoController, AsignacionesController, AvanceMensualController],
     providers: [TasksService, RecurrenciaService, FocoService, ReportsService],
