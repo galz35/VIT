@@ -58,8 +58,13 @@ export interface Proyecto {
     area?: string;
     subgerencia?: string;
     gerencia?: string;
+    creadorNombre?: string;
+    creadorCarnet?: string;
+    responsableCarnet?: string;
+    responsableNombre?: string;
     progreso?: number;
     requiereAprobacion?: boolean;
+    tipo?: string;
 }
 
 export interface SolicitudCambio {
@@ -76,14 +81,15 @@ export interface SolicitudCambio {
 
 export type Prioridad = 'Alta' | 'Media' | 'Baja';
 export type Esfuerzo = 'S' | 'M' | 'L';
-export type EstadoTarea = 'Pendiente' | 'EnCurso' | 'Pausa' | 'Bloqueada' | 'Revision' | 'Hecha' | 'Descartada';
-export type TipoTarea = 'Logistica' | 'Administrativa' | 'Estrategica' | 'AMX' | 'Otros' | 'Operativo';
+export type EstadoTarea = 'Pendiente' | 'En Curso' | 'EnCurso' | 'Pausa' | 'Bloqueada' | 'Revision' | 'Revisión' | 'Hecha' | 'Descartada';
+export type TipoTarea = 'Logistica' | 'Administrativa' | 'Estrategica' | 'AMX' | 'Otros' | 'Operativo' | 'CENAM';
 export type AlcanceTarea = 'Local' | 'Regional' | 'AMX';
 
 export interface Tarea {
     idTarea: number;
     idProyecto: number;
     proyecto?: Proyecto;
+    proyectoNombre?: string;
     titulo: string;
     descripcion?: string;
     estado: EstadoTarea;
@@ -91,11 +97,15 @@ export interface Tarea {
     esfuerzo: Esfuerzo;
     tipo?: TipoTarea;
     alcance?: AlcanceTarea;
-    fechaInicioPlanificada?: string;
-    fechaObjetivo?: string;
+    fechaInicioPlanificada?: string | null;
+    fechaObjetivo?: string | null;
     fechaEnCurso?: string;
     fechaHecha?: string;
     idCreador: number;
+    creador?: {
+        nombre: string;
+        correo?: string;
+    };
     idAsignadoPor?: number;
     asignados?: TareaAsignado[];
     // Campos directos para responsable (alternativa a asignados[])
@@ -108,12 +118,28 @@ export interface Tarea {
     orden: number;
     comentario?: string;
     motivoBloqueo?: string;
+    requiereEvidencia?: boolean;
+    idEntregable?: number;
     // Campos para tipos A/B/C
     comportamiento?: 'SIMPLE' | 'RECURRENTE' | 'LARGA';
     idGrupo?: number;
     numeroParte?: number;
     fechaInicioReal?: string;
     fechaFinReal?: string;
+    linkEvidencia?: string;
+    idTareaPadre?: number;
+    subtareas?: Tarea[];
+    avances?: TareaAvance[];
+    pendingRequests?: number;
+}
+
+export interface TareaAvance {
+    idLog: number;
+    idTarea: number;
+    idUsuario: number;
+    progreso: number;
+    comentario: string;
+    fecha: string;
 }
 
 export interface TareaRegistrarAvanceDto {
@@ -134,12 +160,19 @@ export interface Checkin {
     idCheckin: number;
     fecha: string; // YYYY-MM-DD
     idUsuario: number;
+    usuarioCarnet?: string; // Carnet-First
     usuario?: Usuario;
-    entregableTexto: string;
+    entregableTexto?: string;
     nota?: string;
     linkEvidencia?: string;
+    idNodo?: number;
     estadoAnimo?: 'Tope' | 'Bien' | 'Bajo';
+    prioridad1?: string;
+    prioridad2?: string;
+    prioridad3?: string;
+    energia?: number;
     tareas?: CheckinTarea[];
+    fechaCreacion?: string;
 }
 
 export interface CheckinTarea {
@@ -169,15 +202,20 @@ export interface Bloqueo {
 // DTOs para Formularios
 export interface CheckinUpsertDto {
     idUsuario: number;
+    usuarioCarnet?: string;
     fecha: string;
     entregableTexto: string;
+    prioridad1?: string;
+    prioridad2?: string;
+    prioridad3?: string;
+    energia?: number;
     nota?: string;
     linkEvidencia?: string;
-    idNodo?: number;
-    entrego: number[]; // IDs de tareas
-    avanzo: number[]; // IDs de tareas
-    extras?: number[]; // IDs de tareas (opcional, max 5)
     estadoAnimo?: 'Tope' | 'Bien' | 'Bajo';
+    idNodo?: number;
+    entrego?: number[]; // IDs de tareas
+    avanzo?: number[]; // IDs de tareas
+    extras?: number[]; // IDs de tareas (opcional, max 5)
 }
 
 export interface TareaCrearRapidaDto {

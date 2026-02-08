@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TrendingUp, CheckCircle2, Loader2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { clarityService } from '../../../services/clarity.service';
-import type { Tarea, TareaAvanceMensual } from '../../../types/modelos';
+import type { Tarea } from '../../../types/modelos';
 import { useToast } from '../../../context/ToastContext';
 
 interface Props {

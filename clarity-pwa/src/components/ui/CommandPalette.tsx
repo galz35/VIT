@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { ShieldCheck, Database, Lock, UserCog, History, ShieldAlert } from 'lucide-react';
 import { Search, Calendar, Users, FileText, PlusCircle, AlertTriangle, LogOut, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { alerts } from '../../utils/alerts';
 import { AnimatePresence, motion } from 'framer-motion';
 
 interface Command {
@@ -35,7 +36,7 @@ export const CommandPalette: React.FC = () => {
             { id: 'act-block', label: 'Reportar Bloqueo', icon: <AlertTriangle size={18} />, section: 'Acciones', action: () => navigate('/app/hoy?action=block') },
 
             // Sistema
-            { id: 'sys-logout', label: 'Cerrar Sesión', icon: <LogOut size={18} />, section: 'Sistema', action: () => alert('Usar menú de usuario') },
+            { id: 'sys-logout', label: 'Cerrar Sesión', icon: <LogOut size={18} />, section: 'Sistema', action: () => alerts.info('Cerrar Sesión', 'Utiliza el menú de usuario en la barra lateral para cerrar tu sesión.') },
         ];
 
         // Manager / Admin Commands

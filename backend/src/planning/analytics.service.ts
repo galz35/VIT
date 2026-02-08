@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { VisibilidadService } from '../acceso/visibilidad.service';
 import { ejecutarQuery, Int, NVarChar } from '../db/base.repo';
 import * as accesoRepo from '../acceso/acceso.repo';
@@ -52,7 +52,7 @@ export class AnalyticsService {
                     ISNULL(SUM(CASE WHEN t.estado = 'EnCurso' AND ta.idUsuario IS NOT NULL THEN 1 ELSE 0 END), 0) as enCurso,
                     ISNULL(SUM(CASE WHEN t.estado = 'Pendiente' AND ta.idUsuario IS NOT NULL THEN 1 ELSE 0 END), 0) as pendientes,
                     ISNULL(SUM(CASE WHEN t.estado = 'Bloqueada' AND ta.idUsuario IS NOT NULL THEN 1 ELSE 0 END), 0) as bloqueadas,
-                    ISNULL(SUM(CASE WHEN t.estado IN ('Pendiente', 'EnCurso') AND ta.idUsuario IS NOT NULL AND t.fechaObjetivo < DATEADD(day, DATEDIFF(day, 0, GETDATE()), 0) THEN 1 ELSE 0 END), 0) as atrasadas
+                    ISNULL(SUM(CASE WHEN t.estado IN ('Pendiente', 'EnCurso') AND ta.idUsuario IS NOT NULL AND CAST(t.fechaObjetivo AS DATE) < CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END), 0) as atrasadas
                 FROM p_Proyectos p
                 LEFT JOIN p_Tareas t ON p.idProyecto = t.idProyecto
                 LEFT JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea AND ta.idUsuario IN (${idsStr})
@@ -64,6 +64,8 @@ export class AnalyticsService {
                 SELECT 
                     0 as idProyecto,
                     'Tareas Sin Proyecto' as nombre,
+                    'Activo' as estado,
+                    0 as globalProgress,
                     'General' as subgerencia,
                     '' as area,
                     '' as gerencia,
@@ -74,7 +76,7 @@ export class AnalyticsService {
                     ISNULL(SUM(CASE WHEN t.estado = 'EnCurso' THEN 1 ELSE 0 END), 0) as enCurso,
                     ISNULL(SUM(CASE WHEN t.estado = 'Pendiente' THEN 1 ELSE 0 END), 0) as pendientes,
                     ISNULL(SUM(CASE WHEN t.estado = 'Bloqueada' THEN 1 ELSE 0 END), 0) as bloqueadas,
-                    ISNULL(SUM(CASE WHEN t.estado IN ('Pendiente', 'EnCurso') AND t.fechaObjetivo < DATEADD(day, DATEDIFF(day, 0, GETDATE()), 0) THEN 1 ELSE 0 END), 0) as atrasadas
+                    ISNULL(SUM(CASE WHEN t.estado IN ('Pendiente', 'EnCurso') AND CAST(t.fechaObjetivo AS DATE) < CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END), 0) as atrasadas
                 FROM p_Tareas t
                 INNER JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea
                 WHERE (t.idProyecto IS NULL OR t.idProyecto = 0)
@@ -99,7 +101,7 @@ export class AnalyticsService {
                 fechaInicio: string;
                 fechaObjetivo: string;
                 asignado: string;
-                atrasada: number;
+                isDelayed: number;
             }>(`
                 SELECT 
                     t.idTarea,
@@ -111,7 +113,7 @@ export class AnalyticsService {
                     t.fechaInicioPlanificada as fechaInicio,
                     t.fechaObjetivo,
                     u.nombre as asignado,
-                    CASE WHEN t.estado IN ('Pendiente', 'EnCurso') AND t.fechaObjetivo < DATEADD(day, DATEDIFF(day, 0, GETDATE()), 0) THEN 1 ELSE 0 END as atrasada
+                    CASE WHEN t.estado IN ('Pendiente', 'EnCurso') AND CAST(t.fechaObjetivo AS DATE) < CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END as isDelayed
                 FROM p_Tareas t
                 INNER JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea
                 INNER JOIN p_Usuarios u ON ta.idUsuario = u.idUsuario
@@ -204,7 +206,7 @@ export class AnalyticsService {
                 INNER JOIN p_Usuarios u ON ta.idUsuario = u.idUsuario
                 WHERE ta.idUsuario IN (${idsStr})
                   AND t.estado IN ('Pendiente', 'EnCurso')
-                  AND t.fechaObjetivo < DATEADD(day, DATEDIFF(day, 0, GETDATE()), 0)
+                  AND CAST(t.fechaObjetivo AS DATE) < CAST(GETDATE() AS DATE)
                 ORDER BY diasRetraso DESC
             `);
 
@@ -277,6 +279,107 @@ export class AnalyticsService {
             console.error('Error in getDashboardStats:', error);
             return this.getEmptyStats();
         }
+    }
+
+    private ensureMonthYear(mes: number, anio: number) {
+        if (!mes || Number.isNaN(mes) || mes < 1 || mes > 12) {
+            throw new BadRequestException('mes inválido (1-12).');
+        }
+        if (!anio || Number.isNaN(anio) || anio < 2000 || anio > 2100) {
+            throw new BadRequestException('anio inválido (2000-2100).');
+        }
+    }
+
+    async getGlobalCompliance(month: number, year: number) {
+        this.ensureMonthYear(month, year);
+
+        const sql = `
+            SELECT 
+                estado,
+                COUNT(*) as count,
+                AVG(CAST(COALESCE(objetivos, '') <> '' AS INT)) * 100 as hasGoalsPercent
+            FROM p_PlanesTrabajo
+            WHERE mes = @month AND anio = @year
+            GROUP BY estado
+        `;
+        const items = await ejecutarQuery(sql, {
+            month: { valor: month, tipo: Int },
+            year: { valor: year, tipo: Int }
+        });
+
+        // Calculate global % (simplified: count of confirmed vs total)
+        const total = items.reduce((acc: number, curr: any) => acc + curr.count, 0);
+        const confirmed = items.find((i: any) => i.estado === 'Confirmado' || i.estado === 'Cerrado')?.count || 0;
+        const compliance = total > 0 ? Math.round((confirmed / total) * 100) : 0;
+
+        return {
+            month,
+            year,
+            compliance,
+            totalPlans: total,
+            breakdown: items
+        };
+    }
+
+    async getAreaPerformance(month: number, year: number) {
+        this.ensureMonthYear(month, year);
+
+        const sql = `
+            SELECT 
+                p.gerencia,
+                p.area,
+                AVG(CAST(t.porcentaje AS FLOAT)) as avgProgress,
+                COUNT(t.idTarea) as totalTasks,
+                SUM(CASE WHEN t.estado = 'Hecha' THEN 1 ELSE 0 END) as doneTasks
+            FROM p_Proyectos p
+            JOIN p_Tareas t ON p.idProyecto = t.idProyecto
+            WHERE t.activo = 1
+              AND (t.fechaObjetivo IS NULL OR (MONTH(t.fechaObjetivo) = @month AND YEAR(t.fechaObjetivo) = @year))
+            GROUP BY p.gerencia, p.area
+            ORDER BY avgProgress DESC
+        `;
+        return await ejecutarQuery(sql, {
+            month: { valor: month, tipo: Int },
+            year: { valor: year, tipo: Int }
+        });
+    }
+
+    async getBottlenecks() {
+        // Identify users with most delayed tasks
+        const delayedTasksSql = `
+            SELECT TOP 10
+                u.nombre,
+                ta.carnet,
+                COUNT(t.idTarea) as delayedCount,
+                MAX(DATEDIFF(DAY, t.fechaObjetivo, GETDATE())) as maxDelayDays
+            FROM p_Tareas t
+            JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea
+            JOIN p_Usuarios u ON ta.idUsuario = u.idUsuario
+            WHERE t.estado IN ('Pendiente', 'EnCurso')
+              AND t.fechaObjetivo < GETDATE()
+              AND t.activo = 1
+            GROUP BY u.nombre, ta.carnet
+            ORDER BY delayedCount DESC
+        `;
+
+        const blockersSql = `
+            SELECT TOP 10
+                u.nombre,
+                COUNT(b.idBloqueo) as activeBlockers
+            FROM p_Bloqueos b
+            JOIN p_Usuarios u ON b.idUsuario = u.idUsuario
+            WHERE b.estado = 'Activo'
+            GROUP BY u.nombre
+            ORDER BY activeBlockers DESC
+        `;
+
+        const delayed = await ejecutarQuery(delayedTasksSql);
+        const blockers = await ejecutarQuery(blockersSql);
+
+        return {
+            topDelayedUsers: delayed,
+            topBlockers: blockers
+        };
     }
 
     private getEmptyStats() {

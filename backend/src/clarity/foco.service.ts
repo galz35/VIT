@@ -1,251 +1,134 @@
+
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan, IsNull } from 'typeorm';
-import { FocoDiario } from './entities/foco-diario.entity';
-import { Tarea } from '../planning/entities/tarea.entity';
+import { ejecutarQuery, Int, Bit, SqlDate, NVarChar } from '../db/base.repo';
 import { FocoAgregarDto, FocoActualizarDto } from './dto/clarity.dtos';
 
 @Injectable()
 export class FocoService {
-    constructor(
-        @InjectRepository(FocoDiario)
-        private focoRepo: Repository<FocoDiario>,
-        @InjectRepository(Tarea)
-        private tareaRepo: Repository<Tarea>,
-    ) { }
 
-    /**
-     * Obtener el foco del día para un usuario
-     * Si es un nuevo día, arrastra automáticamente las tareas pendientes del día anterior
-     */
     async getFocoDelDia(idUsuario: number, fecha: string) {
-        // 1. Arrastrar tareas pendientes de días anteriores
-        await this.arrastrarPendientes(idUsuario, fecha);
-
-        // 2. Obtener foco del día actual
-        const focos = await this.focoRepo.find({
-            where: { idUsuario, fecha },
-            relations: ['tarea', 'tarea.proyecto', 'tarea.asignados', 'tarea.asignados.usuario'],
-            order: { orden: 'ASC', idFoco: 'ASC' }
+        const sql = `
+            SELECT f.idFoco, f.idTarea, f.fecha, f.esEstrategico, f.completado, f.orden,
+                   t.nombre as tituloTarea, t.estado as estadoTarea
+            FROM p_FocoDiario f
+            INNER JOIN p_Tareas t ON f.idTarea = t.idTarea
+            WHERE f.idUsuario = @idUsuario AND CAST(f.fecha AS DATE) = CAST(@fecha AS DATE)
+            ORDER BY f.orden ASC
+        `;
+        return ejecutarQuery(sql, {
+            idUsuario: { valor: idUsuario, tipo: Int },
+            fecha: { valor: fecha, tipo: String }
         });
-
-        return focos.map(f => ({
-            idFoco: f.idFoco,
-            idTarea: f.idTarea,
-            tarea: f.tarea,
-            esEstrategico: f.esEstrategico,
-            diasArrastre: f.diasArrastre,
-            fechaPrimerFoco: f.fechaPrimerFoco,
-            completado: !!f.completadoEnFecha,
-            completadoEnFecha: f.completadoEnFecha,
-            orden: f.orden
-        }));
     }
 
-    /**
-     * Arrastrar tareas pendientes de días anteriores al día actual
-     */
-    private async arrastrarPendientes(idUsuario: number, fechaHoy: string) {
-        // Buscar focos de días anteriores que no estén completados
-        const pendientes = await this.focoRepo.find({
-            where: {
-                idUsuario,
-                fecha: LessThan(fechaHoy),
-                completadoEnFecha: IsNull()
-            },
-            relations: ['tarea']
-        });
-
-        for (const foco of pendientes) {
-            // Verificar si la tarea ya está en el foco de hoy
-            const yaExiste = await this.focoRepo.findOne({
-                where: { idUsuario, idTarea: foco.idTarea, fecha: fechaHoy }
-            });
-
-            if (!yaExiste) {
-                // Verificar que la tarea no esté completada o descartada
-                if (foco.tarea && !['Hecha', 'Descartada'].includes(foco.tarea.estado)) {
-                    // Calcular días de arrastre
-                    const primerFoco = new Date(foco.fechaPrimerFoco);
-                    const hoy = new Date(fechaHoy);
-                    const diasDiff = Math.ceil((hoy.getTime() - primerFoco.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-
-                    // Crear nuevo foco para hoy
-                    await this.focoRepo.save({
-                        idUsuario,
-                        idTarea: foco.idTarea,
-                        fecha: fechaHoy,
-                        esEstrategico: foco.esEstrategico,
-                        fechaPrimerFoco: foco.fechaPrimerFoco,
-                        diasArrastre: diasDiff,
-                        orden: foco.orden
-                    });
-                }
-            }
-        }
-    }
-
-    /**
-     * Agregar una tarea al foco del día
-     */
     async agregarAlFoco(idUsuario: number, dto: FocoAgregarDto) {
-        // Verificar que la tarea existe
-        const tarea = await this.tareaRepo.findOne({ where: { idTarea: dto.idTarea } });
-        if (!tarea) {
-            throw new Error('Tarea no encontrada');
-        }
-
-        // Verificar si ya está en el foco de ese día
-        const existente = await this.focoRepo.findOne({
-            where: { idUsuario, idTarea: dto.idTarea, fecha: dto.fecha }
+        // Verificar si ya existe
+        const checkSql = `
+            SELECT idFoco FROM p_FocoDiario 
+            WHERE idUsuario = @idUsuario AND idTarea = @idTarea AND CAST(fecha AS DATE) = CAST(@fecha AS DATE)
+        `;
+        const existing = await ejecutarQuery(checkSql, {
+            idUsuario: { valor: idUsuario, tipo: Int },
+            idTarea: { valor: dto.idTarea, tipo: Int },
+            fecha: { valor: dto.fecha, tipo: String }
         });
 
-        if (existente) {
-            return existente;
-        }
+        if (existing && existing.length > 0) return existing[0];
 
-        // Obtener el orden máximo actual
-        const maxOrden = await this.focoRepo
-            .createQueryBuilder('f')
-            .select('MAX(f.orden)', 'max')
-            .where('f.idUsuario = :idUsuario AND f.fecha = :fecha', { idUsuario, fecha: dto.fecha })
-            .getRawOne();
-
-        const nuevoOrden = (maxOrden?.max || 0) + 1;
-
-        // Crear el foco
-        const foco = this.focoRepo.create({
-            idUsuario,
-            idTarea: dto.idTarea,
-            fecha: dto.fecha,
-            esEstrategico: dto.esEstrategico || false,
-            fechaPrimerFoco: dto.fecha,
-            diasArrastre: 1,
-            orden: nuevoOrden
+        // Obtener max orden
+        const maxOrdenSql = `
+            SELECT COALESCE(MAX(orden), 0) + 1 as nextOrden
+            FROM p_FocoDiario
+            WHERE idUsuario = @idUsuario AND CAST(fecha AS DATE) = CAST(@fecha AS DATE)
+        `;
+        const resOrden = await ejecutarQuery(maxOrdenSql, {
+            idUsuario: { valor: idUsuario, tipo: Int },
+            fecha: { valor: dto.fecha, tipo: String }
         });
+        const nextOrden = resOrden[0]?.nextOrden || 1;
 
-        return this.focoRepo.save(foco);
+        const insertSql = `
+            INSERT INTO p_FocoDiario (idUsuario, idTarea, fecha, esEstrategico, completado, orden, creadoEn)
+            VALUES (@idUsuario, @idTarea, @fecha, @esEstrategico, 0, @orden, GETDATE());
+            SELECT SCOPE_IDENTITY() as id;
+        `;
+
+        return ejecutarQuery(insertSql, {
+            idUsuario: { valor: idUsuario, tipo: Int },
+            idTarea: { valor: dto.idTarea, tipo: Int },
+            fecha: { valor: dto.fecha, tipo: String },
+            esEstrategico: { valor: dto.esEstrategico ? 1 : 0, tipo: Bit },
+            orden: { valor: nextOrden, tipo: Int }
+        });
     }
 
-    /**
-     * Actualizar un foco (marcar estratégico o completado)
-     */
-    async actualizarFoco(idFoco: number, idUsuario: number, dto: FocoActualizarDto, fechaHoy: string) {
-        const foco = await this.focoRepo.findOne({
-            where: { idFoco, idUsuario },
-            relations: ['tarea']
-        });
-
-        if (!foco) {
-            throw new Error('Foco no encontrado');
-        }
+    async actualizarFoco(idFoco: number, idUsuario: number, dto: FocoActualizarDto, fecha?: string) {
+        let updates: string[] = [];
+        let params: any = { idFoco: { valor: idFoco, tipo: Int }, idUsuario: { valor: idUsuario, tipo: Int } };
 
         if (dto.esEstrategico !== undefined) {
-            foco.esEstrategico = dto.esEstrategico;
+            updates.push("esEstrategico = @esEstrategico");
+            params.esEstrategico = { valor: dto.esEstrategico ? 1 : 0, tipo: Bit };
         }
-
         if (dto.completado !== undefined) {
-            if (dto.completado) {
-                foco.completadoEnFecha = fechaHoy;
-
-                // También marcar la tarea como Hecha si no lo está
-                if (foco.tarea && foco.tarea.estado !== 'Hecha') {
-                    await this.tareaRepo.update(foco.idTarea, {
-                        estado: 'Hecha',
-                        fechaHecha: new Date()
-                    });
-                }
-            } else {
-                foco.completadoEnFecha = null as any;
-            }
+            updates.push("completado = @completado");
+            params.completado = { valor: dto.completado ? 1 : 0, tipo: Bit };
         }
 
-        return this.focoRepo.save(foco);
+        if (updates.length === 0) return { success: true };
+
+        const sql = `
+            UPDATE p_FocoDiario
+            SET ${updates.join(', ')}
+            WHERE idFoco = @idFoco AND idUsuario = @idUsuario
+        `;
+
+        await ejecutarQuery(sql, params);
+
+        if (fecha) {
+            return this.getFocoDelDia(idUsuario, fecha);
+        }
+        return { success: true };
     }
 
-    /**
-     * Quitar una tarea del foco del día
-     */
     async quitarDelFoco(idFoco: number, idUsuario: number) {
-        const foco = await this.focoRepo.findOne({ where: { idFoco, idUsuario } });
-
-        if (!foco) {
-            throw new Error('Foco no encontrado');
-        }
-
-        await this.focoRepo.remove(foco);
-        return { success: true };
+        const sql = `DELETE FROM p_FocoDiario WHERE idFoco = @idFoco AND idUsuario = @idUsuario`;
+        return ejecutarQuery(sql, { idFoco: { valor: idFoco, tipo: Int }, idUsuario: { valor: idUsuario, tipo: Int } });
     }
 
-    /**
-     * Reordenar focos del día
-     */
     async reordenarFocos(idUsuario: number, fecha: string, ids: number[]) {
+        let queries: string[] = [];
         for (let i = 0; i < ids.length; i++) {
-            await this.focoRepo.update(
-                { idFoco: ids[i], idUsuario, fecha },
-                { orden: i + 1 }
-            );
+            queries.push(`UPDATE p_FocoDiario SET orden = ${i + 1} WHERE idFoco = ${ids[i]} AND idUsuario = @idUsuario`);
         }
-        return { success: true };
+
+        const sql = queries.join('; ');
+        const updSql = sql.replace(/@idUsuario/g, idUsuario.toString()); // Simple replace for batch if using raw string
+        return ejecutarQuery(updSql);
     }
 
-    /**
-     * Obtener historial de focos completados (para métricas)
-     */
-    async getHistorialFocos(idUsuario: number, limit: number = 30) {
-        return this.focoRepo.find({
-            where: { idUsuario },
-            relations: ['tarea'],
-            order: { fechaCreacion: 'DESC' },
-            take: limit
+    async getEstadisticasFoco(idUsuario: number, month: number, year: number) {
+        const sql = `
+            SELECT 
+                COUNT(*) as totalItems,
+                SUM(CASE WHEN completado = 1 THEN 1 ELSE 0 END) as completados
+            FROM p_FocoDiario
+            WHERE idUsuario = @idUsuario 
+              AND MONTH(fecha) = @month AND YEAR(fecha) = @year
+        `;
+        const res = await ejecutarQuery(sql, {
+            idUsuario: { valor: idUsuario, tipo: Int },
+            month: { valor: month, tipo: Int },
+            year: { valor: year, tipo: Int }
         });
-    }
 
-    /**
-     * Estadísticas de efectividad del foco
-     */
-    async getEstadisticasFoco(idUsuario: number, mes?: number, anio?: number) {
-        const query = this.focoRepo.createQueryBuilder('f')
-            .where('f.idUsuario = :idUsuario', { idUsuario });
-
-        if (mes && anio) {
-            const inicio = new Date(anio, mes - 1, 1).toISOString().split('T')[0];
-            const fin = new Date(anio, mes, 0).toISOString().split('T')[0];
-            query.andWhere('f.fecha BETWEEN :inicio AND :fin', { inicio, fin });
-        }
-
-        const total = await query.getCount();
-        const completados = await query.clone()
-            .andWhere('f.completadoEnFecha IS NOT NULL')
-            .getCount();
-
-        const estrategicosTotal = await query.clone()
-            .andWhere('f.esEstrategico = true')
-            .getCount();
-
-        const estrategicosCompletados = await query.clone()
-            .andWhere('f.esEstrategico = true')
-            .andWhere('f.completadoEnFecha IS NOT NULL')
-            .getCount();
-
-        const promedioArrastre = await this.focoRepo.createQueryBuilder('f')
-            .select('AVG(f.diasArrastre)', 'promedio')
-            .where('f.idUsuario = :idUsuario', { idUsuario })
-            .andWhere('f.completadoEnFecha IS NOT NULL')
-            .getRawOne();
+        const total = res[0]?.totalItems || 0;
+        const completados = res[0]?.completados || 0;
 
         return {
-            total,
-            completados,
-            pendientes: total - completados,
-            porcentajeCompletado: total > 0 ? Math.round((completados / total) * 100) : 0,
-            estrategicos: {
-                total: estrategicosTotal,
-                completados: estrategicosCompletados,
-                porcentaje: estrategicosTotal > 0 ? Math.round((estrategicosCompletados / estrategicosTotal) * 100) : 0
-            },
-            promedioArrastre: parseFloat(promedioArrastre?.promedio || '1').toFixed(1)
+            totalItems: total,
+            completados: completados,
+            efectividad: total > 0 ? (completados / total) * 100 : 0
         };
     }
 }

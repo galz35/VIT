@@ -1,9 +1,10 @@
 import { registerSW } from 'virtual:pwa-register';
+import { alerts } from '../utils/alerts';
 
 export function registerPWA() {
     const updateSW = registerSW({
-        onNeedRefresh() {
-            if (confirm('Nueva versión disponible. ¿Recargar?')) {
+        async onNeedRefresh() {
+            if (await alerts.confirm('Nueva Versión', 'Hay una nueva versión disponible. ¿Deseas recargar la aplicación para actualizar?', 'info')) {
                 updateSW(true);
             }
         },

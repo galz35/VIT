@@ -1,0 +1,511 @@
+1) Jerarquía “Padre/Hijo”: por qué te hace fricción y cómo dejarla simple + bonita (sin meterla en “Mi Día”)
+
+Tu intuición es correcta: Padre/Hijo es de Plan de Trabajo (Proyecto), no del día a día. La fricción aparece cuando el usuario está en ejecución (“Mi Día”) y le metes configuración de estructura.
+
+Ajuste de concepto (sin romper lo que ya tienes)
+
+Regla de oro:
+
+Proyecto = donde se CREA/CONFIGURA la jerarquía (Padres/Entregables y sus subtareas).
+
+Mi Día = donde se EJECUTA (solo tareas accionables/hojas), y el padre se ve como contexto, no como algo que “tengo que escoger”.
+
+UI mínima (bonita y eficiente)
+
+En Proyecto (Plan de Trabajo):
+
+Vista tipo árbol:
+
+Entregable (Padre) con barra de avance roll-up.
+
+Botón “+ Subtarea” dentro del padre (creación in-situ).
+
+Orden por arrastre (si quieres), o “orden” numérico.
+
+En Mi Día:
+
+Mostrar solo subtareas (leaf).
+
+Cada tarea muestra un chip discreto: ↳ Padre: <Nombre> (click abre el padre).
+
+No dropdown para elegir padre en Mi Día.
+
+Automatización que quita fricción (la clave)
+
+El % del Padre se calcula por sus hijos (promedio o ponderado por esfuerzo).
+
+Si un hijo está Bloqueada, el padre muestra ⚠ Riesgo (solo indicador).
+
+2) “Meta” y “Evidencia”: por qué en otros softwares existe y cómo adaptarlo a Clarity sin hacerlo pesado
+
+Tu confusión es normal: mucha gente usa “meta” como número/regla (no como archivo). Y “evidencia” como prueba rápida (link/adjunto/comentario).
+
+En herramientas grandes:
+
+Jira usa campos/estado/criterios y adjuntos en issues (evidencia como attachment o link).
+
+Asana recomienda poner contexto/objetivo en descripción/comentario fijado y usar aprobaciones/archivos cuando aplica.
+
+ClickUp empuja “objetivo + outcomes” con Custom Fields para dejar claro qué se mide.
+
+Propuesta para Clarity (mínima y usable)
+
+Sin romper lo actual:
+
+A) Meta (opcional, simple)
+
+Tipo: Número o Checklist o Texto corto
+
+Ejemplos:
+
+Número: “Cerrar 20 tareas del sprint”
+
+Checklist: “(1) Diseño (2) API (3) QA”
+
+Texto: “Terminar módulo de permisos”
+
+B) Evidencia (opcional, 1 campo)
+
+Un solo campo: linkEvidencia (ya lo tienes en checkin).
+
+Regla UX:
+
+Solo se pide evidencia al marcar “Hecha” (o en Check-in), no al crear tareas.
+
+C) Dónde vive
+
+Meta vive en Proyecto (nivel objetivo/entregable).
+
+Evidencia vive en Mi Día / Check-in (prueba de lo hecho hoy).
+
+Resultado: queda “corporativo” sin volverse burocrático.
+
+3) Prompt para Gemini (tu error Vite/Babel + warnings)
+
+Cópialo tal cual:
+
+Actúa como senior React+TypeScript (Vite). Tengo estos errores y quiero que identifiques la causa exacta y me des el parche mínimo.
+
+1) Error crítico:
+Vite Internal server error:
+D:\planificacion\clarity-pwa\src\components\ui\TaskDetailModal.tsx: Unexpected token, expected "," (66:8)
+
+En el archivo TaskDetailModal.tsx alrededor de la línea 66 aparece:
+}).catch (console.error);
+
+El parser indica que espera una coma, como si hubiera un objeto/array mal cerrado o un bloque fuera de lugar.
+=> Quiero que me digas exactamente qué llave/paréntesis está mal y la corrección exacta del bloque.
+
+2) Warning repetido:
+Duplicate key "revalidarTarea" in object literal
+File: D:/planificacion/clarity-pwa/src/services/clarity.service.ts
+=> Encuentra las dos definiciones de revalidarTarea y deja solo una (o renombra una), sin romper imports/usos.
+
+3) HMR:
+Could not Fast Refresh ("MiDiaContext" export is incompatible).
+File: /src/pages/Hoy/context/MiDiaContext.tsx
+=> Explica qué export cambió (default vs named, o componente vs objeto) y qué patrón debo dejar para que Fast Refresh funcione estable.
+
+Entrega:
+- Diagnóstico por cada punto
+- Cambios exactos (diff o snippet) para arreglarlo
+- Sin refactors grandes, solo parche mínimo.
+
+4) “Clarity” vs SMART (sincero y claro)
+
+Sí: SMART es una metodología para formular objetivos:
+
+S específico, M medible, A alcanzable, R relevante, T con plazo.
+
+Clarity (tu sistema) no es “SMART”, pero puede usar SMART como plantilla para objetivos del proyecto. Lo sano es:
+
+SMART para Objetivos del Proyecto
+
+Tareas para ejecución diaria
+
+Evidencia en check-in / al cerrar
+
+5) Tu repo TS: “yo quiero todo en procedure” (qué cambiar en tu código sin drama)
+
+Tu código está bien “operable”, pero si tu estándar es 100% SP, entonces lo que hoy haces con ejecutarQuery(UPDATE/INSERT/DELETE) debe moverse a SP para consistencia, auditoría y performance.
+
+Qué mover a SP (lista directa)
+
+crearTarea:
+
+incluir dentro del SP: comportamiento, idTareaPadre, asignación responsable (si aplica).
+
+Nuevo SP sugerido: sp_Tarea_CrearCompleta
+
+asignarUsuarioTarea → sp_Tarea_AsignarUsuario
+
+reasignarResponsable → sp_Tarea_ReasignarResponsable (transaccional)
+
+eliminarTarea → sp_Tarea_Eliminar (con tu regla “hoy y creador => hard delete”, si no soft delete)
+
+getTareasUsuario → sp_Tareas_Usuario_Listar (filtros)
+
+obtenerTareasMultiplesUsuarios → sp_Tareas_MultiplesUsuarios (importante: NO armes IN (${idsStr}) en Node; usa TVP o JSON)
+
+obtenerEquipoHoy → sp_Equipo_Hoy
+
+checkinUpsert → sp_Checkin_Upsert (ideal: recibir lista de tareas como JSON y hacer insert set-based)
+
+bloquearTarea / resolverBloqueo → sp_Bloqueo_Crear / sp_Bloqueo_Resolver
+
+Notas CRUD → sp_Notas_Listar/Crear/Actualizar/Eliminar
+
+Dos mejoras críticas de seguridad/performance
+
+Evita IN (${idsStr}) (inyección y planes malos). Pasa IDs como:
+
+TVP (mejor), o
+
+JSON + OPENJSON, o
+
+string CSV + STRING_SPLIT (aceptable).
+
+En checkinUpsert, evita el loop insert por cada tarea: manda lista al SP y haces INSERT ... SELECT.
+
+Si me pegas la firma actual de ejecutarSP (si soporta TVP o solo tipos simples), te digo exactamente cuál formato usar (TVP vs JSON) sin inventar.
+
+Si quieres, lo siguiente que más impacto te da en UX (rápido) es: mover jerarquía fuera de “Historial & Jerarquía” y convertir “Mi Día” en “solo ejecución” con chip del padre + roll-up automático. Eso solo ya elimina la fricción que estás sintiendo.
+4) “Clarity” vs SMART (sincero y claro)
+
+Sí: SMART es una metodología para formular objetivos:
+
+S específico, M medible, A alcanzable, R relevante, T con plazo.
+
+Clarity (tu sistema) no es “SMART”, pero puede usar SMART como plantilla para objetivos del proyecto. Lo sano es:
+
+SMART para Objetivos del Proyecto
+
+Tareas para ejecución diaria
+
+Evidencia en check-in / al cerrar
+
+5) Tu repo TS: “yo quiero todo en procedure” (qué cambiar en tu código sin drama)
+
+Tu código está bien “operable”, pero si tu estándar es 100% SP, entonces lo que hoy haces con ejecutarQuery(UPDATE/INSERT/DELETE) debe moverse a SP para consistencia, auditoría y performance.
+
+Qué mover a SP (lista directa)
+
+crearTarea:
+
+incluir dentro del SP: comportamiento, idTareaPadre, asignación responsable (si aplica).
+
+Nuevo SP sugerido: sp_Tarea_CrearCompleta
+
+asignarUsuarioTarea → sp_Tarea_AsignarUsuario
+
+reasignarResponsable → sp_Tarea_ReasignarResponsable (transaccional)
+
+eliminarTarea → sp_Tarea_Eliminar (con tu regla “hoy y creador => hard delete”, si no soft delete)
+
+getTareasUsuario → sp_Tareas_Usuario_Listar (filtros)
+
+obtenerTareasMultiplesUsuarios → sp_Tareas_MultiplesUsuarios (importante: NO armes IN (${idsStr}) en Node; usa TVP o JSON)
+
+obtenerEquipoHoy → sp_Equipo_Hoy
+
+checkinUpsert → sp_Checkin_Upsert (ideal: recibir lista de tareas como JSON y hacer insert set-based)
+
+bloquearTarea / resolverBloqueo → sp_Bloqueo_Crear / sp_Bloqueo_Resolver
+
+Notas CRUD → sp_Notas_Listar/Crear/Actualizar/Eliminar
+
+Dos mejoras críticas de seguridad/performance
+
+Evita IN (${idsStr}) (inyección y planes malos). Pasa IDs como:
+
+TVP (mejor), o
+
+JSON + OPENJSON, o
+
+string CSV + STRING_SPLIT (aceptable).
+
+En checkinUpsert, evita el loop insert por cada tarea: manda lista al SP y haces INSERT ... SELECT.
+
+Si me pegas la firma actual de ejecutarSP (si soporta TVP o solo tipos simples), te digo exactamente cuál formato usar (TVP vs JSON) sin inventar.
+
+Si quieres, lo siguiente que más impacto te da en UX (rápido) es: mover jerarquía fuera de “Historial & Jerarquía” y convertir “Mi Día” en “solo ejecución” con chip del padre + roll-up automático. Eso solo ya elimina la fricción que estás sintiendo.
+
+1) Prompt “barrido + ajustes” para Gemini 3 (frontend + backend + UX sin romper Plan de Trabajo)
+Actúa como auditor senior (React/Vite + TanStack Query + NestJS + SQL Server). Haz un BARRIDO COMPLETO y aplica AJUSTES sin romper contratos ni flujo actual de “Plan de Trabajo (Proyecto)”.
+
+OBJETIVO UX:
+- Jerarquía (padre/hijo) se gestiona en PROYECTO, NO en “Mi Día”.
+- “Mi Día” debe ser simple: ejecutar, marcar hecha/en curso, revalidar, ver bloqueos. Nada de configuración pesada.
+- Bonito y eficiente: menos clicks, menos campos, más claridad visual.
+
+ENTRADAS (código pegado por el usuario):
+1) Hook useMiDiaQuery (TanStack Query) que consume clarityService.getMiDia(fecha) y tiene mutations revalidarTarea/toggleTarea con optimistic update.
+2) Repo/backend actual en TS con muchas queries inline; el usuario quiere TODO en Stored Procedures (SQL Server).
+3) Logs Vite con:
+   - warning Duplicate key "revalidarTarea" en object literal (clarity.service.ts)
+   - HMR invalidate: MiDiaContext export incompatible
+   - error fatal: TaskDetailModal.tsx Unexpected token, expected "," en línea con `}).catch (console.error);`
+
+TAREAS:
+A) Diagnóstico puntual + FIX:
+- Encuentra el origen del “Duplicate key revalidarTarea” y entrega el diff exacto (qué borrar/renombrar).
+- Arregla el syntax error del TaskDetailModal: muestra el bloque correcto (useEffect / promises) y por qué fallaba.
+- Soluciona el HMR invalidate (export consistente): indica patrón correcto para Context/Provider y exports.
+
+B) Simplificación del hook useMiDiaQuery:
+- Reduce fricción: evita invalidateQueries innecesarios si optimistic update ya resuelve; usa setQueriesData si aplica; elimina any.
+- Propón estructura de keys y retorno más limpio.
+- Mantén staleTime razonable.
+
+C) UX Jerarquía:
+- En “Mi Día”: SOLO mostrar (si existe) una etiqueta pequeña “Parte de: [Padre]” + breadcrumb; NO permitir asignar padre.
+- En “Proyecto/Plan de Trabajo”: ahí sí permitir asignar/crear subtareas rápido.
+- Proponer reglas simples de roll-up (% padre) solo si el usuario lo activa, sin obligarlo.
+
+D) Migración a Stored Procedures (SQL Server):
+- Diseña un set de SPs para reemplazar QUERIES INLINE del backend:
+  - sp_Tarea_Crear/Actualizar, sp_Tarea_Asignar, sp_Tarea_ReasignarResponsable, sp_Tarea_EliminarConReglas
+  - sp_Tareas_ListarUsuario, sp_Tareas_PorProyecto, sp_Tareas_MultiplesUsuarios
+  - sp_Checkin_Upsert (con detalle de tareas via TVP), sp_Checkin_PorFecha
+  - sp_Equipo_Hoy, sp_Bloqueo_Crear, sp_Bloqueo_Resolver
+  - sp_Tareas_Historico, sp_Dashboard_Kpis
+  - sp_Notas_CRUD (listar/crear/actualizar/eliminar)
+- Requisitos SP:
+  - TRY/CATCH + TRAN, sin SQL dinámico, parámetros tipados, OUTPUT/SELECT para ids.
+  - Evitar múltiples roundtrips (ej: checkin header + delete + inserts en un solo SP).
+  - Si usas STRING_AGG, asume SQL Server 2017+; si no, ofrece alternativa XML PATH.
+
+E) Entregables:
+1) Lista de problemas encontrados (bullets).
+2) Diffs de código TS/React (solo lo necesario).
+3) Scripts T-SQL completos: tipos TVP + SPs.
+4) Recomendación final minimalista de UI (3-6 bullets).
+No des explicación larga; solo lo necesario y accionable.
+
+2) Prompt corto para Gemini: resumen del error Vite/Babel
+Tengo Vite + React + TS. Logs:
+
+- warning: Duplicate key "revalidarTarea" in object literal
+  Archivo: src/services/clarity.service.ts
+- HMR invalidate: src/pages/Hoy/context/MiDiaContext.tsx
+  "MiDiaContext export is incompatible" (Fast Refresh)
+- Error fatal:
+  src/components/ui/TaskDetailModal.tsx: Unexpected token, expected "," (66:8)
+  Línea cerca de: `}).catch (console.error);`
+
+Necesito:
+1) Señalar exactamente el bloque incorrecto y dar el bloque corregido.
+2) Decir cómo eliminar el duplicate key revalidarTarea (qué renombrar o borrar).
+3) Ajuste de exports en MiDiaContext para que Fast Refresh no invalide (patrón correcto Provider/hook/export).
+Entrega en formato: PROBLEMA -> CAUSA -> FIX (con código).
+
+3) Clarity vs SMART (sincero y claro)
+
+SMART es una metodología para redactar objetivos: Específico, Medible, Alcanzable, Relevante, con Tiempo.
+Pero “Clarity” no tiene que ser SMART. Clarity puede usar SMART como modo opcional para objetivos/proyectos, no como regla para todas las tareas.
+
+4) “Meta y evidencia” (por qué a vos no te convence) + cómo lo hace software real
+
+Tu intuición es correcta: si “evidencia” te obliga a llenar campos tipo Excel, genera fricción.
+
+En software común (Jira/Asana/ClickUp):
+
+Meta/Objetivo suele vivir en nivel superior (Proyecto/Epic/Goal), no en cada tarea diaria.
+
+Evidencia suele ser opcional y se resuelve con:
+
+link (PR, ticket, documento),
+
+adjunto,
+
+comentario final al cerrar,
+
+checklist/resultado corto.
+
+Lo que NO hacen bien: obligarte a “calcular evidencia” para tareas pequeñas.
+
+5) Propuesta simple para Clarity (sin romper Plan de Trabajo)
+
+Mantén Plan de Trabajo como “donde se configura” y “Mi Día” como “donde se ejecuta”.
+
+Plan de Trabajo (Proyecto):
+
+define padre/hijo, entregable, fechas, responsable, prioridad.
+
+botón “+ Subtarea” dentro del padre.
+
+Mi Día:
+
+lista limpia: Hoy / Retrasadas / En curso / Bloqueadas.
+
+al cerrar una tarea: mini-cierre (1 campo opcional):
+
+“Resultado (1 línea)” o “Link evidencia” (opcional).
+
+Evidencia:
+
+1 solo campo opcional (link o nota).
+
+nada de cálculos.
+
+6) “Todo en Stored Procedures”: paquete recomendado (advanced) para tu backend
+
+Abajo te dejo un paquete base (TVP + SP) para que Gemini 3 lo revise/complete. Es el patrón clave para eliminar roundtrips (especialmente Checkin).
+
+6.1 Tipo TVP para detalle de tareas del checkin
+CREATE TYPE dbo.TVP_CheckinTareas AS TABLE
+(
+    idTarea INT NOT NULL,
+    tipo    NVARCHAR(20) NOT NULL -- 'Entrego' | 'Avanzo' | 'Extra'
+);
+GO
+
+6.2 SP Checkin Upsert (1 solo viaje: header + replace detalle)
+CREATE OR ALTER PROCEDURE dbo.sp_Checkin_Upsert
+(
+    @idUsuario        INT,
+    @fecha            DATE,
+    @entregableTexto  NVARCHAR(4000),
+    @nota             NVARCHAR(4000) = NULL,
+    @linkEvidencia    NVARCHAR(1000) = NULL,
+    @estadoAnimo      NVARCHAR(50) = NULL,
+    @idNodo           INT = NULL,
+    @tareas           dbo.TVP_CheckinTareas READONLY
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        BEGIN TRAN;
+
+        DECLARE @idCheckin INT;
+
+        SELECT @idCheckin = idCheckin
+        FROM p_Checkins
+        WHERE idUsuario = @idUsuario AND CAST(fecha AS DATE) = @fecha;
+
+        IF @idCheckin IS NULL
+        BEGIN
+            INSERT INTO p_Checkins(idUsuario, fecha, entregableTexto, nota, linkEvidencia, estadoAnimo, idNodo)
+            VALUES(@idUsuario, @fecha, @entregableTexto, @nota, @linkEvidencia, @estadoAnimo, @idNodo);
+
+            SET @idCheckin = SCOPE_IDENTITY();
+        END
+        ELSE
+        BEGIN
+            UPDATE p_Checkins
+            SET entregableTexto = @entregableTexto,
+                nota = @nota,
+                linkEvidencia = @linkEvidencia,
+                estadoAnimo = @estadoAnimo,
+                idNodo = @idNodo
+            WHERE idCheckin = @idCheckin;
+        END
+
+        DELETE FROM p_CheckinTareas WHERE idCheckin = @idCheckin;
+
+        INSERT INTO p_CheckinTareas(idCheckin, idTarea, tipo)
+        SELECT @idCheckin, t.idTarea, t.tipo
+        FROM @tareas t;
+
+        COMMIT;
+
+        SELECT @idCheckin AS idCheckin;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK;
+        THROW;
+    END CATCH
+END
+GO
+
+6.3 SP Bloqueo Crear (evita duplicados + actualiza estado tarea)
+CREATE OR ALTER PROCEDURE dbo.sp_Bloqueo_Crear
+(
+    @idTarea         INT,
+    @idOrigenUsuario INT,
+    @idDestinoUsuario INT = NULL,
+    @destinoTexto    NVARCHAR(200) = NULL,
+    @motivo          NVARCHAR(1000),
+    @accionMitigacion NVARCHAR(1000) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        BEGIN TRAN;
+
+        DECLARE @idBloqueo INT;
+
+        SELECT TOP 1 @idBloqueo = idBloqueo
+        FROM p_Bloqueos
+        WHERE idTarea = @idTarea AND estado <> 'Resuelto'
+        ORDER BY creadoEn DESC;
+
+        IF @idBloqueo IS NULL
+        BEGIN
+            INSERT INTO p_Bloqueos(idTarea, idOrigenUsuario, idDestinoUsuario, destinoTexto, motivo, accionMitigacion, creadoEn, estado)
+            VALUES(@idTarea, @idOrigenUsuario, @idDestinoUsuario, @destinoTexto, @motivo, @accionMitigacion, GETDATE(), 'Activo');
+
+            SET @idBloqueo = SCOPE_IDENTITY();
+        END
+
+        UPDATE p_Tareas SET estado = 'Bloqueada'
+        WHERE idTarea = @idTarea AND estado <> 'Hecha';
+
+        COMMIT;
+
+        SELECT @idBloqueo AS idBloqueo;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK;
+        THROW;
+    END CATCH
+END
+GO
+
+6.4 SP Resolver Bloqueo
+CREATE OR ALTER PROCEDURE dbo.sp_Bloqueo_Resolver
+(
+    @idBloqueo INT,
+    @resolucion NVARCHAR(2000)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE p_Bloqueos
+    SET estado = 'Resuelto',
+        resolucion = @resolucion,
+        fechaResolucion = GETDATE()
+    WHERE idBloqueo = @idBloqueo;
+
+    SELECT 1 AS ok;
+END
+GO
+
+7) Prompt para Gemini 3: “migrar repo TS a SPs” (directo)
+Quiero migrar mi backend TS (NestJS) para que NO tenga queries inline: TODO en Stored Procedures.
+
+- Ya tengo ejecutarSP(nombre, params) y tipos Int/NVarChar/DateTime/SqlDate.
+- El repo actual tiene funciones: crearTarea, asignarUsuarioTarea, reasignarResponsable, eliminarTarea(con regla hoy vs soft delete),
+  getTareasUsuario, obtenerTareasMultiplesUsuarios(usa STRING_AGG), obtenerEquipoHoy, checkinUpsert (hoy hace 3 pasos),
+  obtenerCheckinPorFecha, bloquearTarea, resolverBloqueo, obtenerTareasHistorico, obtenerKpisDashboard,
+  obtenerTareasPorProyecto, notas CRUD.
+
+Necesito:
+1) Diseñar SPs equivalentes (TRY/CATCH + TRAN) y TVPs donde convenga (checkin tareas).
+2) Reducir roundtrips: checkinUpsert en 1 SP, bloquearTarea en 1 SP, eliminarTarea en 1 SP.
+3) Entregar scripts T-SQL completos (tipos + SPs) y luego cambios TS mínimos (calls a ejecutarSP).
+4) Mantener los mismos nombres/outputs que consume el frontend.
+
+Entrega: SQL primero, luego TS (solo funciones cambiadas), sin explicación larga.
+
+
+Si querés, pegá solo estas 2 cosas y te lo dejo ya aterrizado “a tu repo” (sin suposiciones):
+
+clarity.service.ts donde aparece duplicado revalidarTarea
+
+El bloque de TaskDetailModal.tsx alrededor de la línea 50–80 (donde está ese }).catch (console.error);)

@@ -4,8 +4,12 @@ import { OrganizacionController } from './organizacion.controller';
 import { KpisController, EquipoController, AsignacionesController, AvanceMensualController } from './kpis.controller';
 import { TasksService } from './tasks.service';
 import { RecurrenciaService } from './recurrencia.service';
+import { FocoService } from './foco.service';
+import { ReportsService } from './reports.service';
 import { PlanningModule } from '../planning/planning.module';
 import { AccesoModule } from '../acceso/acceso.module';
+import { NotificationModule } from '../common/notification.module';
+
 
 // NOTA: ClarityService, ReportsService, FocoService, SeedService
 // han sido removidos o migrados a SQL directo
@@ -13,11 +17,13 @@ import { AccesoModule } from '../acceso/acceso.module';
 @Module({
     imports: [
         PlanningModule,
-        AccesoModule
+        AccesoModule,
+        NotificationModule,
+
     ],
     controllers: [ClarityController, OrganizacionController, KpisController, EquipoController, AsignacionesController, AvanceMensualController],
-    providers: [TasksService, RecurrenciaService],
-    exports: [TasksService, RecurrenciaService]
+    providers: [TasksService, RecurrenciaService, FocoService, ReportsService],
+    exports: [TasksService, RecurrenciaService, FocoService, ReportsService]
 })
 export class ClarityModule { }
 

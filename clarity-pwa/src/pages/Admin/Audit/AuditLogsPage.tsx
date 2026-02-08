@@ -67,17 +67,17 @@ export const AuditLogsPage = () => {
             if (filterEntity !== 'ALL') filters.recurso = filterEntity;
             if (searchTerm) filters.query = searchTerm;
 
-            const data = await clarityService.getAuditLogs(page, 30, filters);
+            const data = await clarityService.getAuditLogs({ page, limit: 30, ...filters });
             if (data) {
                 // Map backend fields to frontend interface
                 const mappedLogs = (data.items || []).map((item: any) => ({
-                    idAuditLog: item.idAudit,
+                    idAuditLog: item.idAudit || item.idAuditLog,
                     idUsuario: item.idUsuario,
                     accion: item.accion,
                     entidad: item.recurso,
                     idEntidad: item.recursoId,
-                    datosAnteriores: null,
-                    datosNuevos: item.detalles, // Use detalles as raw source
+                    datosAnteriores: item.datosAnteriores,
+                    datosNuevos: item.datosNuevos,
                     fecha: item.fecha,
                     usuario: item.usuario,
                     ip: item.ip
@@ -141,7 +141,15 @@ export const AuditLogsPage = () => {
         const newObj = parseJSON(next) || {};
         const changes: { field: string; from: any; to: any }[] = [];
 
-        // format: { cambios: ["Estado: Pendiente -> EnCurso", ...] }
+        // format: { diff: { field: { from, to } } } - Optimized for new logs
+        if (newObj.diff) {
+            Object.entries(newObj.diff).forEach(([field, val]: [string, any]) => {
+                changes.push({ field, from: val.from, to: val.to });
+            });
+            return changes;
+        }
+
+        // format: { cambios: ["Estado: Pendiente -> EnCurso", ...] } - Support for legacy
         if (Array.isArray(newObj.cambios)) {
             newObj.cambios.forEach((c: string, idx: number) => {
                 changes.push({ field: `Cambio #${idx + 1}`, from: null, to: c });
@@ -151,7 +159,7 @@ export const AuditLogsPage = () => {
 
         const allKeys = Array.from(new Set([...Object.keys(oldObj), ...Object.keys(newObj)]));
         allKeys.forEach(key => {
-            if (['idAuditLog', 'idAudit', 'fecha', 'idUsuario', 'actualizadoEn', 'pais'].includes(key)) return;
+            if (['idAuditLog', 'idAudit', 'fecha', 'idUsuario', 'actualizadoEn', 'pais', 'detalles'].includes(key)) return;
             if (JSON.stringify(oldObj[key]) !== JSON.stringify(newObj[key])) {
                 changes.push({ field: key, from: oldObj[key], to: newObj[key] });
             }
@@ -194,8 +202,8 @@ export const AuditLogsPage = () => {
                             <ShieldCheck size={22} />
                         </div>
                         <div>
-                            <h1 className="text-lg font-black text-slate-900 tracking-tight">Auditoría del Sistema</h1>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Inmutabilidad de Datos</p>
+                            <h1 className="text-lg font-black text-slate-900 tracking-tight">Historial de Cambios</h1>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Registros Protegidos</p>
                         </div>
                     </div>
 
@@ -274,7 +282,7 @@ export const AuditLogsPage = () => {
 
                         <div className="space-y-4 pt-4 border-t border-slate-50">
                             <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                                <Database size={14} /> Entidades
+                                <Database size={14} /> Categorías
                             </h3>
                             <div className="flex flex-wrap gap-2">
                                 {['ALL', 'Tarea', 'Proyecto', 'Usuario', 'Rol'].map(e => (
@@ -298,7 +306,7 @@ export const AuditLogsPage = () => {
                             <div className="absolute top-0 right-0 p-4 opacity-10 text-white transform group-hover:scale-110 transition-transform">
                                 <ShieldCheck size={64} />
                             </div>
-                            <p className="text-[10px] font-black text-slate-300 uppercase leading-none mb-1">Total Eventos</p>
+                            <p className="text-[10px] font-black text-slate-300 uppercase leading-none mb-1">Total de Cambios</p>
                             <p className="text-3xl font-black text-white leading-none">{totalItems.toLocaleString()}</p>
                             <p className="text-[10px] text-slate-400 mt-3 flex items-center gap-1 font-bold">
                                 <Clock size={10} /> Auto-refresco en 1m
@@ -312,7 +320,7 @@ export const AuditLogsPage = () => {
                     {loading && (
                         <div className="flex flex-col items-center justify-center py-20 space-y-4">
                             <div className="w-12 h-12 rounded-2xl border-4 border-slate-100 border-t-slate-900 animate-spin" />
-                            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Sincronizando registros...</p>
+                            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Cargando historial...</p>
                         </div>
                     )}
 
@@ -355,7 +363,7 @@ export const AuditLogsPage = () => {
                                                                         {config.label}
                                                                     </span>
                                                                     <span className="flex items-center gap-1 text-[10px] font-black text-slate-400 uppercase bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
-                                                                        {getEntityIcon(log.entidad)} {log.entidad} #{log.idEntidad}
+                                                                        {getEntityIcon(log.entidad)} {log.entidad} Ref: #{log.idEntidad}
                                                                         {(() => {
                                                                             const details = parseJSON(log.datosNuevos);
                                                                             return details?.titulo ? ` - ${details.titulo}` : '';
@@ -396,10 +404,10 @@ export const AuditLogsPage = () => {
                                                                         <table className="w-full text-left text-[11px] bg-slate-50/50">
                                                                             <thead className="bg-slate-100/50 text-slate-500 uppercase font-black tracking-tighter">
                                                                                 <tr>
-                                                                                    <th className="px-4 py-2 border-b border-slate-100 w-1/4">Atributo</th>
-                                                                                    <th className="px-4 py-2 border-b border-slate-100">Estado Previo</th>
+                                                                                    <th className="px-4 py-2 border-b border-slate-100 w-1/4">Información</th>
+                                                                                    <th className="px-4 py-2 border-b border-slate-100">Antes</th>
                                                                                     <th className="w-8 border-b border-slate-100"></th>
-                                                                                    <th className="px-4 py-2 border-b border-slate-100">Nuevo Estado</th>
+                                                                                    <th className="px-4 py-2 border-b border-slate-100">Después</th>
                                                                                 </tr>
                                                                             </thead>
                                                                             <tbody className="divide-y divide-slate-100">

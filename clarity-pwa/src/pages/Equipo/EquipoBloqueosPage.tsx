@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { clarityService } from '../../services/clarity.service';
+import { alerts } from '../../utils/alerts';
 import type { Bloqueo } from '../../types/modelos';
 import {
     Clock, CheckCircle, ArrowRight, Search, X,
@@ -41,9 +42,7 @@ export const EquipoBloqueosPage: React.FC = () => {
     }, [today, showToast]);
 
     useEffect(() => {
-        let mounted = true;
         fetchBloqueos();
-        return () => { mounted = false; };
     }, [fetchBloqueos]);
 
     const stats = useMemo(() => {
@@ -54,7 +53,7 @@ export const EquipoBloqueosPage: React.FC = () => {
 
     const handleResolve = async (id: number, e?: React.MouseEvent) => {
         e?.stopPropagation();
-        if (!confirm('¿Marcar bloqueo como resuelto?')) return;
+        if (!(await alerts.confirm('¿Resolver impedimento?', '¿Marcar este bloqueo como resuelto?', 'question'))) return;
 
         setResolvingId(id);
         try {

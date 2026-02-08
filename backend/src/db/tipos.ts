@@ -83,6 +83,12 @@ export interface ProyectoDb {
     area: string | null;
     subgerencia: string | null;
     gerencia: string | null;
+    idCreador?: number;
+    creadorNombre?: string;
+    creadorCarnet?: string;
+    responsableCarnet?: string;
+    responsableNombre?: string;
+    progreso?: number;
 }
 
 // Tarea (mapeado desde p_Tareas)
@@ -114,6 +120,9 @@ export interface TareaDb {
     numeroParte?: number;
     fechaInicioReal?: Date;
     fechaFinReal?: Date;
+    linkEvidencia?: string;
+    creadorCarnet?: string;
+    asignadoCarnet?: string;
 }
 
 // Recurrencia de tarea (mapeado desde p_TareaRecurrencia)
@@ -128,6 +137,7 @@ export interface TareaRecurrenciaDb {
     activo: boolean;
     fechaCreacion: Date;
     idCreador: number;
+    carnet?: string;
 }
 
 // Instancia de recurrencia (mapeado desde p_TareaInstancia)
@@ -143,6 +153,7 @@ export interface TareaInstanciaDb {
     fechaRegistro: Date;
     fechaReprogramada: Date | null;
     esInstanciaReal?: boolean;  // Calculado en query
+    carnet?: string;
 }
 
 // Avance mensual (mapeado desde p_TareaAvanceMensual) - Solo Plan de Trabajo
@@ -169,6 +180,7 @@ export interface CheckinDb {
     estadoAnimo: string | null;
     idNodo: number | null;
     fechaCreacion: Date;
+    usuariocarnet: string | null;
 }
 
 // Bloqueo (mapeado desde p_Bloqueos)
@@ -182,6 +194,8 @@ export interface BloqueoDb {
     resolucion: string | null;
     idResueltoPor: number | null;
     prioridad: string;
+    carnetOrigen?: string;
+    carnetDestino?: string;
 }
 
 // Plan de Trabajo (mapeado desde p_PlanesTrabajo)
@@ -195,6 +209,7 @@ export interface PlanTrabajoDb {
     idCreador: number | null;
     fechaCreacion: Date;
     fechaActualizacion: Date | null;
+    carnet: string | null;
 }
 
 // Solicitud de Cambio (mapeado desde p_SolicitudCambios)
@@ -262,7 +277,8 @@ export interface LogSistemaDb {
 // Audit Log (mapeado desde p_Auditoria)
 export interface AuditLogDb {
     id: number;
-    idUsuario: number | null;
+    idUsuario: number | null; // Deprecated, use carnet
+    carnet?: string | null;  // New standard
     accion: string;
     entidad: string | null;
     entidadId: string | null;

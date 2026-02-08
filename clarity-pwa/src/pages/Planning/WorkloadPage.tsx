@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { clarityService } from '../../services/clarity.service';
 import type { Tarea, Usuario } from '../../types/modelos';
 import { useAuth } from '../../context/AuthContext';
@@ -13,21 +13,30 @@ import {
     isWeekend
 } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, Briefcase, Zap, Filter, LayoutList, Calendar as CalendarIcon } from 'lucide-react';
 import { useSecureHTML } from '../../hooks/useSecureHTML';
+// Extensión de Usuario para incluir estadísticas de carga
+interface WorkloadUser extends Usuario {
+    tareasActivas?: number;
+    tareasCompletadas?: number;
+}
 
 export const WorkloadPage: React.FC = () => {
     const { user } = useAuth();
     const { sanitize } = useSecureHTML();
+
     const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 })); // Lunes
     const [tasks, setTasks] = useState<Tarea[]>([]);
-    const [team, setTeam] = useState<Usuario[]>([]);
+    const [team, setTeam] = useState<WorkloadUser[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const [selectedTask, setSelectedTask] = useState<Tarea | null>(null);
+    const [viewType, setViewType] = useState<'project' | 'operative'>('project');
+    const [filterTerm, setFilterTerm] = useState('');
 
     const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
     const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
-    // Load real team and workload data from API
     useEffect(() => {
         const loadData = async () => {
             setLoading(true);
@@ -38,233 +47,319 @@ export const WorkloadPage: React.FC = () => {
                     setTasks(data.tasks || []);
                 }
             } catch (e) {
-                // Error de carga - UI muestra estado vacío
+                console.error('[WorkloadPage] Error:', e);
             } finally {
                 setLoading(false);
             }
         };
         loadData();
-    }, [user]);
+    }, [user, weekStart]);
 
-    // Heatmap Helper
-    const getTasksForUserAndDay = (userId: number, date: Date) => {
+    const getTasksForUserAndDay = (usuario: WorkloadUser, date: Date) => {
+        const userCarnet = usuario.carnet;
+
         return tasks.filter(t => {
-            const isAssigned = t.asignados?.some(a => a.idUsuario === userId) || false;
+            // Filtrado por Carnet asignado (desde la nueva lógica de backend)
+            const isAssigned = (t as any).usuarioCarnet === userCarnet;
             if (!isAssigned) return false;
+
+            // Filtro de vista (Proyecto vs Operativo)
+            if (viewType === 'project' && !t.idProyecto) return false;
+            if (viewType === 'operative' && t.idProyecto) return false;
+
             const start = t.fechaInicioPlanificada ? new Date(t.fechaInicioPlanificada) : null;
             const end = t.fechaObjetivo ? new Date(t.fechaObjetivo) : null;
             if (!start) return false;
             if (!end) return isSameDay(date, start);
-            return date >= start && date <= end;
+
+            const checkDate = new Date(date).setHours(0, 0, 0, 0);
+            const startDate = new Date(start).setHours(0, 0, 0, 0);
+            const endDate = new Date(end).setHours(0, 0, 0, 0);
+            return checkDate >= startDate && checkDate <= endDate;
         });
     };
 
-    // Filter & Grouping Logic
-    const [filterTerm, setFilterTerm] = useState('');
+    const filteredUsers = useMemo(() => {
+        const term = filterTerm.trim().toLowerCase();
+        if (!term) return team;
+        return team.filter(u =>
+            (u.nombre || '').toLowerCase().includes(term) ||
+            (u.rol?.nombre || '').toLowerCase().includes(term) ||
+            (u.carnet || '').toLowerCase().includes(term)
+        );
+    }, [team, filterTerm]);
 
-    // 1. Filter Users
-    const filteredUsers = team.filter(u =>
-        (u.nombre || '').toLowerCase().includes(filterTerm.toLowerCase()) ||
-        (u.correo || '').toLowerCase().includes(filterTerm.toLowerCase()) ||
-        (u.carnet || '').toLowerCase().includes(filterTerm.toLowerCase()) ||
-        (u.rol?.nombre && u.rol.nombre.toLowerCase().includes(filterTerm.toLowerCase()))
-    );
-
-    // 2. Group by Role/Dept
-    // We'll treat 'rol' as the Department provided in the mock data (e.g. 'RRHH', 'Dev')
-    // If role is missing, group under 'General'
-    const groupedUsers: Record<string, Usuario[]> = {};
-    filteredUsers.forEach(u => {
-        const group = u.rol?.nombre || 'General';
-        if (!groupedUsers[group]) groupedUsers[group] = [];
-        groupedUsers[group].push(u);
-    });
+    // AGRUPAR POR SUBGERENCIA (Usando el campo que el backend mapea en rol.nombre)
+    const groupedUsers = useMemo(() => {
+        const map: Record<string, WorkloadUser[]> = {};
+        filteredUsers.forEach(u => {
+            const group = u.rol?.nombre || 'General';
+            (map[group] ||= []).push(u);
+        });
+        return map;
+    }, [filteredUsers]);
 
     const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
-
-    const toggleGroup = (group: string) => {
-        setCollapsedGroups(prev => ({ ...prev, [group]: !prev[group] }));
-    };
-
-    // 3. Task Details Modal State
-    const [selectedTask, setSelectedTask] = useState<Tarea | null>(null);
+    const toggleGroup = (group: string) => setCollapsedGroups(prev => ({ ...prev, [group]: !prev[group] }));
 
     return (
-        <div className="bg-slate-50 min-h-screen flex flex-col font-sans">
-            {/* DASHBOARD SUMMARY - New Feature */}
-            <div className="bg-white px-6 py-3 border-b border-slate-200 flex flex-wrap gap-6 items-center text-xs shadow-sm z-30 relative justify-between">
-                <div className="flex gap-6">
-                    <div className="flex flex-col">
-                        <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Total Empleados</span>
-                        <span className="text-lg font-black text-slate-700">{team.length}</span>
+        <div className="bg-slate-50 h-screen max-w-full flex flex-col font-sans overflow-hidden">
+            {/* HEADER MINIMALISTA */}
+            <div className="bg-white border-b border-slate-200 px-6 py-4 flex flex-col lg:flex-row justify-between items-center gap-4 z-40 shrink-0">
+                <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-100">
+                        <LayoutList size={22} />
                     </div>
-                    <div className="flex flex-col">
-                        <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Departamentos</span>
-                        <span className="text-lg font-black text-slate-700">{Object.keys(groupedUsers).length}</span>
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Tareas Totales</span>
-                        <span className="text-lg font-black text-indigo-600">{tasks.length}</span>
-                    </div>
-                    {/* Add more metrics as needed */}
-                </div>
-                <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-rose-500"></span> <span className="text-slate-500 font-medium">Prioridad Alta</span>
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 ml-2"></span> <span className="text-slate-500 font-medium">Completada</span>
-                </div>
-            </div>
-
-            {/* CONTROLS HEADER */}
-            <div className="bg-white border-b border-slate-200 px-6 py-4 shadow-sm z-20 sticky top-0">
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                     <div>
-                        <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                            <Users className="text-slate-600" size={20} />
-                            Planificador de Recursos: {format(weekStart, 'MMMM yyyy', { locale: es })}
-                        </h1>
-                        <p className="text-xs text-slate-500">Gestión de capacidad multidepartamental.</p>
-                    </div>
-
-                    <div className="flex items-center gap-4 w-full md:w-auto">
-                        <div className="relative flex-1 md:w-64">
-                            <input
-                                type="text"
-                                placeholder="Buscar recurso, rol o tarea..."
-                                className="w-full pl-8 pr-3 py-1.5 bg-slate-100 border-transparent focus:bg-white border focus:border-indigo-500 rounded-md text-xs font-medium outline-none transition-all"
-                                value={filterTerm}
-                                onChange={e => setFilterTerm(e.target.value)}
-                            />
-                            <Users size={14} className="absolute left-2.5 top-1.5 text-slate-400" />
-                        </div>
-
-                        <div className="flex items-center bg-slate-100 rounded-md p-0.5 border border-slate-200">
-                            <button onClick={() => setWeekStart(d => subWeeks(d, 1))} className="p-1 hover:bg-white rounded hover:shadow-sm text-slate-600"><ChevronLeft size={16} /></button>
-                            <span className="w-24 text-center text-[10px] font-bold text-slate-600 uppercase">
-                                {format(weekStart, 'd MMM', { locale: es })} - {format(weekEnd, 'd MMM', { locale: es })}
-                            </span>
-                            <button onClick={() => setWeekStart(d => addWeeks(d, 1))} className="p-1 hover:bg-white rounded hover:shadow-sm text-slate-600"><ChevronRight size={16} /></button>
+                        <h1 className="text-lg font-black text-slate-800 tracking-tight">Carga Laboral</h1>
+                        <div className="flex items-center gap-2 text-[10px] text-indigo-600 font-bold uppercase tracking-wider">
+                            <span>{format(weekStart, 'MMMM yyyy', { locale: es })}</span>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* SCHEDULER GRID */}
-            <div className="flex-1 overflow-auto bg-slate-50 p-4">
-                <div className="bg-white rounded-lg shadow-sm border border-slate-200 min-w-[1000px] overflow-hidden">
-                    {/* Header Row */}
-                    <div className="flex border-b border-slate-200 bg-slate-50/90 text-xs font-bold text-slate-500 uppercase z-10 sticky top-0">
-                        <div className="w-64 p-3 border-r border-slate-200 shrink-0 sticky left-0 bg-slate-50 z-20 shadow-[1px_0_5px_rgba(0,0,0,0.05)]">
-                            Empleado / Subgerencia
-                        </div>
-                        {days.map(d => (
-                            <div key={d.toISOString()} className={`flex-1 min-w-[120px] p-2 text-center border-r border-slate-100 ${isWeekend(d) ? 'bg-slate-100/50 text-slate-400' : ''} ${isSameDay(d, new Date()) ? 'bg-indigo-50 text-indigo-700' : ''}`}>
-                                <div>{format(d, 'EEE', { locale: es })}</div>
-                                <div className="text-sm text-slate-800">{format(d, 'd')}</div>
+                <div className="flex flex-wrap items-center gap-4">
+                    {/* SWITCH DE VISTA */}
+                    <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner">
+                        <button
+                            onClick={() => setViewType('project')}
+                            className={`flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${viewType === 'project' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'
+                                }`}
+                        >
+                            <Briefcase size={14} /> Proyectos
+                        </button>
+                        <button
+                            onClick={() => setViewType('operative')}
+                            className={`flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${viewType === 'operative' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'
+                                }`}
+                        >
+                            <Zap size={14} /> Operativo
+                        </button>
+                    </div>
+
+                    <div className="h-6 w-[1px] bg-slate-300 hidden md:block"></div>
+
+                    {/* BUSCADOR */}
+                    <div className="relative w-full lg:w-64 group">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+                        <input
+                            type="text"
+                            placeholder="Buscar..."
+                            className="w-full pl-9 pr-3 py-2 bg-slate-100 border border-transparent focus:bg-white focus:border-indigo-500 rounded-xl text-xs font-bold outline-none transition-all shadow-inner focus:shadow-indigo-50"
+                            value={filterTerm}
+                            onChange={e => setFilterTerm(e.target.value)}
+                        />
+                    </div>
+
+                    {/* NAVEGACIÓN SEMANAL Y CALENDARIO */}
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
+                            className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black text-slate-500 hover:text-indigo-600 hover:border-indigo-200 transition-all uppercase tracking-widest shadow-sm"
+                            title="Ir a hoy"
+                        >
+                            Hoy
+                        </button>
+
+                        <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-sm group">
+                            <button onClick={() => setWeekStart(d => subWeeks(d, 1))} className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-colors">
+                                <ChevronLeft size={18} />
+                            </button>
+
+                            <div
+                                className="relative flex items-center cursor-pointer"
+                                onClick={() => {
+                                    const el = document.getElementById('workload-date-picker') as any;
+                                    if (el && el.showPicker) el.showPicker();
+                                }}
+                            >
+                                <input
+                                    id="workload-date-picker"
+                                    type="date"
+                                    className="absolute inset-0 opacity-0 pointer-events-none"
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val) setWeekStart(startOfWeek(new Date(val + 'T00:00:00'), { weekStartsOn: 1 }));
+                                    }}
+                                />
+                                <span className="text-[10px] font-black text-slate-600 uppercase px-3 text-center min-w-[140px] flex items-center justify-center gap-2 group-hover:text-indigo-600 transition-colors">
+                                    <CalendarIcon size={14} className="text-slate-400 group-hover:text-indigo-500" />
+                                    {format(weekStart, 'd MMM', { locale: es })} - {format(weekEnd, 'd MMM', { locale: es })}
+                                </span>
                             </div>
-                        ))}
+
+                            <button onClick={() => setWeekStart(d => addWeeks(d, 1))} className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-colors">
+                                <ChevronRight size={18} />
+                            </button>
+                        </div>
                     </div>
+                </div>
+            </div>
 
-                    {/* Content */}
-                    <div>
-                        {loading && <div className="p-10 text-center text-slate-400">Cargando planificación...</div>}
-
-                        {!loading && Object.keys(groupedUsers).length === 0 && (
-                            <div className="p-10 text-center text-slate-400 italic">No se encontraron empleados con ese criterio.</div>
-                        )}
-
-                        {!loading && Object.keys(groupedUsers).sort().map(groupName => {
-                            const isCollapsed = collapsedGroups[groupName];
-                            return (
-                                <div key={groupName} className="border-b border-slate-200 last:border-0">
-                                    <div
-                                        className="bg-slate-50 px-4 py-2 text-xs font-bold text-slate-700 flex items-center gap-2 cursor-pointer hover:bg-slate-100 transition-colors sticky left-0 z-10 w-full border-b border-slate-100"
-                                        onClick={() => toggleGroup(groupName)}
-                                    >
-                                        <span className={`transform transition-transform ${isCollapsed ? '-rotate-90' : 'rotate-0'}`}>▼</span>
-                                        {groupName} <span className="text-slate-400 font-normal">({groupedUsers[groupName].length})</span>
-                                    </div>
-
-                                    {!isCollapsed && groupedUsers[groupName].map(member => (
-                                        <div key={member.idUsuario} className="flex border-b border-slate-50 hover:bg-slate-50/50 transition-colors group h-auto min-h-[60px]">
-                                            <div className="w-64 p-3 border-r border-slate-200 bg-white group-hover:bg-slate-50 shrink-0 sticky left-0 z-10 shadow-[1px_0_5px_rgba(0,0,0,0.05)] flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs border border-slate-200">
-                                                    {member.nombre.substring(0, 2).toUpperCase()}
-                                                </div>
-                                                <div>
-                                                    <div className="text-xs font-bold text-slate-800">{member.nombre}</div>
-                                                    <div className="text-[10px] text-slate-400">{member.correo || 'Sin correo'}</div>
-                                                </div>
-                                            </div>
-
-                                            {days.map(day => {
-                                                const dayTasks = getTasksForUserAndDay(member.idUsuario, day);
-                                                return (
-                                                    <div key={day.toISOString()} className={`flex-1 min-w-[120px] p-2 border-r border-slate-100 flex flex-col gap-1 ${isWeekend(day) ? 'bg-slate-50/30' : ''}`}>
-                                                        {dayTasks.map(t => (
-                                                            <div
-                                                                key={t.idTarea}
-                                                                className={`text-[10px] px-2 py-1 rounded border shadow-sm cursor-pointer truncate transition-all hover:scale-[1.02] hover:z-20 relative ${t.prioridad === 'Alta' ? 'bg-rose-50 border-rose-200 text-rose-700 font-medium' :
-                                                                    t.estado === 'Hecha' ? 'bg-emerald-50 border-emerald-200 text-emerald-700 line-through opacity-70' :
-                                                                        'bg-white border-slate-200 text-slate-600'
-                                                                    }`}
-                                                                title={`Clic para ver detalles`}
-                                                                onClick={() => setSelectedTask(t)}
-                                                            >
-                                                                {t.titulo}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                );
-                                            })}
+            {/* ÁREA PRINCIPAL CON SCROLL INTERNO */}
+            <div className="flex-1 w-full overflow-hidden bg-white">
+                <div className="h-full w-full overflow-auto p-4 lg:p-6 lg:pt-0">
+                    <div className="min-w-[1200px]">
+                        {/* CABECERA DE DÍAS (Sticky) */}
+                        <div className="flex border-b border-slate-100 bg-white sticky top-0 z-30">
+                            <div className="w-[300px] p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-r border-slate-100 sticky left-0 bg-white z-40 flex items-center gap-2">
+                                <Filter size={12} className="text-slate-300" />
+                                Subgerencia / Colaborador
+                            </div>
+                            {days.map(d => {
+                                const today = isSameDay(d, new Date());
+                                const weekend = isWeekend(d);
+                                return (
+                                    <div key={d.toISOString()} className={`flex-1 p-4 text-center border-r border-slate-100 last:border-0 relative ${weekend ? 'bg-slate-50/50' : ''}`}>
+                                        {today && <div className="absolute bottom-0 left-0 right-0 h-1 bg-indigo-600 rounded-t-full"></div>}
+                                        <div className={`text-[10px] font-black uppercase transition-colors ${today ? 'text-indigo-600' : 'text-slate-400'}`}>
+                                            {format(d, 'EEEE', { locale: es })}
                                         </div>
-                                    ))}
+                                        <div className={`text-lg font-black mt-0.5 ${today ? 'text-indigo-600' : 'text-slate-800'}`}>
+                                            {format(d, 'd')}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* CUERPO AGRUPADO */}
+                        <div className="divide-y divide-slate-100 pb-10">
+                            {loading ? (
+                                <div className="p-32 text-center flex flex-col items-center gap-4">
+                                    <div className="w-10 h-10 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cargando equipo...</span>
                                 </div>
-                            );
-                        })}
+                            ) : Object.keys(groupedUsers).sort().map(groupName => {
+                                const isCollapsed = collapsedGroups[groupName];
+                                return (
+                                    <div key={groupName} className="relative">
+                                        {/* ENCABEZADO DE SUBGERENCIA */}
+                                        <button
+                                            onClick={() => toggleGroup(groupName)}
+                                            className="w-full flex items-center gap-3 px-6 py-3.5 bg-slate-50/70 hover:bg-slate-100/90 text-[10px] font-black text-indigo-900 border-y border-slate-100 sticky left-0 z-20 transition-all uppercase tracking-widest"
+                                        >
+                                            <div className={`p-1 rounded bg-white shadow-sm transition-transform ${isCollapsed ? '' : 'rotate-90'}`}>
+                                                <ChevronRight size={12} />
+                                            </div>
+                                            {groupName}
+                                            <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-[9px] border border-indigo-200">{groupedUsers[groupName].length}</span>
+                                        </button>
+
+                                        {!isCollapsed && groupedUsers[groupName].map(member => (
+                                            <div key={member.idUsuario} className="flex hover:bg-slate-50/30 transition-all min-h-[90px] group/row border-b border-slate-50 last:border-0">
+                                                {/* TARJETA COLABORADOR (Sticky) */}
+                                                <div className="w-[300px] p-4 border-r border-slate-100 shrink-0 sticky left-0 bg-white z-10 flex items-center gap-4 shadow-[10px_0_15px_-5px_rgba(0,0,0,0.02)] group-hover/row:bg-slate-50 transition-colors">
+                                                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 text-slate-600 flex items-center justify-center font-black text-xs border border-white shadow-sm ring-2 ring-slate-100 transition-transform group-hover/row:scale-105">
+                                                        {(member.nombre || 'E').substring(0, 2).toUpperCase()}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <div className="text-sm font-black text-slate-800 truncate leading-tight mb-1 group-hover/row:text-indigo-700 transition-colors">
+                                                            {member.nombre}
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[9px] font-black text-slate-400 uppercase truncate">ID: {member.carnet || member.idUsuario}</span>
+                                                            <div className="w-1 h-1 rounded-full bg-slate-300"></div>
+                                                            <span className="text-[9px] font-black text-emerald-600 uppercase">{member.tareasCompletadas || 0} OK</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* CELDA POR DÍA CON BADGES DE TAREA */}
+                                                {days.map(day => {
+                                                    const dayTasks = getTasksForUserAndDay(member, day);
+                                                    const isTodayMark = isSameDay(day, new Date());
+                                                    return (
+                                                        <div key={day.toISOString()} className={`flex-1 p-2 border-r border-slate-50 last:border-0 flex flex-col gap-2 relative group/cell ${isWeekend(day) ? 'bg-slate-50/20' : ''} ${isTodayMark ? 'bg-indigo-50/10' : ''}`}>
+                                                            {dayTasks.map(t => (
+                                                                <div
+                                                                    key={t.idTarea}
+                                                                    onClick={() => setSelectedTask(t)}
+                                                                    className={`text-[10px] px-3 py-2 rounded-xl border-2 cursor-pointer transition-all hover:scale-[1.03] hover:shadow-xl hover:z-30 flex flex-col justify-between ${t.prioridad === 'Alta'
+                                                                        ? 'bg-rose-50 border-rose-100 text-rose-800 font-bold shadow-sm shadow-rose-100/50'
+                                                                        : t.estado === 'Hecha'
+                                                                            ? 'bg-slate-50 border-slate-200 text-slate-400 line-through font-medium opacity-60'
+                                                                            : 'bg-white border-slate-200 text-slate-700 font-bold shadow-sm'
+                                                                        }`}
+                                                                >
+                                                                    <div className="line-clamp-2 leading-tight mb-1">{t.titulo}</div>
+                                                                    <div className="flex justify-between items-center mt-1">
+                                                                        <span className="text-[8px] opacity-60">#{t.idTarea}</span>
+                                                                        {t.idProyecto && <Briefcase size={8} className="text-indigo-400" />}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+
+                                                            {/* Hover cell highlight */}
+                                                            <div className="absolute inset-0 bg-indigo-500/0 group-hover/cell:bg-indigo-500/[0.02] transition-colors pointer-events-none"></div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        ))}
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* TASK DETAILS MODAL */}
+            {/* MODAL DE DETALLES PREMIUM REDESIGN */}
             {selectedTask && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setSelectedTask(null)}>
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
-                        <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                            <h3 className="font-bold text-lg text-slate-800">Detalles de la Tarea</h3>
-                            <button onClick={() => setSelectedTask(null)} className="text-slate-400 hover:text-slate-600">✕</button>
-                        </div>
-                        <div className="p-6 space-y-4">
-                            <div>
-                                <label className="text-xs font-bold text-slate-400 uppercase">Tarea</label>
-                                <p className="text-slate-800 font-medium text-lg">{selectedTask.titulo}</p>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-xs font-bold text-slate-400 uppercase">Estado</label>
-                                    <span className={`block w-fit px-2 py-1 rounded text-xs font-bold mt-1 ${selectedTask.estado === 'Hecha' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}`}>
-                                        {selectedTask.estado}
-                                    </span>
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setSelectedTask(null)}>
+                    <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in duration-300 relative border border-white/20" onClick={e => e.stopPropagation()}>
+                        <div className={`h-2.5 w-full ${selectedTask.prioridad === 'Alta' ? 'bg-rose-500' : 'bg-indigo-600'}`}></div>
+
+                        <div className="p-10 space-y-10">
+                            <div className="flex justify-between items-start">
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2">
+                                        <span className="px-3 py-1 bg-slate-100 text-[9px] font-black tracking-widest text-slate-500 rounded-lg border border-slate-200 uppercase">ID: {selectedTask.idTarea}</span>
+                                        {selectedTask.idProyecto && <span className="px-3 py-1 bg-indigo-50 text-[9px] font-black tracking-widest text-indigo-600 rounded-lg border border-indigo-100 uppercase">Estratégica</span>}
+                                    </div>
+                                    <h3 className="font-black text-2xl text-slate-800 leading-tight tracking-tight">{selectedTask.titulo}</h3>
                                 </div>
-                                <div>
-                                    <label className="text-xs font-bold text-slate-400 uppercase">Prioridad</label>
-                                    <span className={`block w-fit px-2 py-1 rounded text-xs font-bold mt-1 ${selectedTask.prioridad === 'Alta' ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700'}`}>
-                                        {selectedTask.prioridad || 'Normal'}
-                                    </span>
+                                <button onClick={() => setSelectedTask(null)} className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all font-bold">✕</button>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="p-5 bg-slate-50/50 rounded-3xl border border-slate-100 flex flex-col gap-2">
+                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Estado</label>
+                                    <div className="flex items-center gap-2">
+                                        <div className={`w-3 h-3 rounded-full ${selectedTask.estado === 'Hecha' ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]' : 'bg-amber-500'}`}></div>
+                                        <span className="text-sm font-black text-slate-700 uppercase">{selectedTask.estado}</span>
+                                    </div>
+                                </div>
+                                <div className="p-5 bg-slate-50/50 rounded-3xl border border-slate-100 flex flex-col gap-2">
+                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Prioridad</label>
+                                    <div className="flex items-center gap-2">
+                                        <div className={`w-3 h-3 rounded-full ${selectedTask.prioridad === 'Alta' ? 'bg-rose-500 animate-pulse shadow-[0_0_10px_rgba(244,63,94,0.4)]' : 'bg-blue-500'}`}></div>
+                                        <span className="text-sm font-black text-slate-700 uppercase">{selectedTask.prioridad || 'Media'}</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div>
-                                <label className="text-xs font-bold text-slate-400 uppercase">Descripción</label>
+
+                            <div className="space-y-4">
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Observaciones / Detalles</label>
                                 <div
-                                    className="text-slate-600 text-sm mt-1 bg-slate-50 p-3 rounded-lg border border-slate-100 min-h-[60px]"
-                                    dangerouslySetInnerHTML={sanitize(selectedTask.descripcion || 'Sin descripción disponible.')}
+                                    className="text-slate-600 text-sm leading-relaxed bg-slate-50/50 p-7 rounded-[2rem] border border-slate-100 min-h-[120px] font-medium"
+                                    dangerouslySetInnerHTML={sanitize(selectedTask.descripcion || 'No se registraron detalles específicos para esta asignación.')}
                                 />
                             </div>
-                            <div className="pt-4 border-t border-slate-100 flex justify-end">
+
+                            <div className="pt-4 flex gap-4">
                                 <button
-                                    onClick={() => setSelectedTask(null)} // In real app, could link to Task Edit page
-                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700"
+                                    onClick={() => setSelectedTask(null)}
+                                    className="flex-1 py-5 bg-indigo-600 text-white rounded-[1.5rem] text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 active:scale-95"
                                 >
-                                    Editar Tarea
+                                    Continuar
+                                </button>
+                                <button
+                                    onClick={() => setSelectedTask(null)}
+                                    className="px-10 py-5 bg-slate-100 text-slate-500 rounded-[1.5rem] text-xs font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
+                                >
+                                    Cerrar
                                 </button>
                             </div>
                         </div>

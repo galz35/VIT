@@ -7,6 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, UserPlus, Trash2, RefreshCw, Shield, AlertCircle, Search, ArrowRight } from 'lucide-react';
 import { accesoService } from '../../services/acceso.service';
+import { alerts } from '../../utils/alerts';
 import type { DelegacionVisibilidad, Empleado } from '../../types/acceso';
 
 interface DelegacionModalProps {
@@ -80,7 +81,7 @@ export const DelegacionModal: React.FC<DelegacionModalProps> = ({ isOpen, onClos
     };
 
     const borrarDelegacion = async (id: number) => {
-        if (!confirm('¿Eliminar esta delegación? El usuario perderá el acceso heredado.')) return;
+        if (!(await alerts.confirm('¿Revocar Delegación?', 'El usuario perderá el acceso heredado inmediatamente.'))) return;
         setLoading(true);
         try {
             await accesoService.deleteDelegacion(id);

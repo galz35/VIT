@@ -1,3 +1,4 @@
+// Last Modified: 2026-01-24 20:38:55
 import React, { useState } from 'react';
 import type { Tarea } from '../../../types/modelos';
 import { Flame, Calendar, Users, Trash2, Plus } from 'lucide-react';
@@ -10,9 +11,11 @@ interface Props {
     onTaskClick?: (t: Tarea) => void;
     onQuickMove?: (taskId: number, target: 'q1' | 'q2' | 'q3' | 'q4', assigneeId?: number) => void;
     onAdd?: (title: string) => void;
+    isBusy?: boolean;
+    busyTaskId?: number;
 }
 
-const QuadrantRow = ({ task, currentQuad, onQuickMove, onTaskClick }: { task: Tarea, currentQuad: string, onQuickMove?: any, onTaskClick?: any }) => {
+const QuadrantRow = ({ task, currentQuad, onQuickMove, onTaskClick, isBusy }: { task: Tarea, currentQuad: string, onQuickMove?: any, onTaskClick?: any, isBusy?: boolean }) => {
     const config = {
         q1: { icon: Flame, color: 'rose', hover: 'hover:bg-rose-50' },
         q2: { icon: Calendar, color: 'blue', hover: 'hover:bg-blue-50' },
@@ -28,11 +31,11 @@ const QuadrantRow = ({ task, currentQuad, onQuickMove, onTaskClick }: { task: Ta
             </div>
 
             {/* COMPACT BUTTONS */}
-            <div className="flex items-center gap-1 opacity-40 group-hover:opacity-100 transition-opacity">
-                <button onClick={() => onQuickMove?.(task.idTarea, 'q1')} disabled={currentQuad === 'q1'} className={`p-1.5 rounded hover:bg-rose-100 hover:text-rose-600 ${currentQuad === 'q1' ? 'text-rose-500 bg-rose-50' : 'text-slate-400'}`} title="Hacer"><Flame size={14} /></button>
-                <button onClick={() => onQuickMove?.(task.idTarea, 'q2')} disabled={currentQuad === 'q2'} className={`p-1.5 rounded hover:bg-blue-100 hover:text-blue-600 ${currentQuad === 'q2' ? 'text-blue-500 bg-blue-50' : 'text-slate-400'}`} title="Planificar"><Calendar size={14} /></button>
-                <button onClick={() => onQuickMove?.(task.idTarea, 'q3')} disabled={currentQuad === 'q3'} className={`p-1.5 rounded hover:bg-amber-100 hover:text-amber-600 ${currentQuad === 'q3' ? 'text-amber-500 bg-amber-50' : 'text-slate-400'}`} title="Delegar"><Users size={14} /></button>
-                <button onClick={() => onQuickMove?.(task.idTarea, 'q4')} disabled={currentQuad === 'q4'} className={`p-1.5 rounded hover:bg-slate-200 hover:text-slate-600 ${currentQuad === 'q4' ? 'text-slate-500 bg-slate-100' : 'text-slate-400'}`} title="Eliminar"><Trash2 size={14} /></button>
+            <div className={`flex items-center gap-1 transition-opacity ${isBusy ? 'opacity-30 pointer-events-none' : 'opacity-40 group-hover:opacity-100'}`}>
+                <button onClick={() => onQuickMove?.(task.idTarea, 'q1')} disabled={currentQuad === 'q1' || isBusy} className={`p-1.5 rounded hover:bg-rose-100 hover:text-rose-600 ${currentQuad === 'q1' ? 'text-rose-500 bg-rose-50' : 'text-slate-400'}`} title="Hacer"><Flame size={14} /></button>
+                <button onClick={() => onQuickMove?.(task.idTarea, 'q2')} disabled={currentQuad === 'q2' || isBusy} className={`p-1.5 rounded hover:bg-blue-100 hover:text-blue-600 ${currentQuad === 'q2' ? 'text-blue-500 bg-blue-50' : 'text-slate-400'}`} title="Planificar"><Calendar size={14} /></button>
+                <button onClick={() => onQuickMove?.(task.idTarea, 'q3')} disabled={currentQuad === 'q3' || isBusy} className={`p-1.5 rounded hover:bg-amber-100 hover:text-amber-600 ${currentQuad === 'q3' ? 'text-amber-500 bg-amber-50' : 'text-slate-400'}`} title="Delegar"><Users size={14} /></button>
+                <button onClick={() => onQuickMove?.(task.idTarea, 'q4')} disabled={currentQuad === 'q4' || isBusy} className={`p-1.5 rounded hover:bg-slate-200 hover:text-slate-600 ${currentQuad === 'q4' ? 'text-slate-500 bg-slate-100' : 'text-slate-400'}`} title="Eliminar"><Trash2 size={14} /></button>
             </div>
         </div>
     );
@@ -40,7 +43,7 @@ const QuadrantRow = ({ task, currentQuad, onQuickMove, onTaskClick }: { task: Ta
 
 import { UserSelector } from '../../../components/ui/UserSelector';
 
-export const EisenhowerMatrix: React.FC<Props> = ({ q1Tasks, q2Tasks, q3Tasks, q4Tasks, onTaskClick, onQuickMove, onAdd }) => {
+export const EisenhowerMatrix: React.FC<Props> = ({ q1Tasks, q2Tasks, q3Tasks, q4Tasks, onTaskClick, onQuickMove, onAdd, isBusy, busyTaskId }) => {
     const [inputValue, setInputValue] = useState('');
     const [isSelectorOpen, setIsSelectorOpen] = useState(false);
     const [taskToDelegate, setTaskToDelegate] = useState<number | null>(null);
@@ -124,7 +127,7 @@ export const EisenhowerMatrix: React.FC<Props> = ({ q1Tasks, q2Tasks, q3Tasks, q
                     </div>
                     <div>
                         {q1Tasks.length === 0 ? <div className="p-4 text-xs text-slate-400 text-center italic">Nada urgente por ahora.</div> :
-                            q1Tasks.map(t => <QuadrantRow key={t.idTarea} task={t} currentQuad="q1" onQuickMove={handleMoveWrapper} onTaskClick={onTaskClick} />)
+                            q1Tasks.map(t => <QuadrantRow key={t.idTarea} task={t} currentQuad="q1" onQuickMove={handleMoveWrapper} onTaskClick={onTaskClick} isBusy={isBusy && busyTaskId === t.idTarea} />)
                         }
                     </div>
                 </div>
@@ -139,7 +142,7 @@ export const EisenhowerMatrix: React.FC<Props> = ({ q1Tasks, q2Tasks, q3Tasks, q
                     </div>
                     <div>
                         {q2Tasks.length === 0 ? <div className="p-4 text-xs text-slate-400 text-center italic">Tu agenda está libre.</div> :
-                            q2Tasks.map(t => <QuadrantRow key={t.idTarea} task={t} currentQuad="q2" onQuickMove={handleMoveWrapper} onTaskClick={onTaskClick} />)
+                            q2Tasks.map(t => <QuadrantRow key={t.idTarea} task={t} currentQuad="q2" onQuickMove={handleMoveWrapper} onTaskClick={onTaskClick} isBusy={isBusy && busyTaskId === t.idTarea} />)
                         }
                     </div>
                 </div>
@@ -154,7 +157,7 @@ export const EisenhowerMatrix: React.FC<Props> = ({ q1Tasks, q2Tasks, q3Tasks, q
                     </div>
                     <div>
                         {q3Tasks.length === 0 ? <div className="p-4 text-xs text-slate-400 text-center italic">Nada para delegar.</div> :
-                            q3Tasks.map(t => <QuadrantRow key={t.idTarea} task={t} currentQuad="q3" onQuickMove={handleMoveWrapper} onTaskClick={onTaskClick} />)
+                            q3Tasks.map(t => <QuadrantRow key={t.idTarea} task={t} currentQuad="q3" onQuickMove={handleMoveWrapper} onTaskClick={onTaskClick} isBusy={isBusy && busyTaskId === t.idTarea} />)
                         }
                     </div>
                 </div>
@@ -169,7 +172,7 @@ export const EisenhowerMatrix: React.FC<Props> = ({ q1Tasks, q2Tasks, q3Tasks, q
                     </div>
                     <div>
                         {q4Tasks.length === 0 ? <div className="p-4 text-xs text-slate-400 text-center italic">Limpio.</div> :
-                            q4Tasks.map(t => <QuadrantRow key={t.idTarea} task={t} currentQuad="q4" onQuickMove={handleMoveWrapper} onTaskClick={onTaskClick} />)
+                            q4Tasks.map(t => <QuadrantRow key={t.idTarea} task={t} currentQuad="q4" onQuickMove={handleMoveWrapper} onTaskClick={onTaskClick} isBusy={isBusy && busyTaskId === t.idTarea} />)
                         }
                     </div>
                 </div>

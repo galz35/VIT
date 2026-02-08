@@ -1,3 +1,11 @@
+/**
+ * ¿QUÉ ES?: El servicio principal de la aplicación que interactúa con la API de "Clarity".
+ * ¿PARA QUÉ SE USA?: Contiene todas las funciones que realizan peticiones HTTP específicas para 
+ * tareas, proyectos, el equipo, administración y reportes.
+ * ¿QUÉ SE ESPERA?: Que centralice la lógica de comunicación con el backend, devolviendo datos tipados
+ * y manejando los parámetros necesarios para cada consulta.
+ */
+
 import { api } from './api';
 import type { ApiResponse } from '../types/api';
 import type {
@@ -6,27 +14,32 @@ import type {
 } from '../types/modelos';
 import type { EquipoHoyResponse } from '../types/equipo';
 
+/**
+ * Agrupa todas las funciones relacionadas con la funcionalidad de "Clarity".
+ */
+
 export const clarityService = {
-    // Mi Día
-    getMiDia: async (fecha: string) => {
+    // === MÓDULO: MI DÍA & AGENDA ===
+    // Estas funciones manejan lo que el usuario ve al inicio de su jornada.
+    getMiDia: async (fecha: string, startDate?: string, endDate?: string) => {
         const { data: response } = await api.get<ApiResponse<{
             checkinHoy: Checkin | null;
             tareasSugeridas: Tarea[]; // Unified list from backend
             backlog: Tarea[];        // New backlog list
             bloqueosActivos?: Bloqueo[];
             bloqueosMeCulpan?: Bloqueo[];
-        }>>(`/mi-dia`, { params: { fecha } });
+        }>>(`/mi-dia`, { params: { fecha, startDate, endDate } });
         return response.data;
     },
 
-    getMemberAgenda: async (userId: string, fecha: string) => {
+    getMemberAgenda: async (userId: string, fecha: string, startDate?: string, endDate?: string) => {
         const { data: response } = await api.get<ApiResponse<{
             checkinHoy: Checkin | null;
             tareasSugeridas: Tarea[];
             backlog: Tarea[];
             bloqueosActivos?: Bloqueo[];
             bloqueosMeCulpan?: Bloqueo[];
-        }>>(`/agenda/${userId}`, { params: { fecha } });
+        }>>(`/agenda/${userId}`, { params: { fecha, startDate, endDate } });
         return response.data;
     },
 
@@ -35,7 +48,8 @@ export const clarityService = {
         return response.data;
     },
 
-    // Tareas
+    // === MÓDULO: TAREAS ===
+    // Funciones para crear, actualizar, reordenar y gestionar el ciclo de vida de las tareas.
     postTareaRapida: async (dto: TareaCrearRapidaDto) => {
         const { data: response } = await api.post<ApiResponse<Tarea>>('/tareas/rapida', dto);
         return response.data;
@@ -46,7 +60,7 @@ export const clarityService = {
         return response.data;
     },
 
-    getMisTareas: async (filters?: { estado?: string, idProyecto?: number }) => {
+    getMisTareas: async (filters?: { estado?: string, idProyecto?: number, startDate?: string, endDate?: string, query?: string }) => {
         const { data: response } = await api.get<ApiResponse<Tarea[]>>('/tareas/mias', { params: filters });
         return response.data;
     },
@@ -56,13 +70,18 @@ export const clarityService = {
         return response.data;
     },
 
+    getTaskById: async (id: number) => {
+        const { data: response } = await api.get<ApiResponse<Tarea>>(`/tareas/${id}`);
+        return response.data;
+    },
+
     getTareasUsuario: async (idUsuario: number) => {
         const { data: response } = await api.get<ApiResponse<Tarea[]>>(`/equipo/miembro/${idUsuario}/tareas`);
         return response.data;
     },
 
-    postProyecto: async (nombre: string, idNodoDuenio?: number, descripcion?: string) => {
-        const { data: response } = await api.post<ApiResponse>('/proyectos', { nombre, idNodoDuenio, descripcion });
+    postProyecto: async (nombre: string, idNodoDuenio?: number, descripcion?: string, tipo?: string) => {
+        const { data: response } = await api.post<ApiResponse>('/proyectos', { nombre, idNodoDuenio, descripcion, tipo });
         return response.data;
     },
 
@@ -72,7 +91,7 @@ export const clarityService = {
     },
 
 
-    actualizarTarea: async (idTarea: number, dto: Partial<Pick<Tarea, 'titulo' | 'descripcion' | 'estado' | 'prioridad' | 'esfuerzo' | 'fechaObjetivo' | 'fechaInicioPlanificada'>> & { motivo?: string }) => {
+    actualizarTarea: async (idTarea: number, dto: Partial<Pick<Tarea, 'titulo' | 'descripcion' | 'estado' | 'prioridad' | 'progreso' | 'tipo' | 'esfuerzo' | 'fechaObjetivo' | 'fechaInicioPlanificada' | 'linkEvidencia' | 'idTareaPadre' | 'idResponsable'>> & { motivo?: string }) => {
         const { data: response } = await api.patch<ApiResponse<Tarea>>(`/tareas/${idTarea}`, dto);
         return response.data;
     },
@@ -87,13 +106,14 @@ export const clarityService = {
         return response.data;
     },
 
-    revalidarTarea: async (idTarea: number, accion: string, idUsuarioOtro?: number, razon?: string) => {
-        const { data: response } = await api.post<ApiResponse>(`/tareas/${idTarea}/revalidar`, { accion, idUsuarioOtro, razon });
-        return response.data;
-    },
 
     solicitarCambio: async (idTarea: number, campo: string, valorNuevo: string, motivo: string) => {
         const { data: response } = await api.post<ApiResponse<any>>('/tareas/solicitud-cambio', { idTarea, campo, valorNuevo, motivo });
+        return response.data;
+    },
+
+    toggleBloqueoTarea: async (idTarea: number, enllavado: boolean) => {
+        const { data: response } = await api.patch<ApiResponse<Tarea>>(`/tareas/${idTarea}/lock`, { enllavado });
         return response.data;
     },
 
@@ -104,6 +124,11 @@ export const clarityService = {
 
     postAvance: async (idTarea: number, dto: TareaRegistrarAvanceDto) => {
         const { data: response } = await api.post<ApiResponse>(`/tareas/${idTarea}/avance`, dto);
+        return response.data;
+    },
+
+    deleteAvance: async (idLog: number) => {
+        const { data: response } = await api.delete<ApiResponse>(`/tareas/avance/${idLog}`);
         return response.data;
     },
 
@@ -119,6 +144,16 @@ export const clarityService = {
     postAvanceMensual: async (idTarea: number, dto: { anio: number, mes: number, porcentajeMes: number, comentario?: string }) => {
         const { data: response } = await api.post<ApiResponse<{ historial: TareaAvanceMensual[], acumulado: number }>>(`/tareas/${idTarea}/avance-mensual`, dto);
         return response.data;
+    },
+
+    deleteTarea: async (idTarea: number) => {
+        const { data: response } = await api.delete<ApiResponse>(`/tareas/${idTarea}`);
+        return response.data;
+    },
+
+    revalidarTarea: async (idTarea: number, accion: 'Sigue' | 'HechaPorOtro' | 'NoAplica' | 'Reasignar', idUsuarioOtro?: number) => {
+        const { data } = await api.post<ApiResponse>(`/tareas/${idTarea}/revalidar`, { accion, idUsuarioOtro });
+        return data.data;
     },
 
     // ==========================================
@@ -161,7 +196,8 @@ export const clarityService = {
         return response.data;
     },
 
-    // Bloqueos
+    // === MÓDULO: BLOQUEOS ===
+    // Maneja los impedimentos que detienen el progreso de las tareas.
     postBloqueo: async (dto: BloqueoCrearDto) => {
         const { data: response } = await api.post<ApiResponse<Bloqueo>>('/bloqueos', dto);
         return response.data;
@@ -172,9 +208,15 @@ export const clarityService = {
         return response.data;
     },
 
-    // Jefatura
+    // === MÓDULO: JEFATURA & EQUIPO ===
+    // Funciones exclusivas para visualización del equipo por parte de gerentes o jefes.
     getEquipoHoy: async (fecha: string) => {
         const { data: response } = await api.get<ApiResponse<EquipoHoyResponse>>('/equipo/hoy', { params: { fecha } });
+        return response.data;
+    },
+
+    getEquipoInform: async (fecha: string) => {
+        const { data: response } = await api.get<ApiResponse<EquipoHoyResponse>>('/equipo/inform', { params: { fecha } });
         return response.data;
     },
 
@@ -193,6 +235,26 @@ export const clarityService = {
         return response.data;
     },
 
+    getEquipoActividad: async (page: number = 1, limit: number = 50, query?: string) => {
+        try {
+            const { data: response } = await api.get<any>('/equipo/actividad', { params: { page, limit, query } });
+            return response;
+        } catch (e) {
+            console.error('Error getEquipoActividad', e);
+            throw e;
+        }
+    },
+
+    getAuditLogDetalle: async (id: number) => {
+        try {
+            const { data } = await api.get<any>(`/equipo/actividad/${id}`);
+            return data;
+        } catch (e) {
+            console.error('Error fetching log detail', e);
+            throw e;
+        }
+    },
+
     getEquipoMiembroTareas: async (idUsuario: number) => {
         const { data: response } = await api.get<ApiResponse<Tarea[]>>(`/equipo/miembro/${idUsuario}/tareas`);
         return response.data || [];
@@ -208,19 +270,34 @@ export const clarityService = {
         return response.data;
     },
 
-    // Proyectos
+    // === MÓDULO: PROYECTOS ===
+    // Gestión de proyectos de alto nivel.
     getProyectos: async (filters?: any) => {
-        const { data: response } = await api.get<ApiResponse<{ items: Proyecto[], total: number, page: number, lastPage: number }>>('/proyectos', { params: filters });
+        const cleanFilters = filters ? Object.fromEntries(
+            Object.entries(filters).filter(([_, v]) => v !== '' && v !== null && v !== undefined)
+        ) : {};
+        console.log('[ClarityService] getProyectos params:', cleanFilters);
+        const { data: response } = await api.get<ApiResponse<{ items: Proyecto[], total: number, page: number, lastPage: number }>>('/proyectos', { params: cleanFilters });
         return response.data;
     },
 
-    updateProyecto: async (id: number, dto: { nombre?: string, descripcion?: string, idNodoDuenio?: number, fechaInicio?: string, fechaFin?: string }) => {
+    getProyecto: async (id: number) => {
+        const { data: response } = await api.get<ApiResponse<Proyecto>>(`/proyectos/${id}`);
+        return response.data;
+    },
+
+    updateProyecto: async (id: number, dto: { nombre?: string, descripcion?: string, idNodoDuenio?: number, fechaInicio?: string, fechaFin?: string, tipo?: string }) => {
         const { data: response } = await api.patch<ApiResponse>(`/proyectos/${id}`, dto);
         return response.data;
     },
 
     deleteProyecto: async (id: number) => {
         const { data: response } = await api.delete<ApiResponse>(`/proyectos/${id}`);
+        return response.data;
+    },
+
+    cloneProyecto: async (idProyecto: number, nombre: string) => {
+        const { data: response } = await api.post<ApiResponse<Proyecto>>(`/proyectos/${idProyecto}/clonar`, { nombre });
         return response.data;
     },
 
@@ -234,6 +311,11 @@ export const clarityService = {
         return response.data;
     },
 
+    getProyectoHistorial: async (idProyecto: number, page: number = 1, limit: number = 50) => {
+        const { data: response } = await api.get<ApiResponse<any>>(`/proyectos/${idProyecto}/historial`, { params: { page, limit } });
+        return response.data;
+    },
+
     // Config
     getUserConfig: async () => {
         const { data: response } = await api.get<ApiResponse>('/config');
@@ -243,6 +325,27 @@ export const clarityService = {
         const { data: response } = await api.post<ApiResponse>('/config', dto);
         return response.data;
     },
+
+    // ==========================================
+    // NOTAS (CRUD)
+    // ==========================================
+    getNotes: async () => {
+        const { data: response } = await api.get<ApiResponse>('/notas');
+        return response.data;
+    },
+    createNote: async (dto: { title: string, content: string }) => {
+        const { data: response } = await api.post<ApiResponse>('/notas', dto);
+        return response.data;
+    },
+    updateNote: async (id: string | number, dto: { title: string, content: string }) => {
+        const { data: response } = await api.patch<ApiResponse>(`/notas/${id}`, dto);
+        return response.data;
+    },
+    deleteNote: async (id: string | number) => {
+        const { data: response } = await api.delete<ApiResponse>(`/notas/${id}`);
+        return response.data;
+    },
+
 
 
     getLogs: async (page: number = 1, limit: number = 100) => {
@@ -255,13 +358,13 @@ export const clarityService = {
         return response.data;
     },
 
-    getAuditLogs: async (page: number = 1, limit: number = 50, filters?: { accion?: string, recurso?: string, idUsuario?: number, query?: string }) => {
+    getAuditLogs: async (params: { page?: number, limit?: number, idUsuario?: number, accion?: string, recurso?: string, query?: string, entidad?: string, entidadId?: string }) => {
         const { data: response } = await api.get<ApiResponse<{
             items: { idAuditLog: number, accion: string, entidad: string, idEntidad: number, datosAnteriores: string | null, datosNuevos: string | null, idUsuario: number, fecha: string }[],
             total: number,
             page: number,
             totalPages: number
-        }>>('/admin/audit-logs', { params: { page, limit, ...filters } });
+        }>>('/admin/audit-logs', { params });
         return response.data;
     },
 
@@ -298,8 +401,26 @@ export const clarityService = {
         const { data: response } = await api.post<ApiResponse>('/admin/usuarios', dto);
         return response.data;
     },
-    getVisibilidadEfectiva: async (idUsuario: number) => {
-        const { data: response } = await api.get<ApiResponse<any[]>>(`/admin/usuarios/${idUsuario}/visibilidad-efectiva`);
+    updateUsuario: async (id: number, dto: any) => {
+        const { data: response } = await api.patch<ApiResponse>(`/admin/usuarios/${id}`, dto);
+        return response.data;
+    },
+    deleteUsuario: async (id: number) => {
+        const { data: response } = await api.delete<ApiResponse>(`/admin/usuarios/${id}`);
+        return response.data;
+    },
+    removerUsuarioNodo: async (idUsuario: number, idNodo: number) => {
+        const { data: response } = await api.delete<ApiResponse>(`/admin/usuarios-organizacion/${idUsuario}/${idNodo}`);
+        return response.data;
+    },
+    async getVisibilidadEfectiva(idUsuario: number) {
+        const { data: response } = await api.get<ApiResponse>(`/visibilidad/${idUsuario}`);
+        return response.data;
+    },
+
+    // === DASHBOARD ALERTS ===
+    getDashboardAlerts: async () => {
+        const { data: response } = await api.get<ApiResponse<{ overdue: any[], today: any[] }>>('/planning/dashboard/alerts');
         return response.data;
     },
     updateUsuarioRol: async (idUsuario: number, rol: string, idRol?: number) => {
@@ -313,7 +434,7 @@ export const clarityService = {
     },
 
     importEmpleados: async (empleados: any[]) => {
-        const { data: response } = await api.post<ApiResponse>('/admin/empleados/import', { empleados });
+        const { data: response } = await api.post<ApiResponse>('/admin/import/empleados', { empleados });
         return response.data;
     },
 
@@ -345,9 +466,16 @@ export const clarityService = {
         return response.data;
     },
 
-    // Reports
+
+
+    // === MÓDULO: REPORTES ===
+    // Obtención de métricas, productividad y descarga de archivos Excel.
     getGerenciaResumen: async (fecha: string) => {
         const { data: response } = await api.get<ApiResponse>('/gerencia/resumen', { params: { fecha } });
+        return response.data;
+    },
+    getAgendaCompliance: async (fecha: string) => {
+        const { data: response } = await api.get<ApiResponse>('/reports/agenda-compliance', { params: { fecha } });
         return response.data;
     },
     getReporteProductividad: async (month?: number, year?: number, idProyecto?: number) => {
@@ -453,7 +581,7 @@ export const clarityService = {
         const { data: response } = await api.get<ApiResponse>(`/acceso/permiso-area/${carnetRecibe}`);
         return response.data;
     },
-    crearPermisoArea: async (dto: { carnetRecibe: string, idOrgRaiz: string | number, alcance?: 'SUBARBOL' | 'SOLO_NODO' }) => {
+    crearPermisoArea: async (dto: { carnetRecibe: string, idOrgRaiz: string | number, alcance?: 'SUBARBOL' | 'SOLO_NODO', tipoAcceso?: 'ALLOW' | 'DENY' }) => {
         const { data: response } = await api.post<ApiResponse>('/acceso/permiso-area', dto);
         return response.data;
     },
@@ -492,7 +620,20 @@ export const clarityService = {
     getCatalogoOrganizacion: async () => {
         const { data: response } = await api.get<ApiResponse<{ id: number, ogerencia: string, subgerencia: string, area: string }[]>>('/organizacion/catalogo');
         return response.data;
-    }
+    },
+    // --- SEGURIDAD ---
+    changePassword: async (oldPassword: string, newPassword: string) => {
+        const { data: response } = await api.post<ApiResponse>('/auth/change-password', { oldPassword, newPassword });
+        return response.data;
+    },
+
+    // --- MI ASIGNACIÓN ---
+    getMiAsignacion: async (estado?: string) => {
+        const params = estado ? { estado } : {};
+        const { data: response } = await api.get<ApiResponse<any>>('/planning/mi-asignacion', { params });
+        return response.data;
+    },
+
 };
 
 // Types for Foco

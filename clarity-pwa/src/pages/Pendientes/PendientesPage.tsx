@@ -1,11 +1,13 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { format } from 'date-fns';
 import { TopBar } from '../../components/layout/TopBar';
 import type { Tarea, Proyecto } from '../../types/modelos';
 import { Plus, Inbox, MoreHorizontal, Play, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { clarityService } from '../../services/clarity.service';
-import { TaskDetailModal as ReadTaskDetailModal } from '../../components/ui/TaskDetailModal';
+import { TaskDetailModalV2 as ReadTaskDetailModal } from '../../components/task-detail-v2/TaskDetailModalV2';
+import { StatusBadge } from '../../components/ui/StatusBadge';
 
 export const PendientesPage: React.FC = () => {
     const { user } = useAuth();
@@ -15,9 +17,12 @@ export const PendientesPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [newTaskTitle, setNewTaskTitle] = useState('');
     const [selectedProjectId, setSelectedProjectId] = useState<number | '' | 'all'>('all');
+    const [creationProjectId, setCreationProjectId] = useState<number | ''>(''); // Proyecto destino al crear
     const [selectedTask, setSelectedTask] = useState<Tarea | null>(null);
     const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
     const [menuPos, setMenuPos] = useState<{ top: number, right: number } | null>(null);
+    const [isCreating, setIsCreating] = useState(false);
+    const [movingTaskIds, setMovingTaskIds] = useState<number[]>([]); // Loading state for individual tasks
 
     // Filters & Pagination
     const [searchTerm, setSearchTerm] = useState('');
@@ -25,9 +30,23 @@ export const PendientesPage: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 10;
 
+    // Sorting State
+    const [sortConfig, setSortConfig] = useState<{ key: keyof Tarea | 'proyecto'; direction: 'asc' | 'desc' }>({
+        key: 'idTarea',
+        direction: 'desc'
+    });
+
+    const handleSort = (key: keyof Tarea | 'proyecto') => {
+        let direction: 'asc' | 'desc' = 'asc';
+        if (sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+    };
+
     // Filter tasks based on selected project, search, and priority
     const filteredTasks = useMemo(() => {
-        let result = tasks;
+        let result = [...tasks];
 
         // Project Filter
         if (selectedProjectId !== 'all') {
@@ -49,8 +68,23 @@ export const PendientesPage: React.FC = () => {
             );
         }
 
+        // Sort Logic
+        result.sort((a, b) => {
+            let valA: any = a[sortConfig.key as keyof Tarea];
+            let valB: any = b[sortConfig.key as keyof Tarea];
+
+            if (sortConfig.key === 'proyecto') {
+                valA = a.proyectoNombre || a.proyecto?.nombre || '';
+                valB = b.proyectoNombre || b.proyecto?.nombre || '';
+            }
+
+            if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+            if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+
         return result;
-    }, [tasks, selectedProjectId, priorityFilter, searchTerm]);
+    }, [tasks, selectedProjectId, priorityFilter, searchTerm, sortConfig]);
 
     // Pagination Logic
     const totalPages = Math.ceil(filteredTasks.length / ITEMS_PER_PAGE);
@@ -64,6 +98,15 @@ export const PendientesPage: React.FC = () => {
         setCurrentPage(1);
     }, [selectedProjectId, priorityFilter, searchTerm]);
 
+    // Sync creation project with filter project
+    useEffect(() => {
+        if (typeof selectedProjectId === 'number') {
+            setCreationProjectId(selectedProjectId);
+        } else if (selectedProjectId === '') {
+            setCreationProjectId('');
+        }
+    }, [selectedProjectId]);
+
     const fetchInitialData = async () => {
         if (!user) return;
         try {
@@ -75,13 +118,12 @@ export const PendientesPage: React.FC = () => {
 
             const tasksArray = Array.isArray(tasksData) ? tasksData : (tasksData as any)?.data || [];
 
-            setTasks(tasksArray.filter((t: Tarea) => t.estado !== 'Hecha' && t.estado !== 'Descartada')
-                .sort((a: Tarea, b: Tarea) => (a.orden || 0) - (b.orden || 0)));
+            setTasks(tasksArray.filter((t: Tarea) => t.estado !== 'Hecha' && t.estado !== 'Descartada'));
 
             const projectItems = (projectsRes as any)?.items || projectsRes || [];
             setProjects(projectItems);
             if (projectItems.length > 0 && !selectedProjectId) {
-                setSelectedProjectId(projectItems[0].idProyecto);
+                // setSelectedProjectId(projectItems[0].idProyecto);
             }
         } catch (err) {
             showToast("Error cargando datos.", "error");
@@ -95,25 +137,34 @@ export const PendientesPage: React.FC = () => {
     }, [user]);
 
     const handleCreateTask = async () => {
-        if (!newTaskTitle.trim() || !user) return;
+        if (!newTaskTitle.trim() || !user || isCreating) return;
         try {
-            await clarityService.postTareaRapida({
+            setIsCreating(true);
+            await clarityService.postTarea({
                 titulo: newTaskTitle,
                 idUsuario: user.idUsuario,
-                idProyecto: typeof selectedProjectId === 'number' ? selectedProjectId : undefined,
+                idResponsable: user.idUsuario, // Auto-assign to self
+                idProyecto: creationProjectId !== '' ? creationProjectId : undefined,
                 prioridad: 'Media',
                 esfuerzo: 'M'
-            });
+            } as any);
             setNewTaskTitle('');
             showToast("Tarea guardada", "success");
             fetchInitialData(); // Refresh list
         } catch (error) {
             showToast("Error al crear la tarea.", "error");
+        } finally {
+            setIsCreating(false);
         }
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') handleCreateTask();
+    };
+
+    const SortIcon = ({ column }: { column: keyof Tarea | 'proyecto' }) => {
+        if (sortConfig.key !== column) return <span className="opacity-20 ml-1">↕</span>;
+        return <span className="ml-1 text-indigo-600">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>;
     };
 
     return (
@@ -137,16 +188,30 @@ export const PendientesPage: React.FC = () => {
 
                     <div className="flex-1 w-full md:w-auto flex flex-col md:flex-row gap-2 justify-end">
                         {/* Creation Input */}
-                        <div className="w-full md:w-96 bg-indigo-50/50 border border-indigo-100 rounded-lg flex items-center px-3 py-2 text-sm focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+                        <div className="w-full md:min-w-[400px] bg-indigo-50/50 border border-indigo-100 rounded-lg flex items-center px-2 py-1 text-sm focus-within:ring-2 focus-within:ring-indigo-100 transition-all gap-1">
+                            <select
+                                value={creationProjectId}
+                                onChange={(e) => setCreationProjectId(e.target.value ? Number(e.target.value) : '')}
+                                className="bg-transparent text-xs font-bold text-indigo-800 outline-none cursor-pointer max-w-[100px] truncate border-r border-indigo-200 pr-1 mr-1"
+                                title="Proyecto Destino"
+                            >
+                                <option value="">📥 Inbox</option>
+                                {projects.map(p => <option key={p.idProyecto} value={p.idProyecto}>{p.nombre}</option>)}
+                            </select>
                             <input
                                 className="bg-transparent outline-none w-full font-medium"
-                                placeholder="+ Nueva Tarea Rápida..."
+                                placeholder={isCreating ? "Creando..." : "+ Nueva Tarea Rápida..."}
                                 value={newTaskTitle}
                                 onChange={e => setNewTaskTitle(e.target.value)}
                                 onKeyDown={handleKeyDown}
+                                disabled={isCreating}
                             />
-                            <button onClick={handleCreateTask} disabled={!newTaskTitle.trim()} className="text-indigo-600 font-bold hover:text-indigo-800 disabled:opacity-30">
-                                <Plus size={18} />
+                            <button onClick={handleCreateTask} disabled={!newTaskTitle.trim() || isCreating} className="text-indigo-600 font-bold hover:text-indigo-800 disabled:opacity-30">
+                                {isCreating ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600" />
+                                ) : (
+                                    <Plus size={18} />
+                                )}
                             </button>
                         </div>
                     </div>
@@ -210,12 +275,22 @@ export const PendientesPage: React.FC = () => {
                     <div className="overflow-x-auto overflow-y-visible">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="bg-gray-100 text-gray-500 text-xs uppercase tracking-wider font-semibold border-b border-gray-200">
-                                    <th className="px-6 py-4 w-16">ID</th>
-                                    <th className="px-6 py-4">Título / Descripción</th>
-                                    <th className="px-6 py-4 w-40">Proyecto</th>
-                                    <th className="px-6 py-4 w-32">Prioridad</th>
-                                    <th className="px-6 py-4 w-32">Estado</th>
+                                <tr className="bg-gray-100 text-gray-500 text-[10px] uppercase tracking-wider font-black border-b border-gray-200">
+                                    <th className="px-6 py-4 w-16 cursor-pointer hover:bg-gray-200 transition-colors" onClick={() => handleSort('idTarea')}>
+                                        ID <SortIcon column="idTarea" />
+                                    </th>
+                                    <th className="px-6 py-4 cursor-pointer hover:bg-gray-200 transition-colors" onClick={() => handleSort('titulo')}>
+                                        Título / Descripción <SortIcon column="titulo" />
+                                    </th>
+                                    <th className="px-6 py-4 w-48 cursor-pointer hover:bg-gray-200 transition-colors" onClick={() => handleSort('proyecto')}>
+                                        Proyecto <SortIcon column="proyecto" />
+                                    </th>
+                                    <th className="px-6 py-4 w-32 cursor-pointer hover:bg-gray-200 transition-colors" onClick={() => handleSort('prioridad')}>
+                                        Prioridad <SortIcon column="prioridad" />
+                                    </th>
+                                    <th className="px-6 py-4 w-32 cursor-pointer hover:bg-gray-200 transition-colors" onClick={() => handleSort('estado')}>
+                                        Estado <SortIcon column="estado" />
+                                    </th>
                                     <th className="px-6 py-4 w-20 text-right">Opciones</th>
                                 </tr>
                             </thead>
@@ -242,15 +317,21 @@ export const PendientesPage: React.FC = () => {
                                 )}
                                 {paginatedTasks.map((task) => (
                                     <tr key={task.idTarea} className="hover:bg-indigo-50/30 transition-colors group">
-                                        <td className="px-6 py-4 font-mono text-gray-400 text-xs">#{task.idTarea}</td>
+                                        <td className="px-6 py-4 font-mono text-gray-400 text-[10px]">#{task.idTarea}</td>
                                         <td className="px-6 py-4">
-                                            <p className="font-bold text-gray-800">{task.titulo}</p>
-                                            {task.descripcion && <p className="text-xs text-gray-500 truncate max-w-xs">{task.descripcion}</p>}
+                                            <p className="font-bold text-gray-800 leading-tight">{task.titulo}</p>
+                                            {task.descripcion && <p className="text-[10px] text-gray-500 truncate max-w-xs mt-0.5">{task.descripcion}</p>}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-gray-600 text-xs font-medium border border-gray-200">
-                                                {task.proyecto?.nombre || 'General'}
-                                            </span>
+                                            {task.idProyecto ? (
+                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[10px] font-black border border-indigo-100 uppercase truncate max-w-full">
+                                                    {task.proyectoNombre || task.proyecto?.nombre || `Proyecto #${task.idProyecto}`}
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-500 text-[10px] font-bold border border-slate-200 uppercase">
+                                                    General
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-2 py-1 rounded-full text-xs font-bold border ${task.prioridad === 'Alta' ? 'bg-rose-50 text-rose-700 border-rose-100' :
@@ -261,25 +342,72 @@ export const PendientesPage: React.FC = () => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="px-2 py-1 rounded text-xs font-medium bg-slate-100 text-slate-600">
-                                                {task.estado}
-                                            </span>
+                                            <StatusBadge status={task.estado} />
                                         </td>
                                         <td className="px-6 py-4 text-right relative">
                                             <div className="flex items-center justify-end gap-1">
                                                 <button
                                                     onClick={async (e) => {
                                                         e.stopPropagation();
+                                                        if (movingTaskIds.includes(task.idTarea)) return;
+
                                                         try {
-                                                            await clarityService.actualizarTarea(task.idTarea, { estado: 'EnCurso' });
-                                                            showToast('Tarea movida a Agenda', 'success');
+                                                            setMovingTaskIds(prev => [...prev, task.idTarea]);
+                                                            const hoyStr = format(new Date(), 'yyyy-MM-dd');
+
+                                                            // 1. Mover la tarea a hoy
+                                                            await clarityService.actualizarTarea(task.idTarea, {
+                                                                estado: 'EnCurso',
+                                                                fechaInicioPlanificada: hoyStr
+                                                            });
+
+                                                            // 2. Intentar agregar al Checkin Activo (Foco)
+                                                            try {
+                                                                if (user) {
+                                                                    const miDia = await clarityService.getMiDia(hoyStr);
+                                                                    const checkin = miDia?.checkinHoy;
+
+                                                                    if (checkin) {
+                                                                        const existing = checkin.tareas || [];
+                                                                        const entregoIds = existing.filter(t => t.tipo === 'Entrego').map(t => t.idTarea);
+                                                                        const avanzoIds = existing.filter(t => t.tipo === 'Avanzo').map(t => t.idTarea);
+                                                                        const extrasIds = existing.filter(t => t.tipo === 'Extra').map(t => t.idTarea);
+
+                                                                        // Solo agregar si no está ya en listas
+                                                                        if (![...entregoIds, ...avanzoIds, ...extrasIds].includes(task.idTarea)) {
+                                                                            await clarityService.postCheckin({
+                                                                                idUsuario: user.idUsuario,
+                                                                                fecha: hoyStr,
+                                                                                entregableTexto: checkin.entregableTexto || '',
+                                                                                estadoAnimo: checkin.estadoAnimo as any,
+                                                                                entrego: [...entregoIds, task.idTarea], // Agregar a FOCO
+                                                                                avanzo: avanzoIds,
+                                                                                extras: extrasIds
+                                                                            });
+                                                                        }
+                                                                    }
+                                                                }
+                                                            } catch (subErr) {
+                                                                console.warn('Auto-add checkin failed', subErr);
+                                                            }
+
+                                                            showToast('Tarea movida a Foco de Hoy', 'success');
                                                             fetchInitialData();
-                                                        } catch (err) { showToast('Error al mover', 'error'); }
+                                                        } catch (err) {
+                                                            showToast('Error al mover', 'error');
+                                                        } finally {
+                                                            setMovingTaskIds(prev => prev.filter(id => id !== task.idTarea));
+                                                        }
                                                     }}
-                                                    className="p-2 rounded-full text-indigo-600 hover:bg-indigo-50 transition-colors"
+                                                    disabled={movingTaskIds.includes(task.idTarea)}
+                                                    className="p-2 rounded-full text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-50"
                                                     title="Mover a Mi Agenda"
                                                 >
-                                                    <Play size={20} />
+                                                    {movingTaskIds.includes(task.idTarea) ? (
+                                                        <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                                                    ) : (
+                                                        <Play size={20} />
+                                                    )}
                                                 </button>
                                                 <button
                                                     onClick={(e) => {
@@ -365,8 +493,11 @@ export const PendientesPage: React.FC = () => {
                         <button
                             onClick={async () => {
                                 try {
-                                    await clarityService.actualizarTarea(activeMenuId, { estado: 'EnCurso' });
-                                    showToast('Tarea movida a Agenda', 'success');
+                                    await clarityService.actualizarTarea(activeMenuId, {
+                                        estado: 'EnCurso',
+                                        fechaInicioPlanificada: format(new Date(), 'yyyy-MM-dd')
+                                    });
+                                    showToast('Tarea movida a Mi Agenda (Hoy)', 'success');
                                     fetchInitialData();
                                 } catch (err) { showToast('Error al mover', 'error'); }
                                 setActiveMenuId(null);

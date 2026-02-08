@@ -1,23 +1,28 @@
+
 const sql = require('mssql');
-const fs = require('fs');
+require('dotenv').config();
 
-const config = {
-    user: 'plan',
-    password: 'admin123',
-    server: 'database-2.cufqs68ewpdj.us-east-1.rds.amazonaws.com',
-    database: 'Bdplaner',
-    options: { encrypt: true, trustServerCertificate: true }
-};
+async function checkUser() {
+    const config = {
+        server: process.env.MSSQL_HOST || '54.146.235.205',
+        port: parseInt(process.env.MSSQL_PORT || '1433'),
+        user: process.env.MSSQL_USER || 'plan',
+        password: process.env.MSSQL_PASSWORD || 'admin123',
+        database: process.env.MSSQL_DATABASE || 'Bdplaner',
+        options: {
+            encrypt: true,
+            trustServerCertificate: true
+        }
+    };
 
-async function checkUsers() {
     try {
-        await sql.connect(config);
-        const result = await sql.query("SELECT idUsuario, correo FROM p_Usuarios");
-        fs.writeFileSync('users_debug.json', JSON.stringify(result.recordset, null, 2));
-    } catch (err) {
-        fs.writeFileSync('users_error.txt', err.message);
-    } finally {
+        let pool = await sql.connect(config);
+        let result = await pool.request().query("SELECT idUsuario, carnet, nombreCompleto, correo FROM p_Usuarios WHERE correo LIKE '%gustavo.lira%'");
+        console.log(JSON.stringify(result.recordset, null, 2));
         await sql.close();
+    } catch (err) {
+        console.error(err);
     }
 }
-checkUsers();
+
+checkUser();

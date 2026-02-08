@@ -4,6 +4,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { clarityService } from '../../services/clarity.service';
+import { alerts } from '../../utils/alerts';
 import { planningService } from '../../services/planning.service';
 import { Repeat, Calendar, Layers, Check, SkipForward } from 'lucide-react';
 import type { Tarea, TareaRecurrencia, TareaInstancia, TareaAvanceMensual } from '../../types/modelos';
@@ -78,18 +79,19 @@ export const TaskABCSection: React.FC<Props> = ({ task, onUpdate }) => {
     };
 
     const handleCrearRecurrencia = async () => {
-        if (diasSeleccionados.length === 0) return alert('Selecciona al menos un día');
+        if (diasSeleccionados.length === 0) return alerts.error('Faltan días', 'Selecciona al menos un día de la semana.');
         try {
             await clarityService.crearRecurrencia(task.idTarea, {
                 tipoRecurrencia: 'SEMANAL',
                 diasSemana: diasSeleccionados.join(','),
                 fechaInicioVigencia: fechaInicio
             });
+            alerts.success('Recurrencia Activa', 'Se ha configurado la recurrencia correctamente.');
             setShowCrear(false);
             loadData();
             onUpdate?.();
         } catch (e: any) {
-            alert('Error: ' + (e.response?.data?.message || e.message));
+            alerts.error('Error', e.response?.data?.message || e.message);
         }
     };
 
@@ -103,23 +105,24 @@ export const TaskABCSection: React.FC<Props> = ({ task, onUpdate }) => {
             loadData();
             onUpdate?.();
         } catch (e: any) {
-            alert('Error: ' + (e.response?.data?.message || e.message));
+            alerts.error('Error', e.response?.data?.message || e.message);
         }
     };
 
     const handleRegistrarAvance = async () => {
-        if (nuevoAvance <= 0 || nuevoAvance > 100) return alert('Ingresa un porcentaje válido (1-100)');
+        if (nuevoAvance <= 0 || nuevoAvance > 100) return alerts.error('Valor inválido', 'Ingresa un porcentaje válido (1-100)');
         try {
             await planningService.registrarAvanceMensual(task.idTarea, {
                 anio: anioActual,
                 mes: mesActual,
                 porcentajeMes: nuevoAvance
             });
+            alerts.success('Avance Mensual', 'Se ha registrado el avance del mes.');
             setNuevoAvance(0);
             loadData();
             onUpdate?.();
         } catch (e: any) {
-            alert('Error: ' + (e.response?.data?.message || e.message));
+            alerts.error('Error', e.response?.data?.message || e.message);
         }
     };
 
@@ -152,7 +155,7 @@ export const TaskABCSection: React.FC<Props> = ({ task, onUpdate }) => {
             loadData();
             onUpdate?.();
         } catch (e: any) {
-            alert('Error agregando fase: ' + (e.response?.data?.message || e.message));
+            alerts.error('Error agregando fase', e.response?.data?.message || e.message);
         }
     };
 

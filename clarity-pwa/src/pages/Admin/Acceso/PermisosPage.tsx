@@ -9,6 +9,7 @@
 import React, { useState, useEffect } from 'react';
 import { KeyRound, Building2, User, Users2, Plus, Trash2, Search, RefreshCw, Eye } from 'lucide-react';
 import { accesoService } from '../../../services/acceso.service';
+import { alerts } from '../../../utils/alerts';
 import { NodoSelector } from '../../../components/acceso/NodoSelector';
 import type {
     PermisoArea,
@@ -119,7 +120,7 @@ export const PermisosPage: React.FC = () => {
     };
 
     const handleDelete = async (id: number) => {
-        if (!confirm('¿Desactivar este permiso?')) return;
+        if (!(await alerts.confirm('¿Desactivar permiso?', '¿Estás seguro de que deseas desactivar este permiso?'))) return;
 
         setLoading(true);
         try {

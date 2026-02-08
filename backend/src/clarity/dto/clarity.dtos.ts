@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDateString, IsInt, IsString, IsOptional, MaxLength, IsArray, IsIn, IsNotEmpty, Min, Max } from 'class-validator';
 import { Trim } from 'class-sanitizer';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 
 export class PaginationDto {
     @ApiProperty({ required: false, default: 1 })
@@ -42,6 +42,23 @@ export class ProyectoFilterDto extends PaginationDto {
     @IsOptional()
     @IsString()
     area?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    tipo?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @Transform(({ value }) => value === '' ? undefined : value)
+    @IsDateString()
+    fechaInicio?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @Transform(({ value }) => value === '' ? undefined : value)
+    @IsDateString()
+    fechaFin?: string;
 }
 
 export class AuditFilterDto extends PaginationDto {
@@ -71,6 +88,16 @@ export class FechaQueryDto {
     @ApiProperty({ example: '2025-12-17' })
     @IsDateString()
     fecha!: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsDateString()
+    startDate?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsDateString()
+    endDate?: string;
 }
 
 export class CheckinUpsertDto {
@@ -127,6 +154,26 @@ export class CheckinUpsertDto {
     @IsOptional()
     @IsIn(['Tope', 'Bien', 'Bajo'])
     estadoAnimo?: 'Tope' | 'Bien' | 'Bajo';
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    usuarioCarnet?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    prioridad1?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    prioridad2?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    prioridad3?: string;
 }
 
 export class TareaCrearRapidaDto {
@@ -157,9 +204,9 @@ export class TareaCrearRapidaDto {
     @IsIn(['S', 'M', 'L'])
     esfuerzo?: string;
 
-    @ApiProperty({ required: false, enum: ['Logistica', 'Administrativa', 'Estrategica', 'AMX', 'Otros'], default: 'Administrativa' })
+    @ApiProperty({ required: false, enum: ['Logistica', 'Administrativa', 'Estrategica', 'AMX', 'Otros', 'CENAM', 'Operativo'], default: 'Administrativa' })
     @IsOptional()
-    @IsIn(['Logistica', 'Administrativa', 'Estrategica', 'AMX', 'Otros'])
+    @IsIn(['Logistica', 'Administrativa', 'Estrategica', 'AMX', 'Otros', 'CENAM', 'Operativo'])
     tipo?: string;
 
     @ApiProperty({ required: false })
@@ -186,6 +233,16 @@ export class TareaCrearRapidaDto {
     @IsOptional()
     @IsIn(['SIMPLE', 'RECURRENTE', 'LARGA'])
     comportamiento?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    linkEvidencia?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsInt()
+    idTareaPadre?: number;
 }
 
 export class TareaActualizarDto {
@@ -217,9 +274,9 @@ export class TareaActualizarDto {
     @IsIn(['S', 'M', 'L'])
     esfuerzo?: string;
 
-    @ApiProperty({ required: false, enum: ['Logistica', 'Administrativa', 'Estrategica', 'AMX', 'Otros'] })
+    @ApiProperty({ required: false, enum: ['Logistica', 'Administrativa', 'Estrategica', 'AMX', 'Otros', 'CENAM', 'Operativo'] })
     @IsOptional()
-    @IsIn(['Logistica', 'Administrativa', 'Estrategica', 'AMX', 'Otros'])
+    @IsIn(['Logistica', 'Administrativa', 'Estrategica', 'AMX', 'Otros', 'CENAM', 'Operativo'])
     tipo?: string;
 
     @ApiProperty({ required: false, nullable: true })
@@ -257,6 +314,21 @@ export class TareaActualizarDto {
     @IsOptional()
     @IsString()
     comentario?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    linkEvidencia?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsInt()
+    idTareaPadre?: number;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsInt()
+    idResponsable?: number;
 }
 
 export class TareaRevalidarDto {
@@ -277,6 +349,18 @@ export class TareaRevalidarDto {
     @MaxLength(200)
     razon?: string;
 }
+
+export class TareaMasivaDto {
+    @ApiProperty()
+    @Type(() => TareaCrearRapidaDto)
+    tareaBase!: TareaCrearRapidaDto;
+
+    @ApiProperty({ type: [Number] })
+    @IsArray()
+    @IsInt({ each: true })
+    idUsuarios!: number[];
+}
+
 
 export class BloqueoCrearDto {
     @ApiProperty({ example: 123, required: false })
@@ -354,14 +438,14 @@ export class ProyectoCrearDto {
     @IsString()
     @IsNotEmpty()
     @Trim()
-    @MaxLength(100)
+    @MaxLength(300)
     nombre!: string;
 
     @ApiProperty({ required: false })
     @IsOptional()
     @IsString()
     @Trim()
-    @MaxLength(500)
+    @MaxLength(2000)
     descripcion?: string;
 
     @ApiProperty({ example: 1, required: false })
@@ -396,6 +480,18 @@ export class ProyectoCrearDto {
     @IsOptional()
     @IsString()
     fechaFin?: string;
+
+    @ApiProperty({ required: false, enum: ['administrativo', 'Logistica', 'AMX', 'Estrategico', 'Operativo'], default: 'administrativo' })
+    @IsOptional()
+    @IsString()
+    @IsIn(['administrativo', 'Logistica', 'AMX', 'Estrategico', 'Operativo'])
+    tipo?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    @MaxLength(50)
+    responsableCarnet?: string;
 }
 
 
@@ -532,6 +628,16 @@ export class TaskFilterDto extends PaginationDto {
     @IsInt()
     @Type(() => Number)
     idUsuario?: number;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    startDate?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    endDate?: string;
 }
 
 export class DateRangeDto {

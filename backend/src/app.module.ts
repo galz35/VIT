@@ -13,6 +13,8 @@ import { AuditModule } from './common/audit.module';
 import { DbModule } from './db/db.module';
 import { DiagnosticoModule } from './diagnostico/diagnostico.module';
 import { SoftwareModule } from './software/software.module';
+import { NotificationModule } from './common/notification.module';
+
 
 // TypeORM y Entidades han sido totalmente eliminadas de AppModule
 // Ahora toda la aplicación usa DbModule (SQL Server directo)
@@ -48,6 +50,8 @@ import { SoftwareModule } from './software/software.module';
     // Módulo de Diagnóstico (SQL Server directo)
     DiagnosticoModule,
     SoftwareModule,
+    NotificationModule,
+
   ],
   controllers: [AppController],
   providers: [

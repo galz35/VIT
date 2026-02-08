@@ -1,7 +1,8 @@
 
 import {
     Sun, CheckSquare, FileText, LayoutDashboard, Eye, Shield, BarChart, FileCheck,
-    PieChart, Users, KeyRound, ShieldCheck, Database, Terminal, Archive, BookOpen, ClipboardList
+    PieChart, Users, KeyRound, ShieldCheck, Database, Terminal, Archive, BookOpen, ClipboardList,
+    History, Trash2, Briefcase
 } from 'lucide-react';
 
 export const APP_MENU = [
@@ -15,18 +16,20 @@ export const APP_MENU = [
         ]
     },
     {
-        group: 'Gestión Equipo',
+        group: 'Mi Gestión Equipo',
         items: [
-            { path: '/app/equipo/mi-equipo', label: 'Mi Equipo', icon: 'Eye' },
-            // { path: '/app/equipo/bloqueos', label: 'Bloqueos y Riesgos', icon: 'Shield' },
+            { path: '/app/equipo/mi-equipo', label: 'Mi Equipo', icon: 'Users' },
+            { path: '/app/equipo/seguimiento-agenda', label: 'Seguimiento Agenda', icon: 'ClipboardList' },
+            { path: '/app/equipo/actividad', label: 'Historial de Cambios', icon: 'History' },
+            { path: '/app/equipo/bloqueos', label: 'Bloqueos y Riesgos', icon: 'Shield' },
         ]
     },
     {
         group: 'Planificación',
         items: [
             { path: '/app/planning/carga', label: 'Carga Laboral', icon: 'BarChart' },
-            { path: '/app/planning/proyectos', label: 'Gestión Proyectos', icon: 'FileCheck' },
-            { path: '/app/software/dashboard', label: 'Anality', icon: 'PieChart' },
+            // { path: '/app/planning/proyectos', label: 'Gestión Proyectos', icon: 'FileCheck' },
+            { path: '/app/software/dashboard', label: 'Dashboard', icon: 'PieChart' },
             { path: '/app/planning/approvals', label: 'Aprobaciones', icon: 'FileCheck' },
         ]
     },
@@ -46,7 +49,9 @@ export const APP_MENU = [
             { path: '/app/admin/seguridad', label: 'Seguridad y Accesos', icon: 'ShieldCheck' },
             { path: '/app/admin/audit', label: 'Auditar Acciones', icon: 'ShieldCheck' },
             { path: '/app/admin/import', label: 'Importar Datos', icon: 'Database' },
-            { path: '/app/admin/logs', label: 'Monitor Sistema', icon: 'Terminal' }
+            { path: '/app/admin/logs', label: 'Monitor Sistema', icon: 'Terminal' },
+            { path: '/app/admin/papelera', label: 'Papelera', icon: 'Trash2' },
+            { path: '/app/admin/mi-asignacion', label: 'Mi Asignación', icon: 'Briefcase' }
         ]
     },
     /* {
@@ -55,15 +60,16 @@ export const APP_MENU = [
             { path: '/app/archivo', label: 'Archivo Tareas', icon: 'Archive' },
         ]
     }, */
-    {
+    /* {
         group: 'Ayuda',
         items: [
             { path: '/app/help', label: 'Tutorial Interactivo', icon: 'BookOpen' },
         ]
-    }
+    } */
 ];
 
 export const ICON_MAP: any = {
     Sun, CheckSquare, FileText, LayoutDashboard, Eye, Shield, BarChart, FileCheck,
-    PieChart, Users, KeyRound, ShieldCheck, Database, Terminal, Archive, BookOpen, ClipboardList
+    PieChart, Users, KeyRound, ShieldCheck, Database, Terminal, Archive, BookOpen, ClipboardList,
+    History, Trash2, Briefcase
 };

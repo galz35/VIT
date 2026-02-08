@@ -6,14 +6,11 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './jwt.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Usuario, UsuarioCredenciales, UsuarioConfig } from '../entities';
-import { SeguridadPerfil } from './entities/seguridad-perfil.entity';
-// import { Empleado } from '../acceso/entities/empleado.entity'; // Removed
+// TypeORM removido - Usando SQL Server directo via auth.repo.ts
+
 
 @Module({
     imports: [
-        // TypeOrmModule.forFeature([...]) -> REMOVED: Usando MSSQL directo
         PassportModule,
         JwtModule.registerAsync({
             imports: [ConfigModule],

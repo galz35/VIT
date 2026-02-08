@@ -51,7 +51,7 @@ export const LogsPage = () => {
         try {
             const [logsRes, auditRes] = await Promise.all([
                 clarityService.getLogs(1, 200),
-                clarityService.getAuditLogs(1, 200),
+                clarityService.getAuditLogs({ page: 1, limit: 200 }),
             ]);
             setLogs(logsRes?.items || []);
             setAuditLogs(auditRes?.items || []);

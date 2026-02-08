@@ -1,7 +1,7 @@
 /**
  * Admin Repository - Queries para el módulo Administrativo
  */
-import { crearRequest, ejecutarQuery, Int, NVarChar, Bit, DateTime, SqlDate } from '../db/base.repo';
+import { crearRequest, ejecutarQuery, ejecutarSP, Int, NVarChar, Bit, DateTime, SqlDate } from '../db/base.repo';
 import {
     UsuarioDb, RolDb, UsuarioConfigDb, SeguridadPerfilDb,
     OrganizacionNodoDb, LogSistemaDb, AuditLogDb, ResultadoPaginado
@@ -69,10 +69,11 @@ export async function obtenerPerfilesSeguridad() {
 export async function listarUsuarios(pagina: number = 1, limite: number = 50) {
     const offset = (pagina - 1) * limite;
 
-    const datos = await ejecutarQuery<UsuarioDb & { rolNombre: string }>(`
-        SELECT u.*, r.nombre as rolNombre
+    const datos = await ejecutarQuery<UsuarioDb & { rolNombre: string, menuPersonalizado: string | null }>(`
+        SELECT u.*, r.nombre as rolNombre, c.menuPersonalizado
         FROM p_Usuarios u
         LEFT JOIN p_Roles r ON u.idRol = r.idRol
+        LEFT JOIN p_UsuariosConfig c ON u.idUsuario = c.idUsuario
         ORDER BY u.nombre ASC
         OFFSET @offset ROWS FETCH NEXT @limite ROWS ONLY
     `, {
@@ -147,8 +148,16 @@ export async function actualizarRol(idRol: number, rol: Partial<RolDb>) {
 }
 
 export async function eliminarRol(idRol: number) {
-    // Validar si hay usuarios asignados antes de borrar?
-    // Por ahora simple delete
+    // 1. Validar si hay usuarios asignados
+    const check = await ejecutarQuery<{ total: number }>(`
+        SELECT COUNT(*) as total FROM p_Usuarios WHERE idRol = @idRol AND activo = 1
+    `, { idRol: { valor: idRol, tipo: Int } });
+
+    if (check[0].total > 0) {
+        throw new Error(`No se puede eliminar el rol: Hay ${check[0].total} usuarios activos asignados a él.`);
+    }
+
+    // 2. Si está libre, proceder (Fisico o Soft, aqui Fisico está bien si está limpio)
     await ejecutarQuery(`DELETE FROM p_Roles WHERE idRol = @idRol`, { idRol: { valor: idRol, tipo: Int } });
 }
 
@@ -261,4 +270,112 @@ export async function listarAuditLogs(filtro: { page?: number, limit?: number, i
         page: pagina,
         totalPages: Math.ceil(totalRes[0].total / limite)
     };
+}
+
+// ==========================================
+// PAPELERA DE RECICLAJE
+// ==========================================
+
+export async function getDeletedItems() {
+    const proyectos = await ejecutarQuery<any>(`
+        SELECT p.idProyecto as id, 'Proyecto' as tipo, p.nombre, 
+               p.fechaActualizacion as fechaEliminacion, NULL as proyecto,
+               u.nombre as eliminadoPor
+        FROM p_Proyectos p
+        LEFT JOIN p_Usuarios u ON p.idCreador = u.idUsuario
+        WHERE p.activo = 0 OR p.estado IN ('Cancelado', 'Eliminado')
+    `);
+
+    const tareas = await ejecutarQuery<any>(`
+        SELECT t.idTarea as id, 'Tarea' as tipo, t.nombre, 
+               t.fechaActualizacion as fechaEliminacion, p.nombre as proyecto,
+               u.nombre as eliminadoPor
+        FROM p_Tareas t
+        LEFT JOIN p_Proyectos p ON t.idProyecto = p.idProyecto
+        LEFT JOIN p_Usuarios u ON t.idCreador = u.idUsuario
+        WHERE t.activo = 0 OR t.estado IN ('Eliminada', 'Descartada')
+    `);
+
+    return [...proyectos, ...tareas].sort((a, b) =>
+        new Date(b.fechaEliminacion || 0).getTime() - new Date(a.fechaEliminacion || 0).getTime()
+    );
+}
+
+export async function restoreItem(tipo: 'Proyecto' | 'Tarea', id: number) {
+    if (tipo === 'Proyecto') {
+        await ejecutarQuery(`
+            UPDATE p_Proyectos 
+            SET estado = 'Activo', activo = 1 
+            WHERE idProyecto = @id
+        `, { id: { valor: id, tipo: Int } });
+    } else {
+        await ejecutarQuery(`
+            UPDATE p_Tareas 
+            SET estado = 'Pendiente', activo = 1, fechaActualizacion = GETDATE()
+            WHERE idTarea = @id
+        `, { id: { valor: id, tipo: Int } });
+    }
+}
+
+export async function crearUsuario(dto: any) {
+    const result = await ejecutarSP('sp_Admin_Usuario_Crear', {
+        nombre: { valor: dto.nombre, tipo: NVarChar },
+        correo: { valor: dto.correo, tipo: NVarChar },
+        carnet: { valor: dto.carnet || null, tipo: NVarChar },
+        cargo: { valor: dto.cargo || null, tipo: NVarChar },
+        telefono: { valor: dto.telefono || null, tipo: NVarChar },
+        rol: { valor: dto.rol || 'Colaborador', tipo: NVarChar }
+    });
+    return result[0];
+}
+
+export async function actualizarUsuario(idUsuario: number, dto: any) {
+    const fields: string[] = [];
+    const params: any = { id: { valor: idUsuario, tipo: Int } };
+
+    if (dto.nombre !== undefined) {
+        fields.push('nombre = @nombre');
+        params.nombre = { valor: dto.nombre, tipo: NVarChar };
+    }
+    if (dto.correo !== undefined) {
+        fields.push('correo = @correo');
+        params.correo = { valor: dto.correo, tipo: NVarChar };
+    }
+    if (dto.carnet !== undefined) {
+        fields.push('carnet = @carnet');
+        params.carnet = { valor: dto.carnet, tipo: NVarChar };
+    }
+    if (dto.cargo !== undefined) {
+        fields.push('cargo = @cargo');
+        params.cargo = { valor: dto.cargo, tipo: NVarChar };
+    }
+    if (dto.telefono !== undefined) {
+        fields.push('telefono = @telefono');
+        params.telefono = { valor: dto.telefono, tipo: NVarChar };
+    }
+    if (dto.activo !== undefined) {
+        fields.push('activo = @activo');
+        params.activo = { valor: dto.activo ? 1 : 0, tipo: Bit };
+    }
+
+    if (fields.length === 0) return;
+
+    await ejecutarQuery(`
+        UPDATE p_Usuarios 
+        SET ${fields.join(', ')}, fechaActualizacion = GETDATE()
+        WHERE idUsuario = @id
+    `, params);
+}
+
+export async function eliminarUsuario(idUsuario: number) {
+    await ejecutarSP('sp_Admin_Usuario_Eliminar', {
+        idUsuario: { valor: idUsuario, tipo: Int }
+    });
+}
+
+export async function removerUsuarioNodo(idUsuario: number, idNodo: number) {
+    await ejecutarSP('sp_Admin_Usuario_RemoverNodo', {
+        idUsuario: { valor: idUsuario, tipo: Int },
+        idNodo: { valor: idNodo, tipo: Int }
+    });
 }

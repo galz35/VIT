@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import type { Tarea, CheckinUpsertDto, Bloqueo } from '../../../types/modelos';
-import { Zap, Battery, BatteryWarning, Plus, X, CheckCircle2, Circle, MessageSquare, Send, Trash2 } from 'lucide-react';
-import { TaskDetailModal } from '../../../components/ui/TaskDetailModal';
+import type { Tarea, CheckinUpsertDto, Bloqueo, Proyecto } from '../../../types/modelos';
+import { Plus, CheckCircle2, Circle, MessageSquare, Send, Trash2, Save } from 'lucide-react';
+import { TaskDetailModalV2 } from '../../../components/task-detail-v2/TaskDetailModalV2';
 import { TaskSelectorOverlay } from './TaskSelectorOverlay';
 import { useToast } from '../../../context/ToastContext';
 
@@ -10,6 +10,7 @@ interface Props {
     checkinTasks?: Tarea[]; // New prop for existing tasks inside the form
     onSubmit: (dto: CheckinUpsertDto) => Promise<void>;
     userId: number;
+    userCarnet?: string; // Carnet-First
     fecha: string;
     initialData?: CheckinUpsertDto;
     onTaskCreated?: () => Promise<void>;
@@ -17,10 +18,10 @@ interface Props {
     onMoodChange?: (mood: 'Tope' | 'Bien' | 'Bajo') => void;
 }
 
-export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], onSubmit, userId, fecha, initialData, onTaskCreated, bloqueos = [], onMoodChange }) => {
+export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], onSubmit, userId, userCarnet, fecha, initialData, onTaskCreated, bloqueos = [] }) => {
     // Form State
     const { showToast } = useToast();
-    const [estadoAnimo, setEstadoAnimo] = useState<'Tope' | 'Bien' | 'Bajo' | undefined>(initialData?.estadoAnimo || undefined);
+
     // Note: 'entregableTexto' is now derived from the selected tasks in Column 1, so we don't strictly need a state for it, 
     // but the API requires it. We will generate it on submit.
 
@@ -29,7 +30,7 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
     // Default 1 Focus (Now "Objetivo Principal"), 3 Advance, 5 Extra.
     const [entregoIds, setEntregoIds] = useState<(number | null)[]>([null]);
     const [avanzoIds, setAvanzoIds] = useState<(number | null)[]>([null, null, null]);
-    const [extraIds, setExtraIds] = useState<(number | null)[]>([null, null, null, null, null]);
+    const [extraIds, setExtraIds] = useState<(number | null)[]>([]);
 
     // UI State
     const [selectingFor, setSelectingFor] = useState<{ type: 'Entrego' | 'Avanzo' | 'Extra', index: number } | null>(null);
@@ -41,8 +42,23 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
     const [quickLogId, setQuickLogId] = useState<number | null>(null);
     const [quickLogText, setQuickLogText] = useState('');
     const [viewBlockers, setViewBlockers] = useState(false);
+    const [lastCreationProjectId, setLastCreationProjectId] = useState<number | ''>('');
+    const [localTasks, setLocalTasks] = useState<Tarea[]>([]); // Tareas creadas localmente para visualización inmediata
 
     // Initialize arrays from initialData
+    const [projects, setProjects] = useState<Proyecto[]>([]);
+
+    useEffect(() => {
+        const loadP = async () => {
+            try {
+                const { clarityService } = await import('../../../services/clarity.service');
+                const p = await clarityService.getProyectos();
+                setProjects((p as any).items || p || []);
+            } catch { } // Silent fail
+        };
+        loadP();
+    }, []);
+
     useEffect(() => {
         if (initialData?.entrego && initialData.entrego.length > 0) {
             const newArr = [...initialData.entrego];
@@ -57,18 +73,24 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
         }
 
         if (initialData?.extras && initialData.extras.length > 0) {
-            const newArr = [...initialData.extras];
-            while (newArr.length < 5) newArr.push(null as any);
-            setExtraIds(newArr);
+            setExtraIds([...initialData.extras]);
         }
     }, [initialData]);
 
     // Helpers
-    const getTask = (id: number | null) => {
+    const getTask = (id: number | null | string) => {
         if (!id) return null;
-        return disponibles.find(t => t.idTarea === id) || checkinTasks.find(t => t.idTarea === id);
+        const numericId = Number(id);
+        return disponibles.find(t => Number(t.idTarea) === numericId) ||
+            checkinTasks.find(t => Number(t.idTarea) === numericId) ||
+            localTasks.find(t => Number(t.idTarea) === numericId);
     };
-    const isSelected = (id: number) => entregoIds.includes(id) || avanzoIds.includes(id) || extraIds.includes(id);
+    const isSelected = (id: number | string) => {
+        const numId = Number(id);
+        return entregoIds.some(i => Number(i) === numId) ||
+            avanzoIds.some(i => Number(i) === numId) ||
+            extraIds.some(i => Number(i) === numId);
+    };
 
     // List Management Helpers
     const addSlot = (type: 'Entrego' | 'Avanzo' | 'Extra') => {
@@ -83,14 +105,10 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
             const newVal = [...prev];
             if (newVal[index] !== null) {
                 newVal[index] = null;
-                return newVal;
             } else {
-                if (newVal.length > minLen) {
-                    newVal.splice(index, 1);
-                    return newVal;
-                }
-                return prev;
+                if (newVal.length > minLen) newVal.splice(index, 1);
             }
+            return newVal;
         };
 
         if (type === 'Entrego') setEntregoIds(p => removeLogic(p, 1));
@@ -99,38 +117,15 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
     };
 
     // UI Helpers
-    const getDaysActive = (dateStr?: string | Date) => {
-        if (!dateStr) return 0;
-        const d = new Date(dateStr);
-        const now = new Date();
-        const diff = now.getTime() - d.getTime();
-        return Math.floor(diff / (1000 * 3600 * 24));
-    };
 
-    const StatusBadge = ({ task }: { task: Tarea }) => {
-        const days = getDaysActive(task.fechaCreacion);
-        const isLate = days > 3;
-        return (
-            <div className="flex items-center gap-2 text-xs font-bold mt-1">
-                <span className={`px-2 py-0.5 rounded-full ${task.estado === 'EnCurso' ? 'bg-blue-100 text-blue-700' : task.estado === 'Hecha' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
-                    {task.estado === 'EnCurso' ? 'En Curso' : task.estado}
-                </span>
-                {days > 0 && task.estado !== 'Hecha' && (
-                    <span className={`${isLate ? 'text-rose-500' : 'text-slate-400'}`}>
-                        {days}d activa
-                    </span>
-                )}
-            </div>
-        );
-    };
 
     const handleSelectTask = (task: Tarea) => {
         if (!selectingFor) return;
         const { type, index } = selectingFor;
 
-        setEntregoIds(prev => prev.map(id => id === task.idTarea ? null : id));
-        setAvanzoIds(prev => prev.map(id => id === task.idTarea ? null : id));
-        setExtraIds(prev => prev.map(id => id === task.idTarea ? null : id));
+        setEntregoIds(prev => prev.map(id => (id !== null && Number(id) === Number(task.idTarea)) ? null : id));
+        setAvanzoIds(prev => prev.map(id => (id !== null && Number(id) === Number(task.idTarea)) ? null : id));
+        setExtraIds(prev => prev.map(id => (id !== null && Number(id) === Number(task.idTarea)) ? null : id));
 
         if (type === 'Entrego') setEntregoIds(prev => { const n = [...prev]; n[index] = task.idTarea; return n; });
         if (type === 'Avanzo') setAvanzoIds(prev => { const n = [...prev]; n[index] = task.idTarea; return n; });
@@ -139,8 +134,12 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
         setSelectingFor(null);
     };
 
-    const handleQuickAdd = async (val: string) => {
+    const handleQuickAdd = async (val: string, _type?: any, _index?: any, projectId?: number) => {
         if (!val.trim() || !selectingFor) return;
+
+        // Save preference for next time
+        setLastCreationProjectId(projectId !== undefined ? projectId : '');
+
         try {
             const { clarityService } = await import('../../../services/clarity.service');
             const prioridad = selectingFor.type === 'Entrego' ? 'Alta' : selectingFor.type === 'Avanzo' ? 'Media' : 'Baja';
@@ -149,11 +148,23 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
             const newT = await clarityService.postTareaRapida({
                 titulo: val,
                 idUsuario: userId,
+                idProyecto: projectId,
                 prioridad,
                 esfuerzo
             });
             if (onTaskCreated) await onTaskCreated();
-            const tempTask = { ...newT, proyecto: { nombre: 'Inbox' } } as unknown as Tarea;
+
+            const realProject = projects.find(p => p.idProyecto === projectId);
+
+            // ✅ Robustez: Asegurar que tenga título (backend usa 'nombre' a veces)
+            const titulo = (newT as any).titulo || (newT as any).nombre || val;
+            const tempTask = {
+                ...newT,
+                titulo,
+                proyecto: realProject || { nombre: 'Inbox' }
+            } as unknown as Tarea;
+
+            setLocalTasks(prev => [...prev, tempTask]);
             handleSelectTask(tempTask);
         } catch (err) { showToast('Error creando tarea', 'error'); }
     };
@@ -178,13 +189,18 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
         if (!validate()) return;
         setErrors({});
 
-        const validEntrego = entregoIds.filter(id => id !== null);
+        const validEntregoIds = entregoIds.filter((id): id is number => id !== null);
+        const validAvanzoIds = avanzoIds.filter((id): id is number => id !== null);
+        const validExtraIds = extraIds.filter((id): id is number => id !== null);
+
+        // Derive Priorities from Task Titles (Carnet-First Strategy)
+        const getTitle = (id: number | undefined) => id ? getTask(id)?.titulo || '' : '';
+        const prioridad1 = getTitle(validEntregoIds[0]);
+        const prioridad2 = getTitle(validAvanzoIds[0]);
+        const prioridad3 = getTitle(validExtraIds[0]);
 
         // Auto-generate goal text from the "Objetivo Principal" tasks
-        let generatedGoalText = validEntrego.map(id => {
-            const t = disponibles.find(d => d.idTarea === id);
-            return t ? t.titulo : '';
-        }).filter(Boolean).join(' + ');
+        let generatedGoalText = validEntregoIds.map(id => getTask(id)?.titulo || '').filter(Boolean).join(' + ');
 
         // Fallback if no specific task is in Column 1
         if (!generatedGoalText) {
@@ -195,12 +211,15 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
         try {
             await onSubmit({
                 idUsuario: userId,
+                usuarioCarnet: userCarnet, // NEW
                 fecha,
                 entregableTexto: generatedGoalText,
-                entrego: validEntrego as number[],
-                avanzo: avanzoIds.filter((id): id is number => id !== null),
-                extras: extraIds.filter((id): id is number => id !== null),
-                estadoAnimo,
+                entrego: validEntregoIds,
+                avanzo: validAvanzoIds,
+                extras: validExtraIds,
+                prioridad1, // NEW
+                prioridad2,
+                prioridad3,
                 linkEvidencia: initialData?.linkEvidencia
             });
         } catch (err) {
@@ -224,11 +243,7 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
         if (!quickLogText.trim()) return;
         try {
             const { clarityService } = await import('../../../services/clarity.service');
-            await clarityService.postAvance(taskId, {
-                idUsuario: userId,
-                progreso: 0,
-                comentario: quickLogText
-            });
+            await clarityService.postAvance(taskId, { idUsuario: userId, progreso: 0, comentario: quickLogText });
             setQuickLogId(null);
             setQuickLogText('');
             if (onTaskCreated) await onTaskCreated();
@@ -253,9 +268,9 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
         let emptyText = 'Escribe o selecciona...';
 
         // Customized placeholders
-        if (type === 'Entrego') { activeBorder = 'border-l-4 border-l-rose-500'; emptyText = 'Definir Objetivo...'; }
-        if (type === 'Avanzo') { activeBorder = 'border-l-4 border-l-blue-500'; emptyText = 'Agregar pendiente...'; }
-        if (type === 'Extra') { activeBorder = 'border-l-4 border-l-emerald-500'; emptyText = 'Agregar victoria rápida...'; }
+        if (type === 'Entrego') { activeBorder = 'border-l-4 border-l-rose-500'; emptyText = 'Agregar.'; }
+        if (type === 'Avanzo') { activeBorder = 'border-l-4 border-l-blue-500'; emptyText = 'Agregar'; }
+        if (type === 'Extra') { activeBorder = 'border-l-4 border-l-emerald-500'; emptyText = 'Agregar'; }
 
         if (id && isQuickLogging) { bgClass = 'bg-indigo-50 shadow-md ring-1 ring-indigo-200'; }
 
@@ -275,48 +290,50 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
                             <input
                                 autoFocus
                                 value={quickLogText}
-                                onChange={e => setQuickLogText(e.target.value)}
-                                placeholder="Bitácora rápida..."
-                                className="flex-1 bg-white p-2 rounded-lg border border-indigo-200 text-sm outline-none focus:border-indigo-500"
-                                onKeyDown={e => e.key === 'Enter' && handleQuickLogSubmit(e, id)}
+                                onChange={(e) => setQuickLogText(e.target.value)}
+                                placeholder="Escribe bitácora..."
+                                className="flex-1 text-xs bg-white border border-indigo-200 rounded px-2 py-1 outline-none"
+                                onKeyDown={(e) => e.key === 'Enter' && handleQuickLogSubmit(e, id)}
                             />
-                            <button onClick={e => handleQuickLogSubmit(e, id)} className="p-2 bg-indigo-600 text-white rounded-lg"><Send size={16} /></button>
-                            <button onClick={() => setQuickLogId(null)} className="p-2 text-slate-400 hover:text-slate-600"><X size={16} /></button>
+                            <button type="submit" onClick={(e) => handleQuickLogSubmit(e, id)} className="text-white bg-indigo-500 p-1 rounded hover:bg-indigo-600"><Send size={12} /></button>
                         </div>
                     ) : (
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3 overflow-hidden">
-                                <button onClick={(e) => handleToggleComplete(task, e)} className="hover:scale-110 transition-transform flex-shrink-0">
-                                    {task.estado === 'Hecha'
-                                        ? <CheckCircle2 size={20} className="text-emerald-500 fill-emerald-50" />
-                                        : <Circle size={20} className="text-slate-300 hover:text-indigo-500" />
-                                    }
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2 overflow-hidden">
+                                <button
+                                    onClick={(e) => handleToggleComplete(task, e)}
+                                    className={`shrink-0 ${task.estado === 'Hecha' ? 'text-emerald-500' : 'text-slate-300 hover:text-emerald-400'}`}>
+                                    {task.estado === 'Hecha' ? <CheckCircle2 size={16} /> : <Circle size={16} />}
                                 </button>
-                                <div className="min-w-0">
-                                    <p className={`font-medium text-slate-700 truncate ${task.estado === 'Hecha' ? 'line-through opacity-50' : ''}`}>
+                                <div className="flex flex-col min-w-0">
+                                    <span className={`text-sm font-semibold truncate ${task.estado === 'Hecha' ? 'line-through text-slate-400' : 'text-slate-700'}`}>
                                         {task.titulo}
-                                    </p>
-                                    <div className="flex gap-2 text-[10px] text-slate-400 mt-0.5">
-                                        <StatusBadge task={task} />
-                                    </div>
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 truncate">{task.proyectoNombre || task.proyecto?.nombre || 'Inbox'}</span>
                                 </div>
                             </div>
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={(e) => { e.stopPropagation(); setQuickLogId(id); setQuickLogText(''); }}
-                                    className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md transition-colors" title="Añadir Bitácora">
-                                    <MessageSquare size={16} />
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setQuickLogId(prev => prev === id ? null : id); }}
+                                    className="p-1 hover:bg-slate-100 rounded text-slate-400"
+                                    title="Bitácora rápida"
+                                >
+                                    <MessageSquare size={14} />
                                 </button>
-                                <button onClick={(e) => removeSlot(e, type, idx)}
-                                    className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-white rounded-md transition-colors" title="Quitar">
-                                    <Trash2 size={16} />
+                                <button
+                                    onClick={(e) => removeSlot(e, type, idx)}
+                                    className="p-1 hover:bg-rose-50 rounded text-rose-300 hover:text-rose-500"
+                                    title="Quitar"
+                                >
+                                    <Trash2 size={14} />
                                 </button>
                             </div>
                         </div>
                     )
                 ) : (
-                    <div className="flex items-center gap-3 py-1">
-                        <Plus size={18} className="text-slate-300 group-hover:text-indigo-500 transition-colors" />
-                        <span className="text-sm font-medium">{emptyText}</span>
+                    <div className="flex items-center gap-2 h-full">
+                        <Plus size={16} />
+                        <span className="text-xs font-medium">{emptyText}</span>
                     </div>
                 )}
             </div>
@@ -326,8 +343,9 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
     return (
         <form onSubmit={handleSubmit} className="h-full flex flex-col gap-4 animate-fade-in max-w-7xl mx-auto pb-6 relative">
             {editingTask && (
-                <TaskDetailModal
+                <TaskDetailModalV2
                     task={editingTask}
+                    mode="execution"
                     onClose={() => setEditingTask(null)}
                     onUpdate={async () => {
                         if (onTaskCreated) await onTaskCreated();
@@ -344,118 +362,89 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
                     onSelect={handleSelectTask}
                     isSelected={isSelected}
                     onQuickAdd={handleQuickAdd}
+                    projects={projects}
+                    defaultProjectId={lastCreationProjectId}
                 />
             )}
 
-            {/* ROW 1: UTILS BAR (Mood + Blockers + Submit) */}
+            {/* ROW 1: UTILS BAR (Blockers + Submit) */}
             <div className="flex flex-col md:flex-row items-center gap-4">
 
-                {/* MOOD + BLOCKERS CONTAINER */}
-                <div className="flex-1 w-full bg-white p-2 rounded-xl border border-slate-100 shadow-sm flex items-center justify-between gap-4 overflow-hidden">
-
-                    {/* Mood (Left) */}
-                    <div className="flex items-center gap-2 pl-2 border-r border-slate-100 pr-4">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide hidden sm:block">Mi Ánimo:</span>
-                        {[
-                            { id: 'Tope', icon: Zap, color: 'emerald', label: 'Motivado' },
-                            { id: 'Bien', icon: Battery, color: 'indigo', label: 'Rutina' },
-                            { id: 'Bajo', icon: BatteryWarning, color: 'rose', label: 'Sobrecarga' }
-                        ].map((m) => (
-                            <button
-                                key={m.id}
-                                type="button"
-                                onClick={() => { setEstadoAnimo(m.id as any); if (onMoodChange) onMoodChange(m.id as any); }}
-                                title={m.label}
-                                className={`p-1.5 rounded-lg transition-all ${estadoAnimo === m.id ? `bg-${m.color}-100 text-${m.color}-600 ring-1 ring-${m.color}-200` : 'text-slate-300 hover:text-slate-500 hover:bg-slate-50'}`}
-                            >
-                                <m.icon size={18} className={estadoAnimo === m.id ? 'fill-current' : ''} />
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Blockers (Middle/Right) */}
-                    <div className="flex-1 flex items-center gap-2 overflow-hidden">
-                        {bloqueos.length > 0 ? (
-                            <div onClick={() => setViewBlockers(true)} className="flex items-center gap-2 text-xs text-red-600 bg-red-50 px-3 py-1.5 rounded-lg w-full cursor-pointer hover:bg-red-100 transition-colors">
-                                <span className="font-bold whitespace-nowrap">🚫 BLOQUEOS ({bloqueos.length}):</span>
-                                <div className="overflow-hidden relative flex-1">
-                                    <div className="whitespace-nowrap animate-marquee flex gap-4">
-                                        {bloqueos.map((b, i) => (
-                                            <span key={i} className="flex items-center gap-1">
-                                                <span className="font-bold">{b.destinoUsuario?.nombre}</span>
-                                                <span className="opacity-70">({b.motivo})</span>
-                                            </span>
-                                        ))}
-                                    </div>
+                {/* BLOCKERS CONTAINER (Only if exists) */}
+                <div className="flex-1 w-full flex items-center gap-4">
+                    {bloqueos.length > 0 && (
+                        <div onClick={() => setViewBlockers(true)} className="flex-1 bg-red-50 p-2 rounded-xl border border-red-100 shadow-sm flex items-center gap-2 text-xs text-red-600 cursor-pointer hover:bg-red-100 transition-colors py-3 px-4">
+                            <span className="font-bold whitespace-nowrap">🚫 BLOQUEOS ({bloqueos.length}):</span>
+                            <div className="overflow-hidden relative flex-1">
+                                <div className="whitespace-nowrap animate-marquee flex gap-4">
+                                    {bloqueos.map((b, i) => (
+                                        <span key={i} className="flex items-center gap-1">
+                                            <span className="font-bold">{b.destinoUsuario?.nombre}</span>
+                                            <span className="opacity-70">({b.motivo})</span>
+                                        </span>
+                                    ))}
                                 </div>
                             </div>
-                        ) : (
-                            <div className="text-xs text-emerald-600 flex items-center gap-1 px-3 opacity-60">
-                                <CheckCircle2 size={14} /> <span>Sin bloqueos activos.</span>
-                            </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Submit (Desktop) */}
-                <div className="hidden md:block">
+                <div className="hidden md:block mx-auto">
                     <button
                         type="button"
                         onClick={(e) => handleSubmit(e as any)}
                         disabled={submitting}
-                        className="bg-slate-900 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-slate-900/10 active:scale-[0.95] hover:bg-slate-800 transition-all disabled:opacity-70 flex items-center gap-2 text-sm whitespace-nowrap h-full"
+                        className="bg-slate-900 hover:bg-slate-800 text-white font-black py-3.5 px-12 rounded-xl shadow-xl shadow-slate-200 active:scale-[0.95] transition-all disabled:opacity-70 flex items-center gap-3 text-sm whitespace-nowrap"
                     >
-                        {submitting ? '...' : '🚀 Activar Plan'}
+                        <Save size={18} />
+                        {submitting ? 'Guardando...' : 'GUARDAR AGENDA'}
                     </button>
                 </div>
             </div>
 
-            {/* MAIN GRID: THE 1-3-5 PLAN */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 items-start">
+            {/* MAIN GRID: THE 1-3-5 PLAN (Simplified to 2 columns) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 items-start">
 
-                {/* COL 1: OBJETIVO PRINCIPAL (Merged with Foco) */}
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col gap-3 min-h-[12rem]">
-                    <div className="flex items-center gap-2 pb-2 border-b border-slate-50">
-                        <div className="w-5 h-5 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-[10px] ring-4 ring-rose-50">1</div>
-                        <h4 className="font-bold text-slate-800 text-sm">Objetivo Principal</h4>
+                {/* COL 1: OBJETIVO PRINCIPAL */}
+                <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex flex-col gap-4 min-h-[15rem]">
+                    <div className="flex items-center gap-3 pb-3 border-b border-slate-50">
+                        <div className="w-6 h-6 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-xs ring-4 ring-rose-50">1</div>
+                        <h4 className="font-bold text-slate-800 text-sm">Tarea Principal (Foco)</h4>
                     </div>
                     <div className="space-y-2 flex-1">
                         {entregoIds.map((id, idx) => renderCard('Entrego', id, idx))}
-                        <p className="text-[10px] text-slate-400 leading-tight px-1 italic mt-2">
-                            Define lo único que DEBE salir hoy.
+                        <p className="text-[11px] text-slate-400 leading-tight px-1 italic mt-2">
+                            Define lo único que DEBE salir hoy pase lo que pase.
                         </p>
                         {errors.entrego && <p className="text-rose-500 text-[10px] font-bold px-1 animate-pulse">⚠️ Este campo es obligatorio</p>}
                     </div>
-                    <button type="button" onClick={() => { addSlot('Entrego'); setErrors({}); }} className="text-xs font-bold text-rose-500 hover:text-rose-700 flex justify-center py-1 opacity-60 hover:opacity-100 transition-opacity">
-                        + Espacio
+                    <button type="button" onClick={() => { addSlot('Entrego'); setErrors({}); }} className="text-xs font-bold text-rose-500 hover:text-rose-700 flex justify-center py-2 opacity-60 hover:opacity-100 transition-opacity">
+                        + Agregar Foco
                     </button>
                 </div>
 
-                {/* COL 2: AVANCE */}
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col gap-3 min-h-[12rem]">
-                    <div className="flex items-center gap-2 pb-2 border-b border-slate-50">
-                        <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-[10px] ring-4 ring-blue-50">3</div>
-                        <h4 className="font-bold text-slate-800 text-sm">Para Avanzar</h4>
+                {/* COL 2: OTRAS TAREAS */}
+                <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex flex-col gap-4 min-h-[15rem]">
+                    <div className="flex items-center gap-3 pb-3 border-b border-slate-50">
+                        <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs ring-4 ring-blue-50">2</div>
+                        <h4 className="font-bold text-slate-800 text-sm">Otras Tareas (Gestión)</h4>
                     </div>
-                    <div className="space-y-2 flex-1">
+                    <div className="space-y-2 flex-1 overflow-y-auto max-h-[400px]">
                         {avanzoIds.map((id, idx) => renderCard('Avanzo', id, idx))}
+                        {/* Hidden Column merged logic here if needed, but for now just showing Col 2 */}
+                        {extraIds.length > 0 && (
+                            <div className="pt-4 mt-2 border-t border-slate-50">
+                                <p className="text-[10px] font-bold text-slate-300 uppercase mb-2 tracking-widest px-1">Tareas Rápidas</p>
+                                {extraIds.map((id, idx) => renderCard('Extra', id, idx))}
+                            </div>
+                        )}
                     </div>
-                    <button type="button" onClick={() => addSlot('Avanzo')} className="text-xs font-bold text-blue-500 hover:text-blue-700 flex justify-center py-1 opacity-60 hover:opacity-100 transition-opacity">
-                        + Espacio
+                    <button type="button" onClick={() => addSlot('Avanzo')} className="text-xs font-bold text-blue-500 hover:text-blue-700 flex justify-center py-2 opacity-60 hover:opacity-100 transition-opacity">
+                        + Agregar Pendiente
                     </button>
-                </div>
-
-                {/* COL 3: EXTRAS */}
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col gap-3 min-h-[12rem]">
-                    <div className="flex items-center gap-2 pb-2 border-b border-slate-50">
-                        <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-[10px] ring-4 ring-emerald-50">5</div>
-                        <h4 className="font-bold text-slate-800 text-sm">Victorias Rápidas</h4>
-                    </div>
-                    <div className="space-y-2 flex-1">
-                        {extraIds.map((id, idx) => renderCard('Extra', id, idx))}
-                    </div>
-                    <button type="button" onClick={() => addSlot('Extra')} className="text-xs font-bold text-emerald-500 hover:text-emerald-700 flex justify-center py-1 opacity-60 hover:opacity-100 transition-opacity">
-                        + Espacio
+                    <button type="button" onClick={() => addSlot('Extra')} className="text-[10px] font-bold text-slate-400 hover:text-indigo-500 flex justify-center py-1 opacity-50 hover:opacity-100 transition-opacity">
+                        + Otros (Rápida)
                     </button>
                 </div>
             </div>
@@ -495,7 +484,7 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
                     disabled={submitting}
                     className="w-full bg-slate-900 text-white font-bold py-3 rounded-xl shadow-xl shadow-slate-900/20 active:scale-[0.98] transition-all disabled:opacity-70 flex items-center justify-center gap-2"
                 >
-                    {submitting ? 'Guardando...' : '🚀 Activar Plan'}
+                    {submitting ? 'Guardando...' : 'Guardar Agenda'}
                 </button>
             </div>
         </form>

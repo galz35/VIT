@@ -4,6 +4,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { TasksService } from './tasks.service';
 import * as clarityRepo from './clarity.repo';
 import * as avanceMensualRepo from '../planning/avance-mensual.repo';
+import * as accesoRepo from '../acceso/acceso.repo';
 
 @ApiTags('KPIs & Dashboard')
 @ApiBearerAuth()
@@ -15,7 +16,7 @@ export class KpisController {
     @Get('dashboard')
     @ApiOperation({ summary: 'Obtener KPIs del dashboard ejecutivo' })
     async getKpisDashboard(@Request() req) {
-        return this.tasksService.getDashboardKPIs(req.user.userId);
+        return this.tasksService.getDashboardKPIs(req.user.carnet);
     }
 }
 
@@ -29,7 +30,30 @@ export class EquipoController {
     @Get('hoy')
     @ApiOperation({ summary: 'Obtener snapshot del equipo para el día de hoy' })
     async getEquipoHoy(@Request() req, @Query('fecha') fecha: string) {
-        return this.tasksService.getEquipoHoy(req.user.userId, fecha);
+        return this.tasksService.getEquipoHoy(req.user.carnet, fecha);
+    }
+
+    @Get('miembro/:idUsuario')
+    @ApiOperation({ summary: 'Obtener información básica de un miembro del equipo por ID' })
+    async getMiembro(@Param('idUsuario') idUsuario: number) {
+        const carnet = await accesoRepo.obtenerCarnetDeUsuario(idUsuario);
+        if (!carnet) return null;
+        const [emp] = await accesoRepo.obtenerDetallesUsuarios([carnet]);
+        return emp;
+    }
+
+    @Get('miembro/:idUsuario/tareas')
+    @ApiOperation({ summary: 'MANAGER: Ver detalles de miembro de equipo (tareas)' })
+    async getEquipoMemberTareas(@Param('idUsuario') idUsuario: number, @Request() req) {
+        const idLider = req.user.userId;
+        const res = await this.tasksService.equipoMiembro(idLider, idUsuario);
+        return res.tareas;
+    }
+
+    @Get('miembro/:idUsuario/bloqueos')
+    @ApiOperation({ summary: 'Obtener bloqueos activos de un miembro del equipo' })
+    async getEquipoMiembroBloqueos(@Param('idUsuario') idUsuario: number) {
+        return this.tasksService.getBloqueosUsuario(idUsuario);
     }
 }
 

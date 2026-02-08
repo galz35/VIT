@@ -2,27 +2,34 @@
  * Planning Repository - Queries para el módulo de planificación
  * Reemplaza TypeORM con consultas directas a SQL Server
  */
-import { crearRequest, ejecutarQuery, Int, NVarChar, Bit, DateTime, SqlDate, conTransaccion } from '../db/base.repo';
+import { crearRequest, ejecutarQuery, ejecutarSP, Int, NVarChar, Bit, DateTime, SqlDate, conTransaccion, sql } from '../db/base.repo';
 import { ProyectoDb, TareaDb, PlanTrabajoDb, SolicitudCambioDb, UsuarioDb, UsuarioOrganizacionDb } from '../db/tipos';
+import { cacheGet, cacheSet } from '../common/cache.service';
 
 // ==========================================
 // CONSULTAS DE PROYECTOS
 // ==========================================
 
-export async function obtenerProyectosPorUsuario(idUsuario: number) {
-    // Obtener proyectos donde el usuario tiene tareas asignadas
-    return await ejecutarQuery<ProyectoDb>(`
-        SELECT DISTINCT p.* 
-        FROM p_Proyectos p
-        INNER JOIN p_Tareas t ON p.idProyecto = t.idProyecto
-        INNER JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea
-        WHERE ta.idUsuario = @idUsuario
-        ORDER BY p.fechaCreacion DESC
-    `, { idUsuario: { valor: idUsuario, tipo: Int } });
+export async function obtenerProyectosPorUsuario(carnet: string) {
+    return await ejecutarSP<ProyectoDb>('sp_ObtenerProyectos', {
+        carnet: { valor: carnet, tipo: NVarChar },
+        filtroNombre: { valor: null, tipo: NVarChar },
+        filtroEstado: { valor: null, tipo: NVarChar }
+    });
 }
 
-export async function obtenerTodosProyectos() {
-    return await ejecutarQuery<ProyectoDb>('SELECT * FROM p_Proyectos ORDER BY fechaCreacion DESC');
+export async function obtenerTodosProyectos(filter?: any) {
+    // 2026-01-27: v2 - Use SP with Pagination Support (Defaulting to large page for backward compat)
+    return await ejecutarSP<ProyectoDb>('sp_Proyectos_Listar', {
+        nombre: { valor: filter?.nombre || null, tipo: NVarChar },
+        estado: { valor: filter?.estado || null, tipo: NVarChar },
+        gerencia: { valor: filter?.gerencia || null, tipo: NVarChar },
+        subgerencia: { valor: filter?.subgerencia || null, tipo: NVarChar },
+        area: { valor: filter?.area || null, tipo: NVarChar },
+        tipo: { valor: filter?.tipo || null, tipo: NVarChar },
+        pageNumber: { valor: 1, tipo: Int },
+        pageSize: { valor: 2000, tipo: Int } // Fetch "all" (limit to 2000)
+    });
 }
 
 /**
@@ -31,61 +38,86 @@ export async function obtenerTodosProyectos() {
  * 2. Proyectos donde tengo tareas asignadas
  * 3. Proyectos donde mis subordinados (cadena de jefatura) tienen tareas
  */
-export async function obtenerProyectosVisibles(idUsuario: number, usuario: any) {
-    // Usar UNION para combinar todas las fuentes de visibilidad
-    // La jerarquía se valida usando jefeCarnet (hasta 4 niveles hacia abajo)
-    const sql = `
-        -- Proyectos que yo creé
-        SELECT DISTINCT p.* FROM p_Proyectos p WHERE p.idCreador = @idUsuario
-        UNION
-        -- Proyectos donde tengo tareas asignadas
-        SELECT DISTINCT p.* FROM p_Proyectos p
-        INNER JOIN p_Tareas t ON p.idProyecto = t.idProyecto
-        INNER JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea
-        WHERE ta.idUsuario = @idUsuario
-        UNION
-        -- Proyectos de subordinados nivel 1 (reportan directamente a mí)
-        SELECT DISTINCT p.* FROM p_Proyectos p
-        INNER JOIN p_Tareas t ON p.idProyecto = t.idProyecto
-        INNER JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea
-        INNER JOIN p_Usuarios u ON ta.idUsuario = u.idUsuario
-        WHERE u.jefeCarnet = @carnet AND @carnet IS NOT NULL AND @carnet != ''
-        UNION
-        -- Proyectos de subordinados nivel 2
-        SELECT DISTINCT p.* FROM p_Proyectos p
-        INNER JOIN p_Tareas t ON p.idProyecto = t.idProyecto
-        INNER JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea
-        INNER JOIN p_Usuarios u ON ta.idUsuario = u.idUsuario
-        WHERE u.carnet_jefe2 = @carnet AND @carnet IS NOT NULL AND @carnet != ''
-        UNION
-        -- Proyectos de subordinados nivel 3
-        SELECT DISTINCT p.* FROM p_Proyectos p
-        INNER JOIN p_Tareas t ON p.idProyecto = t.idProyecto
-        INNER JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea
-        INNER JOIN p_Usuarios u ON ta.idUsuario = u.idUsuario
-        WHERE u.carnet_jefe3 = @carnet AND @carnet IS NOT NULL AND @carnet != ''
-        UNION
-        -- Proyectos de subordinados nivel 4
-        SELECT DISTINCT p.* FROM p_Proyectos p
-        INNER JOIN p_Tareas t ON p.idProyecto = t.idProyecto
-        INNER JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea
-        INNER JOIN p_Usuarios u ON ta.idUsuario = u.idUsuario
-        WHERE u.carnet_jefe4 = @carnet AND @carnet IS NOT NULL AND @carnet != ''
-        ORDER BY fechaCreacion DESC
-    `;
+export async function obtenerProyectosVisibles(idUsuario: number, usuario: any, filter?: any) {
+    const cacheKey = `equipo_ids_v2:${usuario.carnet || idUsuario}`;
+    let idsEquipo = cacheGet<number[]>(cacheKey);
 
-    return await ejecutarQuery<ProyectoDb>(sql, {
+    // Si no está en cache, usamos el SP optimizado de Visibilidad (Carnet-First)
+    if (!idsEquipo) {
+        // [OPTIMIZACION] Usamos el repo de acceso que ya tiene la lógica de jerarquía + delegación + permisos
+        const accesoRepo = require('../acceso/acceso.repo');
+        const miEquipo = await accesoRepo.obtenerMiEquipoPorCarnet(usuario.carnet || '');
+
+        // Extraemos solo IDs únicos
+        idsEquipo = [...new Set(miEquipo.map((u: any) => u.idUsuario).filter((id: any) => id))] as number[];
+
+        // Fallback: si no devuelve nada (raro), al menos el propio usuario
+        if (idsEquipo.length === 0) idsEquipo = [idUsuario];
+
+        cacheSet(cacheKey, idsEquipo, 5 * 60 * 1000); // Cache 5 min
+    }
+
+    // 2026-01-25: Migración Zero Inline SQL - Uso de SP con TVP
+    const tvpEquipo = new sql.Table('dbo.TVP_IntList');
+    tvpEquipo.columns.add('Id', sql.Int);
+
+    idsEquipo.forEach(id => tvpEquipo.rows.add(id));
+
+    return await ejecutarSP<ProyectoDb>('sp_Proyecto_ObtenerVisibles', {
         idUsuario: { valor: idUsuario, tipo: Int },
-        carnet: { valor: usuario.carnet || '', tipo: NVarChar }
+        idsEquipo: tvpEquipo // TVP
     });
 }
 
 
-export async function crearProyecto(dto: { nombre: string, descripcion?: string, idNodoDuenio?: number, area?: string, subgerencia?: string, gerencia?: string, fechaInicio?: Date, fechaFin?: Date, idCreador: number }) {
+// Esta función estaba creando PROYECTOS, no tareas. La de tareas no estaba exportada o estaba en otro lado.
+// Ahora agregamos la V2 para crear Tarea con SP
+/**
+ * @deprecated PRECAUCIÓN (CR-01): Este método es LEGACY y no integra las validaciones de Jerarquía Inteligente v2.1.
+ * NO USAR PARA NUEVO CÓDIGO. Migrar a tasks.repo.crearTarea().
+ */
+export async function crearTarea(dto: {
+    titulo: string, descripcion?: string, idProyecto?: number, prioridad: string, effort?: string, tipo?: string,
+    fechaInicioPlanificada?: Date | null, fechaObjetivo?: Date | null, idCreador: number, idResponsable?: number,
+    comportamiento?: string, linkEvidencia?: string
+}) {
+    // V2: Uso de SP
+    const res = await ejecutarQuery<{ idTarea: number }>(`
+        EXEC sp_CrearTarea
+            @titulo = @titulo,
+            @descripcion = @descripcion,
+            @idProyecto = @idProyecto,
+            @prioridad = @prioridad,
+            @esfuerzo = @esfuerzo,
+            @tipo = @tipo,
+            @fechaInicioPlanificada = @fechaInicioPlanificada,
+            @fechaObjetivo = @fechaObjetivo,
+            @idUsuarioCreador = @idCreador,
+            @idResponsable = @idResponsable,
+            @comportamiento = @comportamiento,
+            @linkEvidencia = @linkEvidencia
+    `, {
+        titulo: { valor: dto.titulo, tipo: NVarChar },
+        descripcion: { valor: dto.descripcion, tipo: NVarChar },
+        idProyecto: { valor: dto.idProyecto, tipo: Int },
+        prioridad: { valor: dto.prioridad, tipo: NVarChar },
+        esfuerzo: { valor: dto.effort || 'M', tipo: NVarChar },
+        tipo: { valor: dto.tipo || 'Administrativa', tipo: NVarChar },
+        fechaInicioPlanificada: { valor: dto.fechaInicioPlanificada, tipo: DateTime },
+        fechaObjetivo: { valor: dto.fechaObjetivo, tipo: DateTime },
+        idCreador: { valor: dto.idCreador, tipo: Int },
+        idResponsable: { valor: dto.idResponsable, tipo: Int },
+        comportamiento: { valor: dto.comportamiento, tipo: NVarChar },
+        linkEvidencia: { valor: dto.linkEvidencia, tipo: NVarChar }
+    });
+    return res[0]?.idTarea;
+}
+
+export async function crearProyecto(dto: { nombre: string, descripcion?: string, idNodoDuenio?: number, area?: string, subgerencia?: string, gerencia?: string, fechaInicio?: Date, fechaFin?: Date, idCreador: number, tipo?: string, creadorCarnet?: string, responsableCarnet?: string }) {
     const res = await ejecutarQuery<{ idProyecto: number }>(`
-        INSERT INTO p_Proyectos (nombre, descripcion, idNodoDuenio, area, subgerencia, gerencia, fechaInicio, fechaFin, fechaCreacion, idCreador, estado)
+        INSERT INTO p_Proyectos (nombre, descripcion, idNodoDuenio, area, subgerencia, gerencia, fechaInicio, fechaFin, fechaCreacion, idCreador, creadorCarnet, responsableCarnet, estado, tipo)
         OUTPUT INSERTED.idProyecto
-        VALUES (@nombre, @descripcion, @idNodoDuenio, @area, @subgerencia, @gerencia, @fechaInicio, @fechaFin, GETDATE(), @idCreador, 'Activo')
+        VALUES (@nombre, @descripcion, @idNodoDuenio, @area, @subgerencia, @gerencia, @fechaInicio, @fechaFin, GETDATE(), @idCreador, @creadorCarnet, @responsableCarnet, 'Activo', @tipo)
     `, {
         nombre: { valor: dto.nombre, tipo: NVarChar },
         descripcion: { valor: dto.descripcion, tipo: NVarChar },
@@ -95,7 +127,10 @@ export async function crearProyecto(dto: { nombre: string, descripcion?: string,
         gerencia: { valor: dto.gerencia, tipo: NVarChar },
         fechaInicio: { valor: dto.fechaInicio, tipo: DateTime },
         fechaFin: { valor: dto.fechaFin, tipo: DateTime },
-        idCreador: { valor: dto.idCreador, tipo: Int }
+        idCreador: { valor: dto.idCreador, tipo: Int },
+        creadorCarnet: { valor: dto.creadorCarnet, tipo: NVarChar },
+        responsableCarnet: { valor: dto.responsableCarnet, tipo: NVarChar },
+        tipo: { valor: dto.tipo || 'administrativo', tipo: NVarChar }
     });
     return res[0].idProyecto;
 }
@@ -120,12 +155,43 @@ export async function actualizarDatosProyecto(idProyecto: number, updates: Parti
     await ejecutarQuery(`UPDATE p_Proyectos SET ${sets.join(', ')} WHERE idProyecto = @idProyecto`, params);
 }
 
-export async function eliminarProyecto(idProyecto: number) {
-    await ejecutarQuery('DELETE FROM p_Proyectos WHERE idProyecto = @idProyecto', { idProyecto: { valor: idProyecto, tipo: Int } });
+export async function eliminarProyecto(idProyecto: number, forceCascade: boolean = false) {
+    // FORCE SOFT DELETE (No se usa el SP para evitar borrado físico)
+    await ejecutarQuery(`
+        UPDATE p_Proyectos 
+        SET estado = 'Cancelado', activo = 0 
+        WHERE idProyecto = @idProyecto
+    `, {
+        idProyecto: { valor: idProyecto, tipo: Int }
+    });
+}
+
+export async function restaurarProyecto(idProyecto: number) {
+    await ejecutarQuery(`
+        UPDATE p_Proyectos 
+        SET estado = 'Activo', activo = 1 
+        WHERE idProyecto = @idProyecto
+    `, {
+        idProyecto: { valor: idProyecto, tipo: Int }
+    });
 }
 
 export async function obtenerProyectoPorId(idProyecto: number) {
-    const res = await ejecutarQuery<ProyectoDb>('SELECT * FROM p_Proyectos WHERE idProyecto = @idProyecto', { idProyecto: { valor: idProyecto, tipo: Int } });
+    const res = await ejecutarQuery<ProyectoDb>(`
+        SELECT p.*, 
+            creadorNombre = u.nombre,
+            progreso = ISNULL((
+                SELECT ROUND(AVG(CAST(CASE WHEN t.estado = 'Hecha' THEN 100 ELSE ISNULL(t.porcentaje, 0) END AS FLOAT)), 0)
+                FROM p_Tareas t
+                WHERE t.idProyecto = p.idProyecto 
+                  AND t.idTareaPadre IS NULL 
+                  AND t.activo = 1
+                  AND t.estado NOT IN ('Descartada', 'Eliminada', 'Anulada', 'Cancelada')
+            ), 0)
+        FROM p_Proyectos p
+        LEFT JOIN p_Usuarios u ON p.idCreador = u.idUsuario
+        WHERE p.idProyecto = @idProyecto
+    `, { idProyecto: { valor: idProyecto, tipo: Int } });
     return res[0];
 }
 
@@ -133,142 +199,168 @@ export async function obtenerProyectoPorId(idProyecto: number) {
 // CONSULTAS DE TAREAS
 // ==========================================
 
+// Recupera una tarea por ID incluyendo sus subtareas y datos del proyecto
 export async function obtenerTareaPorId(idTarea: number) {
     const tareas = await ejecutarQuery<TareaDb & {
         proyectoTipo?: string,
-        proyectoRequiereAprobacion?: boolean
+        proyectoRequiereAprobacion?: boolean,
+        creadorNombre?: string,
+        creadorCorreo?: string
     }>(`
         SELECT 
-            t.*, 
+            t.idTarea, t.nombre as titulo, t.descripcion, t.estado, t.prioridad, t.fechaCreacion, t.fechaObjetivo, t.fechaCompletado, t.porcentaje, t.idPadre, t.orden, t.esHito, t.idAsignado, t.idPlan,
+            t.linkEvidencia, t.tipo, t.esfuerzo, t.comportamiento, t.fechaInicioPlanificada,
+            t.porcentaje as progreso,
             p.tipo as proyectoTipo, 
-            p.requiereAprobacion as proyectoRequiereAprobacion
+            p.requiereAprobacion as proyectoRequiereAprobacion,
+            uc.nombre as creadorNombre,
+            uc.correo as creadorCorreo
         FROM p_Tareas t
         LEFT JOIN p_Proyectos p ON t.idProyecto = p.idProyecto
+        LEFT JOIN p_Usuarios uc ON t.idCreador = uc.idUsuario
         WHERE t.idTarea = @idTarea
     `, { idTarea: { valor: idTarea, tipo: Int } });
 
-    return tareas[0] || null;
+    if (tareas.length === 0) return null;
+    const t = tareas[0];
+
+    // Transform flat creator fields to object
+    const tarea: any = {
+        ...t,
+        creador: t.creadorNombre ? { nombre: t.creadorNombre, correo: t.creadorCorreo } : null
+    };
+
+    if (tarea) {
+        // Cargar subtareas
+        const subtareas = await ejecutarQuery<TareaDb>(`
+            SELECT idTarea, nombre as titulo, estado, prioridad, porcentaje as progreso
+            FROM p_Tareas
+            WHERE idTareaPadre = @id
+            ORDER BY orden ASC, fechaObjetivo ASC
+        `, { id: { valor: idTarea, tipo: Int } });
+
+        (tarea as any).subtareas = subtareas;
+
+        // Cargar avances (comentarios)
+        try {
+            const avances = await ejecutarQuery<any>(`
+                IF OBJECT_ID(N'dbo.p_TareaAvances', N'U') IS NOT NULL
+                SELECT idLog, idTarea, idUsuario, progreso, comentario, fecha
+                FROM p_TareaAvances
+                WHERE idTarea = @id
+                ORDER BY fecha DESC
+            `, { id: { valor: idTarea, tipo: Int } });
+            (tarea as any).avances = avances || [];
+        } catch (e) { (tarea as any).avances = []; }
+    }
+
+    return tarea;
 }
 
+/**
+ * @deprecated PRECAUCIÓN (CR-01): Este método es LEGACY y no recalcula jerarquía. NO USAR para updates complejos.
+ * Usar tasks.repo.actualizarTarea() envuelto en TasksService.
+ */
 export async function actualizarTarea(idTarea: number, updates: Partial<TareaDb>) {
-    const sets: string[] = [];
-    const params: any = { idTarea: { valor: idTarea, tipo: Int } };
+    // V3: Uso de ejecutarSP para mayor seguridad y evitar warnings de BaseRepo
+    // Mapeamos los campos del objeto TareaDb o Updates a los parámetros del SP
+    // console.log(`[Repo] Actualizando tarea ${idTarea}:`, updates);
+    // V3: Uso de ejecutarSP (envuelto en query raw con SET options para evitar error de indice filtrado)
+    // Parche crítico: SET QUOTED_IDENTIFIER ON requerido.
+    await ejecutarQuery(`
+        SET QUOTED_IDENTIFIER ON;
+        EXEC sp_ActualizarTarea 
+            @idTarea = @idTarea,
+            @titulo = @titulo,
+            @descripcion = @descripcion,
+            @estado = @estado,
+            @prioridad = @prioridad,
+            @progreso = @progreso,
+            @fechaObjetivo = @fechaObjetivo,
+            @fechaInicioPlanificada = @fechaInicioPlanificada,
+            @linkEvidencia = @linkEvidencia
+    `, {
+        idTarea: { valor: idTarea, tipo: Int },
+        titulo: { valor: updates.nombre ?? null, tipo: NVarChar },
+        descripcion: { valor: updates.descripcion ?? null, tipo: NVarChar },
+        estado: { valor: updates.estado ?? null, tipo: NVarChar },
+        prioridad: { valor: updates.prioridad ?? null, tipo: NVarChar },
+        progreso: { valor: updates.porcentaje ?? null, tipo: Int },
+        fechaObjetivo: { valor: updates.fechaObjetivo ?? null, tipo: DateTime },
+        fechaInicioPlanificada: { valor: updates.fechaInicioPlanificada ?? null, tipo: DateTime },
+        linkEvidencia: { valor: updates.linkEvidencia ?? null, tipo: NVarChar }
+    });
 
-    for (const [key, value] of Object.entries(updates)) {
-        if (value !== undefined) {
-            sets.push(`${key} = @${key}`);
+    if ((updates as any).idTareaPadre !== undefined) {
+        await ejecutarQuery(`SET QUOTED_IDENTIFIER ON; UPDATE p_Tareas SET idTareaPadre = @p WHERE idTarea = @t`, {
+            p: { valor: (updates as any).idTareaPadre, tipo: Int }, // Puede ser null
+            t: { valor: idTarea, tipo: Int }
+        });
+    }
 
-            let tipo = NVarChar;
-            if (typeof value === 'number') tipo = Int;
-            if (typeof value === 'boolean') tipo = Bit;
-            if (value instanceof Date) tipo = DateTime;
-
-            params[key] = { valor: value, tipo };
+    // [SCHEMA HEAL] Asegurar que la columna existe y soporta URLs largas
+    if (updates.linkEvidencia) {
+        try {
+            await ejecutarQuery(`
+                IF COL_LENGTH('p_Tareas', 'linkEvidencia') IS NULL 
+                BEGIN 
+                    ALTER TABLE p_Tareas ADD linkEvidencia NVARCHAR(MAX); 
+                END
+                ELSE
+                BEGIN
+                    -- Si existe, asegurar que sea MAX (opcional, pero útil si se creó pequeña)
+                     IF (SELECT max_length FROM sys.columns WHERE object_id = OBJECT_ID('p_Tareas') AND name = 'linkEvidencia') < 2000
+                     BEGIN
+                        ALTER TABLE p_Tareas ALTER COLUMN linkEvidencia NVARCHAR(MAX);
+                     END
+                END
+             `);
+        } catch (e) {
+            console.warn('[Repo] Schema heal failed (non-critical):', e);
         }
     }
 
-    if (sets.length === 0) return;
+    // [FIX] Inline Update para campos nuevos que el SP podría no tener mapeados aún en DB
+    if (updates.linkEvidencia !== undefined || (updates as any).tipo !== undefined) {
+        const sets: string[] = [];
+        const params: any = { id: { valor: idTarea, tipo: Int } };
 
-    await ejecutarQuery(`
-        UPDATE p_Tareas 
-        SET ${sets.join(', ')} 
-        WHERE idTarea = @idTarea
-    `, params);
-}
+        if (updates.linkEvidencia !== undefined) {
+            sets.push("linkEvidencia = @link");
+            params.link = { valor: updates.linkEvidencia, tipo: NVarChar };
+        }
+        if ((updates as any).tipo !== undefined) {
+            sets.push("tipo = @tipoUpdate");
+            params.tipoUpdate = { valor: (updates as any).tipo, tipo: NVarChar };
+        }
 
-// ==========================================
-// CONSULTAS DE SOLICITUDES DE CAMBIO
-// ==========================================
-
-export async function crearSolicitudCambio(solicitud: any) {
-    const result = await ejecutarQuery<{ id: number }>(`
-        INSERT INTO p_SolicitudCambios 
-        (idTarea, idSolicitante, carnetSolicitante, campoAfectado, valorAnterior, valorNuevo, motivo, estado, fechaSolicitud)
-        OUTPUT INSERTED.id
-        VALUES 
-        (@idTarea, @idSolicitante, @carnetSolicitante, @campoAfectado, @valorAnterior, @valorNuevo, @motivo, @estado, @fechaSolicitud)
-    `, {
-        idTarea: { valor: solicitud.idTarea, tipo: Int },
-        idSolicitante: { valor: solicitud.idUsuarioSolicitante, tipo: Int },
-        carnetSolicitante: { valor: solicitud.carnetSolicitante, tipo: NVarChar },
-        campoAfectado: { valor: solicitud.campoAfectado, tipo: NVarChar },
-        valorAnterior: { valor: solicitud.valorAnterior, tipo: NVarChar },
-        valorNuevo: { valor: solicitud.valorNuevo, tipo: NVarChar },
-        motivo: { valor: solicitud.motivo, tipo: NVarChar },
-        estado: { valor: solicitud.estado, tipo: NVarChar },
-        fechaSolicitud: { valor: solicitud.fechaSolicitud, tipo: DateTime }
-    });
-
-    return { ...solicitud, id: result[0].id };
-}
-
-export async function obtenerSolicitudesPendientes() {
-    return await ejecutarQuery<any>(`
-        SELECT s.*, t.nombre as tareaNombre, p.nombre as proyectoNombre, u.nombre as solicitanteNombre 
-        FROM p_SolicitudCambios s
-        JOIN p_Tareas t ON s.idTarea = t.idTarea
-        LEFT JOIN p_Proyectos p ON t.idProyecto = p.idProyecto
-        LEFT JOIN p_Usuarios u ON s.carnetSolicitante = u.carnet
-        WHERE s.estado = 'Pendiente'
-        ORDER BY s.fechaSolicitud DESC
-    `);
-}
-
-export async function obtenerSolicitudesPorCarnets(carnets: string[]) {
-    if (carnets.length === 0) return [];
-    // Sanitize and quote carnets
-    const carnetsStr = carnets.map(c => `'${c.replace(/'/g, "''")}'`).join(',');
-
-    return await ejecutarQuery<any>(`
-        SELECT s.*, t.nombre as tareaNombre, p.nombre as proyectoNombre, u.nombre as solicitanteNombre 
-        FROM p_SolicitudCambios s
-        JOIN p_Tareas t ON s.idTarea = t.idTarea
-        LEFT JOIN p_Proyectos p ON t.idProyecto = p.idProyecto
-        LEFT JOIN p_Usuarios u ON s.carnetSolicitante = u.carnet
-        WHERE s.carnetSolicitante IN (${carnetsStr}) AND s.estado = 'Pendiente'
-        ORDER BY s.fechaSolicitud DESC
-    `);
-}
-
-export async function obtenerSolicitudPorId(id: number) {
-    const res = await ejecutarQuery<SolicitudCambioDb>('SELECT * FROM p_SolicitudCambios WHERE id = @id', { id: { valor: id, tipo: Int } });
-    return res[0] || null;
-}
-
-export async function actualizarEstadoSolicitud(idSolicitud: number, estado: string, resolucion?: string, idResueltoPor?: number) {
-    await ejecutarQuery(`
-        UPDATE p_SolicitudCambios 
-        SET estado = @estado, resolucion = @resolucion, idResueltoPor = @idResueltoPor, fechaResolucion = GETDATE()
-        WHERE id = @idSolicitud
-    `, {
-        idSolicitud: { valor: idSolicitud, tipo: Int },
-        estado: { valor: estado, tipo: NVarChar },
-        resolucion: { valor: resolucion, tipo: NVarChar },
-        idResueltoPor: { valor: idResueltoPor, tipo: Int }
-    });
+        if (sets.length > 0) {
+            await ejecutarQuery(`SET QUOTED_IDENTIFIER ON; UPDATE p_Tareas SET ${sets.join(', ')} WHERE idTarea = @id`, params);
+        }
+    }
 }
 
 // ==========================================
 // CONSULTAS DE PLANES DE TRABAJO
 // ==========================================
 
-export async function obtenerPlanes(idUsuario: number, mes: number, anio: number) {
-    // Buscar plan existente
-    const planes = await ejecutarQuery<any>(`
-        SELECT * FROM p_PlanesTrabajo 
-        WHERE idUsuario = @idUsuario AND mes = @mes AND anio = @anio
-    `, {
-        idUsuario: { valor: idUsuario, tipo: Int },
+export async function obtenerPlanPorId(idPlan: number) {
+    const res = await ejecutarQuery<any>('SELECT * FROM p_PlanesTrabajo WHERE idPlan = @id', { id: { valor: idPlan, tipo: Int } });
+    return res[0] || null;
+}
+
+export async function obtenerPlanes(carnet: string, mes: number, anio: number) {
+    // Buscar plan existente usando SP carnet-first
+    const result = await ejecutarSP<any>('sp_Planning_ObtenerPlanes', {
+        carnet: { valor: carnet, tipo: NVarChar },
         mes: { valor: mes, tipo: Int },
         anio: { valor: anio, tipo: Int }
     });
-
-    let plan = planes[0];
-
-    // Si no existe, devolver estructura vacía (o crearlo si fuera necesario, pero mejor solo devolver null)
+    let plan = (result as any)[0];
     if (!plan) return null;
 
-    // Obtener tareas del plan
+    // Si el SP devuelve el plan en el primero, buscamos las tareas.
+    // Asumiendo el wrapper actual de base.repo devuelve Recordset[0]:
     const tareas = await ejecutarQuery<any>(`
         SELECT t.*, p.nombre as proyectoNombre, p.tipo as proyectoTipo
         FROM p_Tareas t
@@ -277,7 +369,6 @@ export async function obtenerPlanes(idUsuario: number, mes: number, anio: number
         ORDER BY t.orden ASC
     `, { idPlan: { valor: plan.idPlan, tipo: Int } });
 
-    // Armar estructura para frontend
     return {
         ...plan,
         semanas: [
@@ -347,21 +438,25 @@ export async function obtenerNodosLiderados(idUsuario: number) {
 export async function obtenerHijosDeNodos(idsPadres: number[]) {
     if (idsPadres.length === 0) return [];
 
-    // Construir lista IN para la query (sanitizada via parameter no soportado en lista, usaremos string builder seguro con ints)
-    const idsStr = idsPadres.map(id => Math.floor(id)).join(',');
+    const tvp = new sql.Table('dbo.TVP_IntList');
+    tvp.columns.add('Id', sql.Int);
+    idsPadres.forEach(id => tvp.rows.add(Math.floor(id)));
 
     return await ejecutarQuery<{ idNodo: number }>(`
-        SELECT idNodo FROM p_OrganizacionNodos WHERE idPadre IN (${idsStr})
-    `);
+        SELECT idNodo FROM p_OrganizacionNodos WHERE idPadre IN (SELECT Id FROM @tvp)
+    `, { tvp });
 }
 
 export async function obtenerUsuariosEnNodos(idsNodos: number[]) {
     if (idsNodos.length === 0) return [];
-    const idsStr = idsNodos.map(id => Math.floor(id)).join(',');
+
+    const tvp = new sql.Table('dbo.TVP_IntList');
+    tvp.columns.add('Id', sql.Int);
+    idsNodos.forEach(id => tvp.rows.add(Math.floor(id)));
 
     return await ejecutarQuery<{ idUsuario: number }>(`
-        SELECT idUsuario FROM p_UsuariosOrganizacion WHERE idNodo IN (${idsStr})
-    `);
+        SELECT idUsuario FROM p_UsuariosOrganizacion WHERE idNodo IN (SELECT Id FROM @tvp)
+    `, { tvp });
 }
 
 // ==========================================
@@ -404,3 +499,292 @@ export async function obtenerEquipoDirecto(carnetJefe: string) {
     });
 }
 
+
+// ==========================================
+// SOLICITUDES DE CAMBIO (Proyectos Estratégicos)
+// ==========================================
+
+export async function crearSolicitudCambio(dto: { idTarea: number, idUsuario: number, campo: string, valorAnterior: string, valorNuevo: string, motivo: string }) {
+    // Verificar si ya existe una pendiente
+    await ejecutarQuery(`
+        INSERT INTO p_SolicitudesCambio (idTarea, idUsuarioSolicitante, campo, valorAnterior, valorNuevo, motivo)
+        VALUES (@idTarea, @idUsuario, @campo, @valorAnterior, @valorNuevo, @motivo)
+    `, {
+        idTarea: { valor: dto.idTarea, tipo: Int },
+        idUsuario: { valor: dto.idUsuario, tipo: Int },
+        campo: { valor: dto.campo, tipo: NVarChar },
+        valorAnterior: { valor: dto.valorAnterior, tipo: NVarChar },
+        valorNuevo: { valor: dto.valorNuevo, tipo: NVarChar },
+        motivo: { valor: dto.motivo, tipo: NVarChar }
+    });
+}
+
+export async function obtenerSolicitudesPendientes() {
+    return await ejecutarQuery(`
+        SELECT s.*, 
+               t.nombre as tareaNombre, 
+               u.nombre as solicitanteNombre, u.carnet as solicitanteCarnet,
+               p.nombre as proyectoNombre
+        FROM p_SolicitudesCambio s
+        JOIN p_Tareas t ON s.idTarea = t.idTarea
+        LEFT JOIN p_Proyectos p ON t.idProyecto = p.idProyecto
+        JOIN p_Usuarios u ON s.idUsuarioSolicitante = u.idUsuario
+        WHERE s.estado = 'Pendiente'
+        ORDER BY s.fechaSolicitud DESC
+    `);
+}
+
+export async function obtenerSolicitudesPorCarnets(carnets: string[]) {
+    if (!carnets.length) return [];
+    const carnetsStr = carnets.map(c => `'${c.replace(/'/g, "''")}'`).join(',');
+
+    return await ejecutarQuery(`
+        SELECT s.*, 
+               t.nombre as tareaNombre, 
+               u.nombre as solicitanteNombre, u.carnet as solicitanteCarnet,
+               p.nombre as proyectoNombre
+        FROM p_SolicitudesCambio s
+        JOIN p_Tareas t ON s.idTarea = t.idTarea
+        LEFT JOIN p_Proyectos p ON t.idProyecto = p.idProyecto
+        JOIN p_Usuarios u ON s.idUsuarioSolicitante = u.idUsuario
+        WHERE s.estado = 'Pendiente'
+        AND u.carnet IN (${carnetsStr})
+        ORDER BY s.fechaSolicitud DESC
+    `);
+}
+
+export async function obtenerSolicitudesPendientesPorProyecto(idProyecto: number) {
+    return await ejecutarQuery<{ idTarea: number, total: number }>(`
+        SELECT s.idTarea, COUNT(*) as total
+        FROM p_SolicitudesCambio s
+        JOIN p_Tareas t ON s.idTarea = t.idTarea
+        WHERE s.estado = 'Pendiente' AND t.idProyecto = @idProyecto
+        GROUP BY s.idTarea
+    `, { idProyecto: { valor: idProyecto, tipo: Int } });
+}
+
+export async function obtenerSolicitudPorId(id: number) {
+    const res = await ejecutarQuery<any>('SELECT * FROM p_SolicitudesCambio WHERE idSolicitud = @id', { id: { valor: id, tipo: Int } });
+    return res[0] || null;
+}
+
+
+
+export async function resolverSolicitud(id: number, estado: string, idUsuarioResolutor: number, comentario: string) {
+    await ejecutarQuery(`
+        UPDATE p_SolicitudesCambio 
+        SET estado = @estado, 
+            idUsuarioResolutor = @idUsuario, 
+            fechaResolucion = GETDATE(),
+            comentarioResolucion = @comentario
+        WHERE idSolicitud = @id
+    `, {
+        id: { valor: id, tipo: Int },
+        estado: { valor: estado, tipo: NVarChar },
+        idUsuario: { valor: idUsuarioResolutor, tipo: Int },
+        comentario: { valor: comentario, tipo: NVarChar }
+    });
+}
+
+export async function clonarTarea(idTarea: number, carnet: string) {
+    const res = await ejecutarSP<{ idTarea: number }>('sp_Tarea_Clonar', {
+        idTareaFuente: { valor: idTarea, tipo: Int },
+        ejecutorCarnet: { valor: carnet, tipo: NVarChar }
+    });
+    return res[0].idTarea;
+}
+
+export async function reasignarTareas(taskIds: number[], toCarnet: string) {
+    await ejecutarSP('sp_Tareas_Reasignar_PorCarnet', {
+        taskIdsCsv: { valor: taskIds.join(','), tipo: NVarChar },
+        toCarnet: { valor: toCarnet, tipo: NVarChar }
+    });
+}
+
+export async function cerrarPlan(idPlan: number) {
+    await ejecutarSP('sp_Plan_Cerrar', {
+        idPlan: { valor: idPlan, tipo: Int }
+    });
+}
+
+export async function esAsignado(idTarea: number, idUsuario: number) {
+    const res = await ejecutarQuery(`
+        -- Check legacy single assignment
+        SELECT 1 FROM p_Tareas WHERE idTarea = @idTarea AND idAsignado = @idUsuario
+        UNION
+        -- Check multiple assignment via carnet
+        SELECT 1 
+        FROM p_TareaAsignados ta
+        INNER JOIN p_Usuarios u ON ta.carnet = u.carnet
+        WHERE ta.idTarea = @idTarea AND u.idUsuario = @idUsuario
+    `, {
+        idTarea: { valor: idTarea, tipo: Int },
+        idUsuario: { valor: idUsuario, tipo: Int }
+    });
+    return res.length > 0;
+}
+
+// === DASHBOARD ALERTS (REAL DATA) ===
+export async function obtenerTareasCriticas(carnets: string[]) {
+    if (!carnets || carnets.length === 0) return [];
+
+    // Sanitizar carnets para IN clausula segura
+    const carnetsSafe = carnets.map(c => c.replace(/'/g, "''"));
+    const carnetsCsv = carnetsSafe.map(c => `'${c}'`).join(',');
+
+    // Query optimizada: Tareas activas que vencen hoy o antes
+    // FIX: Ahora hacemos JOIN con p_TareaAsignados porque esa es la tabla real de asignaciones.
+    // Usamos DISTINCT para evitar duplicados si la lógica de asignación es redundante.
+    return await ejecutarQuery(`
+        DECLARE @Hoy DATE = CONVERT(DATE, GETDATE());
+        DECLARE @Ini DATETIME2(0) = CONVERT(DATETIME2(0), @Hoy);
+        DECLARE @Fin DATETIME2(0) = DATEADD(DAY, 1, @Ini);
+
+        WITH TareasEquipo AS (
+            -- FUENTE 1: Asignación oficial a un miembro del equipo
+            SELECT ta.idTarea, ta.carnet
+            FROM dbo.p_TareaAsignados ta
+            WHERE ta.carnet IN (${carnetsCsv})
+
+            UNION  -- Dedup automático
+            
+            -- FUENTE 2: Tareas que el equipo puso en su plan de hoy
+            SELECT ct.idTarea, c.usuarioCarnet as carnet
+            FROM dbo.p_CheckinTareas ct
+            INNER JOIN dbo.p_Checkins c ON c.idCheckin = ct.idCheckin
+            WHERE c.usuarioCarnet IN (${carnetsCsv})
+              AND c.fecha >= @Ini AND c.fecha < @Fin
+        )
+        SELECT DISTINCT
+            t.idTarea, t.nombre as titulo, t.fechaObjetivo, t.estado, t.prioridad, t.idProyecto, 
+            t.fechaCompletado, t.fechaFinReal,
+            u.nombre as asignado, 
+            u.gerencia, u.subgerencia, u.area,
+            te.carnet as usuarioCarnet, 
+            p.nombre as proyectoNombre
+        FROM TareasEquipo te
+        INNER JOIN dbo.p_Tareas t ON t.idTarea = te.idTarea
+        INNER JOIN dbo.p_Usuarios u ON te.carnet = u.carnet
+        LEFT JOIN dbo.p_Proyectos p ON t.idProyecto = p.idProyecto
+        WHERE t.activo = 1
+          AND (
+            -- Caso A: Tarea pendiente que vence hoy o está atrasada
+            (t.estado NOT IN ('Hecha', 'Completada', 'Eliminada', 'Cancelada') AND t.fechaObjetivo < @Fin)
+            OR
+            -- Caso B: Tarea terminada HOY (usando fecha de término real)
+            (t.estado IN ('Hecha', 'Completada') AND (
+                (t.fechaCompletado >= @Ini AND t.fechaCompletado < @Fin) OR 
+                (t.fechaFinReal >= @Ini AND t.fechaFinReal < @Fin)
+            ))
+          )
+        ORDER BY t.fechaObjetivo ASC;
+    `);
+}
+
+// ==========================================
+// MI ASIGNACIÓN - Vista Unificada
+// ==========================================
+
+export async function obtenerMiAsignacion(carnet: string, filtros?: { estado?: string }) {
+    // 1. Obtener proyectos donde tengo tareas asignadas
+    const proyectos = await ejecutarQuery<any>(`
+        SELECT DISTINCT
+            p.idProyecto,
+            p.nombre,
+            p.estado,
+            p.tipo,
+            p.gerencia,
+            p.subgerencia,
+            p.area,
+            p.fechaInicio,
+            p.fechaFin,
+            ISNULL((
+                SELECT AVG(CAST(CASE WHEN t2.estado = 'Hecha' THEN 100 ELSE ISNULL(t2.porcentaje, 0) END AS FLOAT))
+                FROM p_Tareas t2
+                WHERE t2.idProyecto = p.idProyecto 
+                  AND t2.activo = 1 
+                  AND t2.idTareaPadre IS NULL
+                  AND t2.estado NOT IN ('Descartada', 'Eliminada')
+            ), 0) AS progresoProyecto
+        FROM p_Proyectos p
+        INNER JOIN p_Tareas t ON p.idProyecto = t.idProyecto
+        INNER JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea
+        WHERE ta.carnet = @carnet
+          AND t.activo = 1
+          AND p.estado = 'Activo'
+        ORDER BY p.fechaFin ASC
+    `, { carnet: { valor: carnet, tipo: NVarChar } });
+
+    // 2. Obtener mis tareas en esos proyectos - SIN FILTRO DE ESTADO EN QUERY
+    const tareas = await ejecutarQuery<any>(`
+        SELECT 
+            t.idTarea,
+            t.idProyecto,
+            t.nombre AS titulo,
+            t.descripcion,
+            t.estado,
+            t.prioridad,
+            t.porcentaje AS progreso,
+            t.fechaObjetivo,
+            t.fechaInicioPlanificada,
+            t.fechaCreacion,
+            t.linkEvidencia,
+            CASE 
+                WHEN t.fechaObjetivo < CAST(GETDATE() AS DATE) 
+                     AND t.estado NOT IN ('Hecha', 'Completada', 'Descartada', 'Eliminada')
+                THEN DATEDIFF(day, t.fechaObjetivo, GETDATE())
+                ELSE 0
+            END AS diasAtraso,
+            CASE 
+                WHEN t.fechaObjetivo < CAST(GETDATE() AS DATE) 
+                     AND t.estado NOT IN ('Hecha', 'Completada', 'Descartada', 'Eliminada')
+                THEN 1 ELSE 0
+            END AS esAtrasada,
+            p.nombre AS proyectoNombre
+        FROM p_Tareas t
+        INNER JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea
+        LEFT JOIN p_Proyectos p ON t.idProyecto = p.idProyecto
+        WHERE ta.carnet = @carnet
+          AND t.activo = 1
+          AND (p.idProyecto IS NULL OR p.estado = 'Activo')
+        ORDER BY 
+            CASE WHEN t.estado NOT IN ('Hecha', 'Completada') THEN 0 ELSE 1 END,
+            CASE WHEN t.fechaObjetivo < CAST(GETDATE() AS DATE) THEN 0 ELSE 1 END,
+            t.fechaObjetivo ASC
+    `, { carnet: { valor: carnet, tipo: NVarChar } });
+
+    // 3. Filtrar en memoria según el estado solicitado
+    let tareasFiltradas = tareas;
+    if (filtros?.estado && filtros.estado !== 'todas') {
+        if (filtros.estado === 'pendientes') {
+            tareasFiltradas = tareas.filter((t: any) =>
+                !['Hecha', 'Completada', 'Descartada', 'Eliminada'].includes(t.estado)
+            );
+        } else {
+            tareasFiltradas = tareas.filter((t: any) => t.estado === filtros.estado);
+        }
+    }
+
+    // 4. Calcular resumen
+    const tareasAtrasadas = tareasFiltradas.filter((t: any) => t.esAtrasada === 1 || t.esAtrasada === true).length;
+    const tareasHoy = tareasFiltradas.filter((t: any) => {
+        if (!t.fechaObjetivo) return false;
+        const hoy = new Date().toISOString().split('T')[0];
+        const fecha = new Date(t.fechaObjetivo).toISOString().split('T')[0];
+        return hoy === fecha;
+    }).length;
+
+    return {
+        proyectos: proyectos.map((p: any) => ({
+            ...p,
+            misTareas: tareasFiltradas.filter((t: any) => t.idProyecto === p.idProyecto)
+        })).filter((p: any) => p.misTareas.length > 0), // Solo proyectos con tareas filtradas
+        resumen: {
+            totalProyectos: proyectos.length,
+            totalTareas: tareasFiltradas.length,
+            tareasAtrasadas,
+            tareasHoy,
+            tareasCompletadas: tareasFiltradas.filter((t: any) => t.estado === 'Hecha' || t.estado === 'Completada').length
+        }
+    };
+}

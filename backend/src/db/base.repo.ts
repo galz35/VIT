@@ -1,208 +1,386 @@
 /**
- * Base Repository - Funciones genéricas para ejecutar queries y SPs
- * Estilo Dapper: queries con parámetros, manejo de transacciones
+ * ARCHITECTURAL NOTE:
+ * Base Repository for SQL Server (Node.js + mssql)
+ *
+ * Design Principles:
+ * 1. Singleton Pool: Prevents connection leaks and handles re-connection.
+ * 2. Stored Procedures First: Encourages strict SP usage over inline SQL.
+ * 3. Non-Blocking Observability: Slow logs are buffered and flushed asynchronously.
+ * 4. Security: Parameter logging is sanitized to prevent credential leakage.
+ * 5. Type Safety: Strict exports for SQL types.
  */
-import { obtenerPoolSql, sql } from './sqlserver.provider';
 
-// Umbral para logear queries lentas (ms)
-const SLOW_QUERY_THRESHOLD = 1000;
+import { Logger } from '@nestjs/common';
+import * as sql from 'mssql';
+import { obtenerPoolSql } from './sqlserver.provider';
 
-/**
- * Registra una query lenta en la base de datos para auditoría
- */
-async function registrarQueryLenta(
-    duracion: number,
-    sqlText: string,
-    tipo: string,
-    parametros?: any
-) {
-    try {
-        // Importante: No usamos ejecutarQuery aquí para evitar bucles o sobrecarga
-        const pool = await obtenerPoolSql();
-        const request = pool.request();
+// ============================
+// CONFIGURATION & CONSTANTS
+// ============================
+const CONFIG = {
+    SLOW_QUERY_THRESHOLD_MS: 1000,
+    LOG_FLUSH_INTERVAL_MS: 5000,
+    MAX_LOG_QUEUE_SIZE: 500,
+    MAX_TEXT_LEN: 4000, // Max NVarChar param size safety
+};
 
-        request.input('duracion', sql.Int, duracion);
-        request.input('sqlText', sql.NVarChar(sql.MAX), sqlText);
-        request.input('tipo', sql.NVarChar(50), tipo);
+const logger = new Logger('BaseRepo');
 
-        let paramsLog: string | null = null;
-        if (parametros) {
-            try {
-                // Si es el formato { nombre: { valor, tipo } }, extraemos solo los valores
-                const simplifiedParams: any = {};
-                for (const [key, obj] of Object.entries(parametros)) {
-                    simplifiedParams[key] = (obj as any).valor;
-                }
-                paramsLog = JSON.stringify(simplifiedParams);
-            } catch {
-                paramsLog = 'Error serializando parámetros';
-            }
+// ============================
+// SINGLETON POOL
+// ============================
+let poolPromise: Promise<sql.ConnectionPool> | null = null;
+
+async function getPool(): Promise<sql.ConnectionPool> {
+    if (!poolPromise) {
+        poolPromise = obtenerPoolSql()
+            .then((p) => {
+                p.on('error', (err) => {
+                    logger.error('🔥 SQL Pool Error:', err);
+                    resetPool();
+                });
+                return p;
+            })
+            .catch((err) => {
+                logger.error('🔥 SQL Connection Warning:', err);
+                resetPool();
+                throw err;
+            });
+    }
+    return poolPromise;
+}
+
+function resetPool() {
+    poolPromise = null;
+    logger.warn('🔄 SQL Pool Reset triggered.');
+}
+
+function isConnectionError(e: any): boolean {
+    const msg = (e?.message || '').toLowerCase();
+    return (
+        msg.includes('closed') ||
+        msg.includes('broken') ||
+        msg.includes('socket hang up') ||
+        msg.includes('timeout') ||
+        msg.includes('econnreset') ||
+        msg.includes('login failed')
+    );
+}
+
+// ============================
+// TYPE DEFINITIONS
+// ============================
+export type ParamInput =
+    | any
+    | {
+        valor: any;
+        tipo?: sql.ISqlType;
+    };
+
+export type ParamsMap = Record<string, ParamInput>;
+
+// ============================
+// OBSERVABILITY (Slow Log & Sanitization)
+// ============================
+const SENSITIVE_KEYS = ['password', 'clave', 'token', 'secret', 'credencial'];
+
+function sanitizeParamsForLog(params?: ParamsMap): any {
+    if (!params) return null;
+    const copy: any = {};
+    for (const [key, val] of Object.entries(params)) {
+        if (SENSITIVE_KEYS.some((k) => key.toLowerCase().includes(k))) {
+            copy[key] = '[REDACTED]';
+        } else {
+            // Extract clean value from object wrapper if needed
+            const raw = val && typeof val === 'object' && 'valor' in val ? val.valor : val;
+            // Truncate huge strings for logs
+            copy[key] =
+                typeof raw === 'string' && raw.length > 500
+                    ? raw.substring(0, 500) + '...[TRUNC]'
+                    : raw;
         }
-        request.input('parametros', sql.NVarChar(sql.MAX), paramsLog);
+    }
+    return copy;
+}
 
-        await request.query(`
-            IF EXISTS (SELECT * FROM sys.tables WHERE name = 'p_SlowQueries')
-            BEGIN
-                INSERT INTO p_SlowQueries (duracionMS, sqlText, tipo, parametros, fecha)
-                VALUES (@duracion, @sqlText, @tipo, @parametros, GETDATE())
-            END
-        `);
-    } catch (error) {
-        console.error('[DB] ❌ Error registrando query lenta en BD:', error.message);
+// Buffer for Slow Logs
+type SlowLogItem = {
+    duration: number;
+    command: string;
+    type: 'SP' | 'QUERY';
+    params: string; // JSON
+    origin: string;
+    date: Date;
+};
+
+const logQueue: SlowLogItem[] = [];
+let flushTimer: NodeJS.Timeout | null = null;
+let slowTableExists = true; // Optimistic assumption
+
+function enqueueSlowLog(item: SlowLogItem) {
+    if (logQueue.length >= CONFIG.MAX_LOG_QUEUE_SIZE) return; // Drop if full to protect memory
+    logQueue.push(item);
+
+    if (!flushTimer) {
+        flushTimer = setTimeout(() => {
+            flushTimer = null;
+            flushLogs().catch((e) => logger.error('Error flushing logs', e));
+        }, CONFIG.LOG_FLUSH_INTERVAL_MS);
     }
 }
 
+async function flushLogs() {
+    if (logQueue.length === 0) return;
+    const batch = logQueue.splice(0, logQueue.length); // Drain queue
+
+    try {
+        const pool = await getPool();
+
+        // Check table existence lazily if previously failed or first run implies optimistic
+        if (!slowTableExists) return;
+
+        // Construct Batch Insert (more efficient than N roundtrips)
+        const request = pool.request();
+
+        // Note: This relies on the table existing. If not, we switch to console mode.
+        // Dynamic SQL construction for batch insert is safe here as we bind parameters
+        let valuesClause = '';
+
+        batch.forEach((log, index) => {
+            const pIdx = index;
+            request.input(`d${pIdx}`, sql.Int, log.duration);
+            request.input(`s${pIdx}`, sql.NVarChar(sql.MAX), log.command.substring(0, CONFIG.MAX_TEXT_LEN));
+            request.input(`t${pIdx}`, sql.NVarChar(20), log.type);
+            request.input(`p${pIdx}`, sql.NVarChar(sql.MAX), log.params);
+            request.input(`o${pIdx}`, sql.NVarChar(200), log.origin || 'backend');
+
+            valuesClause += `(@d${pIdx}, @s${pIdx}, @t${pIdx}, @p${pIdx}, GETDATE(), @o${pIdx}),`;
+        });
+
+        // Remove trailing comma
+        valuesClause = valuesClause.slice(0, -1);
+
+        const sqlText = `
+      INSERT INTO dbo.p_SlowQueries (duracionMS, sqlText, tipo, parametros, fecha, origen)
+      VALUES ${valuesClause}
+    `;
+
+        await request.query(sqlText);
+
+    } catch (error: any) {
+        if (error?.message?.includes('Invalid object name')) {
+            slowTableExists = false;
+            logger.warn('⚠️ Table p_SlowQueries not found. Dumping to console instead.');
+            batch.forEach(b => logger.warn(`[SLOW-SQL] (${b.duration}ms) ${b.command}`));
+        } else {
+            logger.error('Failed to flush slow logs', error);
+        }
+    }
+}
+
+// ============================
+// CORE EXECUTION LOGIC
+// ============================
+
+function bindParams(req: sql.Request, params?: ParamsMap) {
+    if (!params) return;
+    for (const [key, value] of Object.entries(params)) {
+        if (value === undefined) {
+            // Skip undefined, or bind as custom null? mssql ignores undefined usually,
+            // but explicitly sending null is safer for SPs expecting parameters.
+            req.input(key, null);
+        } else if (value && typeof value === 'object' && 'valor' in value) {
+            // Typed Parameter
+            req.input(key, value.tipo || sql.NVarChar, value.valor);
+        } else {
+            // Auto-inferred
+            req.input(key, value);
+        }
+    }
+}
 
 /**
- * Ejecuta una query SQL con parámetros
- * @param sqlText - Query SQL (usar @param para parámetros)
- * @param parametros - Objeto con los parámetros { nombre: { valor, tipo } }
- * @param tx - Transacción opcional
+ * Execute a Stored Procedure securely.
+ * @param spName - Name of the Stored Procedure
+ * @param params - Key-value map of parameters
+ * @param tx - Optional transaction scope
+ * @param origin - Caller context for logging
+ */
+export async function ejecutarSP<T = any>(
+    spName: string,
+    params?: ParamsMap,
+    tx?: sql.Transaction,
+    origin: string = 'unknown'
+): Promise<T[]> {
+    const start = Date.now();
+    try {
+        const connection = await getPool();
+        const request = tx ? new sql.Request(tx) : connection.request();
+
+        bindParams(request, params);
+
+        const result = await request.execute<T>(spName);
+
+        const duration = Date.now() - start;
+        if (duration > CONFIG.SLOW_QUERY_THRESHOLD_MS) {
+            enqueueSlowLog({
+                duration,
+                command: `EXEC ${spName}`,
+                type: 'SP',
+                params: JSON.stringify(sanitizeParamsForLog(params)),
+                origin,
+                date: new Date()
+            });
+        }
+
+        return result.recordset || [];
+
+    } catch (error: any) {
+        const duration = Date.now() - start;
+        logger.error(`❌ SP Error [${spName}] (${duration}ms): ${error.message}`, {
+            params: sanitizeParamsForLog(params),
+            code: error.code
+        });
+
+        if (isConnectionError(error)) resetPool();
+        throw error;
+    }
+}
+
+/**
+ * Execute a Stored Procedure expecting Multiple Result Sets.
+ */
+export async function ejecutarSPMulti<T = any>(
+    spName: string,
+    params?: ParamsMap,
+    tx?: sql.Transaction,
+    origin: string = 'unknown'
+): Promise<T[][]> {
+    const start = Date.now();
+    try {
+        const connection = await getPool();
+        const request = tx ? new sql.Request(tx) : connection.request();
+
+        bindParams(request, params);
+
+        const result = await request.execute<T>(spName);
+
+        const duration = Date.now() - start;
+        if (duration > CONFIG.SLOW_QUERY_THRESHOLD_MS) {
+            enqueueSlowLog({
+                duration,
+                command: `EXEC ${spName} (MULTI)`,
+                type: 'SP',
+                params: JSON.stringify(sanitizeParamsForLog(params)),
+                origin,
+                date: new Date()
+            });
+        }
+
+        return result.recordsets || [];
+
+    } catch (error: any) {
+        const duration = Date.now() - start;
+        logger.error(`❌ SP Multi Error [${spName}] (${duration}ms): ${error.message}`, {
+            params: sanitizeParamsForLog(params),
+            code: error.code
+        });
+
+        if (isConnectionError(error)) resetPool();
+        throw error;
+    }
+}
+
+/**
+ * Creates a raw mssql Request object. 
+ */
+export async function crearRequest(tx?: sql.Transaction): Promise<sql.Request> {
+    const connection = await getPool();
+    return tx ? new sql.Request(tx) : connection.request();
+}
+
+/**
+ * Executes a raw query (DEPRECATED: Use SPs prefers).
+ * Kept for maintenance or rare dynamic needs.
  */
 export async function ejecutarQuery<T = any>(
     sqlText: string,
-    parametros?: Record<string, { valor: any; tipo: sql.ISqlType }>,
-    tx?: sql.Transaction
+    params?: ParamsMap,
+    tx?: sql.Transaction,
+    origin: string = 'legacy'
 ): Promise<T[]> {
-    const inicio = Date.now();
-
+    const start = Date.now();
     try {
-        const pool = await obtenerPoolSql();
-        const request = tx ? new sql.Request(tx) : pool.request();
-
-        // Agregar parámetros
-        if (parametros) {
-            for (const [nombre, { valor, tipo }] of Object.entries(parametros)) {
-                request.input(nombre, tipo, valor);
-            }
+        if (sqlText.toLowerCase().includes('exec ')) {
+            logger.warn(`⚠️ Inline EXEC detected in ejecutaQuery. Please use ejecutaSP for: ${sqlText.substring(0, 50)}...`);
         }
+
+        const connection = await getPool();
+        const request = tx ? new sql.Request(tx) : connection.request();
+
+        bindParams(request, params);
 
         const result = await request.query<T>(sqlText);
 
-        // Log de queries lentas
-        const duracion = Date.now() - inicio;
-        if (duracion > SLOW_QUERY_THRESHOLD) {
-            console.warn(`[DB] ⚠️ Query lenta (${duracion}ms): ${sqlText.substring(0, 100)}...`);
-            // Registrar en base de datos de forma asíncrona (fire and forget)
-            registrarQueryLenta(duracion, sqlText, 'Query', parametros).catch(() => { });
+        const duration = Date.now() - start;
+        if (duration > CONFIG.SLOW_QUERY_THRESHOLD_MS) {
+            enqueueSlowLog({
+                duration,
+                command: sqlText,
+                type: 'QUERY',
+                params: JSON.stringify(sanitizeParamsForLog(params)),
+                origin,
+                date: new Date()
+            });
         }
 
-
-        return result.recordset;
+        return result.recordset || [];
     } catch (error: any) {
-        console.error('[DB] ❌ Error en query:', error.message, '| Code:', error.code);
+        logger.error(`❌ Query Error: ${error.message}`, { sql: sqlText.substring(0, 100) });
+        if (isConnectionError(error)) resetPool();
         throw error;
     }
 }
 
 /**
- * Ejecuta una query SQL simple (sin parámetros tipados)
- * Para queries sencillas como SELECT COUNT(*)
- */
-export async function ejecutarQuerySimple<T = any>(
-    sqlText: string,
-    tx?: sql.Transaction
-): Promise<T[]> {
-    const inicio = Date.now();
-
-    try {
-        const pool = await obtenerPoolSql();
-        const request = tx ? new sql.Request(tx) : pool.request();
-        const result = await request.query<T>(sqlText);
-
-        const duracion = Date.now() - inicio;
-        if (duracion > SLOW_QUERY_THRESHOLD) {
-            console.warn(`[DB] ⚠️ Query lenta (${duracion}ms): ${sqlText.substring(0, 100)}...`);
-            registrarQueryLenta(duracion, sqlText, 'QuerySimple').catch(() => { });
-        }
-
-
-        return result.recordset;
-    } catch (error: any) {
-        console.error('[DB] ❌ Error en query simple:', error.message);
-        throw error;
-    }
-}
-
-/**
- * Ejecuta un Stored Procedure
- * @param nombreSP - Nombre del SP (ej: 'sp_Auth_Login')
- * @param parametros - Parámetros del SP
- * @param tx - Transacción opcional
- */
-export async function ejecutarSP<T = any>(
-    nombreSP: string,
-    parametros?: Record<string, { valor: any; tipo: sql.ISqlType }>,
-    tx?: sql.Transaction
-): Promise<T[]> {
-    const inicio = Date.now();
-
-    try {
-        const pool = await obtenerPoolSql();
-        const request = tx ? new sql.Request(tx) : pool.request();
-
-        if (parametros) {
-            for (const [nombre, { valor, tipo }] of Object.entries(parametros)) {
-                request.input(nombre, tipo, valor);
-            }
-        }
-
-        const result = await request.execute<T>(nombreSP);
-
-        const duracion = Date.now() - inicio;
-        if (duracion > SLOW_QUERY_THRESHOLD) {
-            console.warn(`[DB] ⚠️ SP lento (${duracion}ms): ${nombreSP}`);
-            registrarQueryLenta(duracion, `EXEC ${nombreSP}`, 'SP', parametros).catch(() => { });
-        }
-
-
-        return result.recordset;
-    } catch (error: any) {
-        console.error('[DB] ❌ Error en SP:', nombreSP, '|', error.message);
-        throw error;
-    }
-}
-
-/**
- * Ejecuta una función dentro de una transacción
- * Si la función falla, hace rollback automático
+ * Transaction Wrapper
+ * Ensures Commit/Rollback is handled automatically.
  */
 export async function conTransaccion<T>(
-    fn: (tx: sql.Transaction) => Promise<T>
+    work: (tx: sql.Transaction) => Promise<T>
 ): Promise<T> {
-    const pool = await obtenerPoolSql();
-    const transaction = new sql.Transaction(pool);
+    const pool = await getPool();
+    const tx = new sql.Transaction(pool);
 
     try {
-        await transaction.begin();
-        const resultado = await fn(transaction);
-        await transaction.commit();
-        return resultado;
+        await tx.begin();
+        const result = await work(tx);
+        await tx.commit();
+        return result;
     } catch (error) {
-        await transaction.rollback();
+        try {
+            if (tx) await tx.rollback();
+        } catch (rbError) {
+            logger.error('Rollback failed', rbError);
+        }
         throw error;
     }
 }
 
-/**
- * Helper para crear un Request con pool
- */
-export async function crearRequest(): Promise<sql.Request> {
-    const pool = await obtenerPoolSql();
-    return pool.request();
-}
-
-// Re-exportar tipos SQL para uso en repos
+// ============================
+// EXPORTS (Strict Typing)
+// ============================
 export { sql };
-export const VarChar = sql.VarChar;
-export const NVarChar = sql.NVarChar;
 export const Int = sql.Int;
 export const BigInt = sql.BigInt;
+export const NVarChar = sql.NVarChar;
 export const Bit = sql.Bit;
 export const DateTime = sql.DateTime;
-export const SqlDate = sql.Date; // Renombrado para evitar conflicto con Date global
-export const Text = sql.Text;
-export const NText = sql.NText;
+export const DateOnly = sql.Date;
+export const SqlDate = sql.Date; // Legacy Alias
 export const Decimal = sql.Decimal;
 export const Float = sql.Float;
+export const Text = sql.Text;
+export const Xml = sql.Xml;
 
+export const execute = ejecutarSP; // Alias for English preference

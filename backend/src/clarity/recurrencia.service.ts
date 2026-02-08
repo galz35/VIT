@@ -101,8 +101,8 @@ export class RecurrenciaService {
     /**
      * Obtiene recurrencias que aplican para una fecha (agenda diaria)
      */
-    async obtenerAgendaRecurrente(fecha: Date, idUsuario: number) {
-        return await recurrenciaRepo.obtenerAgendaRecurrente(fecha, idUsuario);
+    async obtenerAgendaRecurrente(fecha: Date, carnet: string) {
+        return await recurrenciaRepo.obtenerAgendaRecurrente(fecha, carnet);
     }
 
     /**
