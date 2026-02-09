@@ -91,7 +91,7 @@ class _PendingScreenState extends State<PendingScreen> {
     setState(() {
       _future = _future.then((data) {
         final newItems = List<dynamic>.from(data.items)..removeWhere((t) => (t['idTarea'] ?? t['id']) == id);
-        return OfflineListResult(newItems, data.fromCache, data.timestamp);
+        return OfflineListResult(items: newItems, fromCache: data.fromCache);
       });
     });
 
