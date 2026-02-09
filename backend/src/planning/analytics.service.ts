@@ -8,7 +8,7 @@ export class AnalyticsService {
     constructor(private readonly visibilidadService: VisibilidadService) { }
 
     async getDashboardStats(managerId: number, month: number, year: number) {
-        console.log(`[Analytics] Solicitando dashboard para ManagerID: ${managerId} (Mes: ${month}, Año: ${year})`);
+        console.log(`[Analytics] Solicitando dashboard para ManagerID: ${managerId} (Mes: ${month}, Año: ${year}) - vFixed_NombreColumn`);
         try {
             // 1. Get user's carnet first, then get visible employees
             const carnet = await accesoRepo.obtenerCarnetDeUsuario(managerId);
