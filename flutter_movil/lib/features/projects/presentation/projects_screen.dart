@@ -45,7 +45,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // Slate 50
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: const Text(
           'Mis Proyectos',
@@ -99,7 +99,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  color: const Color(0xFFFFF7ED), // Orange 50
+                  color: const Color(0xFFFFF7ED),
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -109,7 +109,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                         'Modo Offline - Datos cacheados',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF9A3412), // Orange 800
+                          color: Color(0xFF9A3412),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -118,7 +118,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                 ),
 
               if (items.isEmpty)
-                Expanded(child: _buildEmptyState())
+                const Expanded(child: _ProjectsEmptyState())
               else
                 Expanded(
                   child: RefreshIndicator(
@@ -183,7 +183,6 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -245,7 +244,6 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
               
               const SizedBox(height: 12),
               
-              // Desc
               Text(
                 desc,
                 style: const TextStyle(
@@ -260,7 +258,6 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
               const SizedBox(height: 16),
               
-              // Progress Bar
               if (avance > 0) ...[
                 Row(
                   children: [
@@ -287,8 +284,8 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                   ],
                 ),
               ] else 
-                Row(
-                  children: const [
+                const Row(
+                  children: [
                     Icon(CupertinoIcons.calendar, size: 14, color: Color(0xFF94A3B8)),
                     SizedBox(width: 4),
                     Text(
@@ -331,8 +328,13 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       ),
     );
   }
+}
 
-  Widget _buildEmptyState() {
+class _ProjectsEmptyState extends StatelessWidget {
+  const _ProjectsEmptyState();
+
+  @override
+  Widget build(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

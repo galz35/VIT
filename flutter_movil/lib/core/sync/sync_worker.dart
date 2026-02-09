@@ -120,7 +120,7 @@ class SyncWorker {
   Future<void> _pullFreshData(Dio dio) async {
     try {
       // Obtener tareas del usuario actual
-      final response = await dio.get('/clarity/tasks/me');
+      final response = await dio.get('/tasks/me');
       
       if (response.statusCode == 200) {
         final tasks = response.data as List<dynamic>? ?? [];

@@ -33,7 +33,7 @@ class _HomeShellState extends State<HomeShell> {
   int _currentIndex = 0;
 
   // Pantallas principales accesibles desde BottomNav
-  final _screens = const [
+  static const _screens = [
     AgendaScreen(), // Hoy / Agenda
     PendingScreen(), // Pendientes
     ProjectsScreen(), // Proyectos
@@ -41,7 +41,7 @@ class _HomeShellState extends State<HomeShell> {
     ReportsScreen(), // Dashboard
   ];
 
-  final _navItems = const [
+  static const _navItems = [
     _NavItem(icon: CupertinoIcons.calendar_today, activeIcon: CupertinoIcons.calendar, label: 'Hoy'),
     _NavItem(icon: CupertinoIcons.check_mark_circled, activeIcon: CupertinoIcons.check_mark_circled_solid, label: 'Pendientes'),
     _NavItem(icon: CupertinoIcons.folder, activeIcon: CupertinoIcons.folder_solid, label: 'Proyectos'),
@@ -198,7 +198,7 @@ class _HomeShellState extends State<HomeShell> {
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                 children: [
-                  _buildSectionTitle('MI ESPACIO'),
+                  const _SectionTitle('MI ESPACIO'),
                   ListTile(
                     onTap: () {
                       setState(() => _currentIndex = 0);
@@ -240,7 +240,7 @@ class _HomeShellState extends State<HomeShell> {
                   ),
 
                   const SizedBox(height: 24),
-                  _buildSectionTitle('GESTIÓN EQUIPO'),
+                  const _SectionTitle('GESTIÓN EQUIPO'),
                    _buildDrawerItem(
                     icon: CupertinoIcons.exclamationmark_shield,
                     label: 'Bloqueos Activos',
@@ -259,7 +259,7 @@ class _HomeShellState extends State<HomeShell> {
                   ),
 
                   const SizedBox(height: 24),
-                  _buildSectionTitle('SISTEMA'),
+                  const _SectionTitle('SISTEMA'),
                    _buildDrawerItem(
                     icon: CupertinoIcons.settings,
                     label: 'Configuración',
@@ -422,22 +422,6 @@ class _HomeShellState extends State<HomeShell> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 0, 8),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 1.2,
-          color: Color(0xFF94A3B8), // Slate 400
-        ),
-      ),
-    );
-  }
-
   Widget _buildDrawerItem({
     required IconData icon,
     required String label,
@@ -449,7 +433,6 @@ class _HomeShellState extends State<HomeShell> {
         onTap: onTap,
         dense: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        // tileColor: active ? const Color(0xFFECFDF5) : Colors.transparent, // Green 50
         leading: Icon(
           icon,
           size: 20,
@@ -463,6 +446,28 @@ class _HomeShellState extends State<HomeShell> {
             fontSize: 14,
             color: Color(0xFF64748B),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  final String title;
+  const _SectionTitle(this.title);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 0, 8),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.2,
+          color: Color(0xFF94A3B8), // Slate 400
         ),
       ),
     );

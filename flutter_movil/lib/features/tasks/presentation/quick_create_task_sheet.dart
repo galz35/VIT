@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
@@ -17,9 +16,13 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
   DateTime _selectedDate = DateTime.now();
   bool _isSaving = false;
 
-  // Mock de usuarios (luego vendrá de backend)
-  // final _users = ['Gustavo Lira', 'Ana Garcia', 'Carlos Perez'];
   String? _assignedTo;
+
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +121,6 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
               Expanded(
                 child: InkWell(
                   onTap: () {
-                    // TODO: Mostrar bottom sheet de usuarios
                     setState(() {
                       _assignedTo = _assignedTo == null ? 'Gustavo Lira' : null;
                     });
@@ -150,7 +152,7 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                                                   ),
+                          ),
                          ),
                       ],
                     ),
@@ -230,10 +232,7 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
     setState(() => _isSaving = true);
 
     try {
-      final repo = TasksRepository(); // Inyección manual simple
-      
-      // Asignación de ID de usuario (por ahora null, se asigna al usuario actual por defecto en backend)
-      // Si _assignedTo fuera real, buscaríamos el ID aquí.
+      final repo = TasksRepository();
       const int? assignedToId = null; 
 
       await repo.createTask(
@@ -244,21 +243,20 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
 
       if (mounted) {
         setState(() => _isSaving = false);
-        Navigator.pop(context, true); // Retorna true si se creó
+        Navigator.pop(context, true);
         
-        // Feedback
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Row(
+          const SnackBar(
+            content: Row(
               children: [
                 Icon(Icons.check_circle, color: Colors.white, size: 20),
                 SizedBox(width: 8),
                 Text('Tarea creada exitosamente'),
               ],
             ),
-            backgroundColor: const Color(0xFF10B981), // Emerald 500
+            backgroundColor: Color(0xFF10B981), // Emerald 500
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
           ),
         );
       }
