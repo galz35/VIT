@@ -13,7 +13,9 @@ import '../../projects/presentation/project_search_sheet.dart';
 /// Equivalente a QuickTaskModal de React.
 /// Ahora incluye todos los campos: Tipo, Prioridad, Esfuerzo, Descripción.
 class QuickCreateTaskSheet extends StatefulWidget {
-  const QuickCreateTaskSheet({super.key});
+  final Map<String, dynamic>? preSelectedProject;
+
+  const QuickCreateTaskSheet({super.key, this.preSelectedProject});
 
   @override
   State<QuickCreateTaskSheet> createState() => _QuickCreateTaskSheetState();
@@ -22,16 +24,24 @@ class QuickCreateTaskSheet extends StatefulWidget {
 class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
-  
+
   DateTime _selectedDate = DateTime.now();
   String _tipo = 'Administrativa';
   String _prioridad = 'Media';
   String _esfuerzo = 'M';
   Empleado? _responsable;
   Map<String, dynamic>? _proyecto;
-  
+
   bool _isSaving = false;
   bool _showAdvanced = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.preSelectedProject != null) {
+      _proyecto = widget.preSelectedProject;
+    }
+  }
 
   @override
   void dispose() {
@@ -77,7 +87,8 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
                     color: const Color(0xFFECFDF5),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(CupertinoIcons.add_circled_solid, color: Color(0xFF059669), size: 24),
+                  child: const Icon(CupertinoIcons.add_circled_solid,
+                      color: Color(0xFF059669), size: 24),
                 ),
                 const SizedBox(width: 12),
                 const Expanded(
@@ -106,7 +117,7 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 24),
 
             // Input Título
@@ -115,10 +126,11 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
               controller: _titleCtrl,
               autofocus: true,
               textCapitalization: TextCapitalization.sentences,
-              style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                  fontFamily: 'Inter', fontWeight: FontWeight.w500),
               decoration: _inputDecoration('¿Qué hay que hacer?'),
             ),
-            
+
             const SizedBox(height: 16),
 
             // Fecha y Tipo en Row
@@ -134,7 +146,8 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
                         onTap: _pickDate,
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 14),
                           decoration: BoxDecoration(
                             color: const Color(0xFFF8FAFC),
                             borderRadius: BorderRadius.circular(12),
@@ -142,7 +155,8 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
                           ),
                           child: Row(
                             children: [
-                              const Icon(CupertinoIcons.calendar, size: 18, color: Color(0xFF64748B)),
+                              const Icon(CupertinoIcons.calendar,
+                                  size: 18, color: Color(0xFF64748B)),
                               const SizedBox(width: 8),
                               Text(
                                 _formatDate(_selectedDate),
@@ -178,14 +192,26 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
                           child: DropdownButton<String>(
                             value: _tipo,
                             isExpanded: true,
-                            icon: const Icon(CupertinoIcons.chevron_down, size: 16),
-                            style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, color: Color(0xFF0F172A), fontSize: 14),
+                            icon: const Icon(CupertinoIcons.chevron_down,
+                                size: 16),
+                            style: const TextStyle(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF0F172A),
+                                fontSize: 14),
                             items: const [
-                              DropdownMenuItem(value: 'Administrativa', child: Text('Administrativa')),
-                              DropdownMenuItem(value: 'Logistica', child: Text('Logística')),
-                              DropdownMenuItem(value: 'Estrategica', child: Text('Estratégica')),
-                              DropdownMenuItem(value: 'AMX', child: Text('AMX')),
-                              DropdownMenuItem(value: 'Otros', child: Text('Otros')),
+                              DropdownMenuItem(
+                                  value: 'Administrativa',
+                                  child: Text('Administrativa')),
+                              DropdownMenuItem(
+                                  value: 'Logistica', child: Text('Logística')),
+                              DropdownMenuItem(
+                                  value: 'Estrategica',
+                                  child: Text('Estratégica')),
+                              DropdownMenuItem(
+                                  value: 'AMX', child: Text('AMX')),
+                              DropdownMenuItem(
+                                  value: 'Otros', child: Text('Otros')),
                             ],
                             onChanged: (v) => setState(() => _tipo = v!),
                           ),
@@ -211,7 +237,11 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
                       _buildChipRow(
                         options: ['Alta', 'Media', 'Baja'],
                         selected: _prioridad,
-                        colors: [const Color(0xFFEF4444), const Color(0xFFF59E0B), const Color(0xFF10B981)],
+                        colors: [
+                          const Color(0xFFEF4444),
+                          const Color(0xFFF59E0B),
+                          const Color(0xFF10B981)
+                        ],
                         onSelected: (v) => setState(() => _prioridad = v),
                       ),
                     ],
@@ -244,13 +274,17 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
               child: Row(
                 children: [
                   Icon(
-                    _showAdvanced ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down,
+                    _showAdvanced
+                        ? CupertinoIcons.chevron_up
+                        : CupertinoIcons.chevron_down,
                     size: 16,
                     color: const Color(0xFF64748B),
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    _showAdvanced ? 'Ocultar descripción' : 'Agregar descripción (opcional)',
+                    _showAdvanced
+                        ? 'Ocultar descripción'
+                        : 'Agregar descripción (opcional)',
                     style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 13,
@@ -262,7 +296,6 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
               ),
             ),
 
-
             const SizedBox(height: 16),
 
             // Proyecto
@@ -271,22 +304,25 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
               onTap: () async {
                 // Aquí usamos ProjectSearchSheet como un modal directo, pero el widget espera un callback
                 // La forma correcta de usarlo según mi implementación static show es:
-                // ProjectSearchSheet.show(context).then(...) 
+                // ProjectSearchSheet.show(context).then(...)
                 // Pero ProjectSearchSheet.show retorna Future<Map?>
-                final selected = await showModalBottomSheet<Map<String, dynamic>>(
+                final selected =
+                    await showModalBottomSheet<Map<String, dynamic>>(
                   context: context,
                   isScrollControlled: true,
                   backgroundColor: Colors.transparent,
-                  builder: (context) => ProjectSearchSheet(onSelected: (p) => Navigator.pop(context, p)),
+                  builder: (context) => ProjectSearchSheet(
+                      onSelected: (p) => Navigator.pop(context, p)),
                 );
-                
+
                 if (selected != null) {
                   setState(() => _proyecto = selected);
                 }
               },
               borderRadius: BorderRadius.circular(12),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(12),
@@ -294,26 +330,33 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      CupertinoIcons.folder, 
-                      size: 18, 
-                      color: _proyecto != null ? Colors.purple : const Color(0xFF64748B)
-                    ),
+                    Icon(CupertinoIcons.folder,
+                        size: 18,
+                        color: _proyecto != null
+                            ? Colors.purple
+                            : const Color(0xFF64748B)),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        _proyecto != null ? (_proyecto!['nombre'] ?? 'Proyecto sin nombre') : 'Asignar a proyecto',
+                        _proyecto != null
+                            ? (_proyecto!['nombre'] ?? 'Proyecto sin nombre')
+                            : 'Asignar a proyecto',
                         style: TextStyle(
                           fontFamily: 'Inter',
-                          fontWeight: _proyecto != null ? FontWeight.w600 : FontWeight.normal,
-                          color: _proyecto != null ? const Color(0xFF0F172A) : const Color(0xFF94A3B8),
+                          fontWeight: _proyecto != null
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                          color: _proyecto != null
+                              ? const Color(0xFF0F172A)
+                              : const Color(0xFF94A3B8),
                         ),
                       ),
                     ),
-                     if (_proyecto != null)
+                    if (_proyecto != null)
                       InkWell(
                         onTap: () => setState(() => _proyecto = null),
-                        child: const Icon(CupertinoIcons.xmark_circle_fill, size: 18, color: Color(0xFF64748B)),
+                        child: const Icon(CupertinoIcons.xmark_circle_fill,
+                            size: 18, color: Color(0xFF64748B)),
                       ),
                   ],
                 ),
@@ -333,7 +376,8 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
               },
               borderRadius: BorderRadius.circular(12),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(12),
@@ -341,32 +385,38 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      CupertinoIcons.person_2, 
-                      size: 18, 
-                      color: _responsable != null ? const Color(0xFF0F172A) : const Color(0xFF64748B)
-                    ),
+                    Icon(CupertinoIcons.person_2,
+                        size: 18,
+                        color: _responsable != null
+                            ? const Color(0xFF0F172A)
+                            : const Color(0xFF64748B)),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        _responsable?.nombreCompleto ?? 'Asignar a alguien (opcional)',
+                        _responsable?.nombreCompleto ??
+                            'Asignar a alguien (opcional)',
                         style: TextStyle(
                           fontFamily: 'Inter',
-                          fontWeight: _responsable != null ? FontWeight.w600 : FontWeight.normal,
-                          color: _responsable != null ? const Color(0xFF0F172A) : const Color(0xFF94A3B8),
+                          fontWeight: _responsable != null
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                          color: _responsable != null
+                              ? const Color(0xFF0F172A)
+                              : const Color(0xFF94A3B8),
                         ),
                       ),
                     ),
                     if (_responsable != null)
                       InkWell(
                         onTap: () => setState(() => _responsable = null),
-                        child: const Icon(CupertinoIcons.xmark_circle_fill, size: 18, color: Color(0xFF64748B)),
+                        child: const Icon(CupertinoIcons.xmark_circle_fill,
+                            size: 18, color: Color(0xFF64748B)),
                       ),
                   ],
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 16),
 
             // Toggle para mostrar descripción
@@ -395,9 +445,12 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
                       foregroundColor: const Color(0xFF64748B),
                       side: const BorderSide(color: Color(0xFFE2E8F0)),
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('Cancelar', style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600)),
+                    child: const Text('Cancelar',
+                        style: TextStyle(
+                            fontFamily: 'Inter', fontWeight: FontWeight.w600)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -409,19 +462,27 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
                       backgroundColor: const Color(0xFF0F172A),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                       elevation: 0,
                     ),
-                    child: _isSaving 
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(CupertinoIcons.checkmark_alt, size: 18),
-                            SizedBox(width: 8),
-                            Text('Crear Tarea', style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.bold)),
-                          ],
-                        ),
+                    child: _isSaving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2))
+                        : const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(CupertinoIcons.checkmark_alt, size: 18),
+                              SizedBox(width: 8),
+                              Text('Crear Tarea',
+                                  style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontWeight: FontWeight.bold)),
+                            ],
+                          ),
                   ),
                 ),
               ],
@@ -481,7 +542,7 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
         final opt = options[i];
         final isSelected = selected == opt;
         final color = colors != null ? colors[i] : const Color(0xFF0F172A);
-        
+
         return Expanded(
           child: Padding(
             padding: EdgeInsets.only(right: i < options.length - 1 ? 6 : 0),
@@ -491,7 +552,9 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: isSelected ? color.withValues(alpha: 0.1) : const Color(0xFFF8FAFC),
+                  color: isSelected
+                      ? color.withValues(alpha: 0.1)
+                      : const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: isSelected ? color : const Color(0xFFE2E8F0),
@@ -504,7 +567,8 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 11,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.w500,
                       color: isSelected ? color : const Color(0xFF64748B),
                     ),
                     textAlign: TextAlign.center,
@@ -522,9 +586,13 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
     final now = DateTime.now();
     final tomorrow = now.add(const Duration(days: 1));
 
-    if (date.year == now.year && date.month == now.month && date.day == now.day) {
+    if (date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day) {
       return 'Hoy';
-    } else if (date.year == tomorrow.year && date.month == tomorrow.month && date.day == tomorrow.day) {
+    } else if (date.year == tomorrow.year &&
+        date.month == tomorrow.month &&
+        date.day == tomorrow.day) {
       return 'Mañana';
     }
     return DateFormat('d MMM', 'es').format(date);
@@ -578,15 +646,18 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
         tipo: _tipo,
         prioridad: _prioridad,
         esfuerzo: _esfuerzo,
-        descripcion: _descCtrl.text.trim().isNotEmpty ? _descCtrl.text.trim() : null,
+        descripcion:
+            _descCtrl.text.trim().isNotEmpty ? _descCtrl.text.trim() : null,
         assignedToUserId: _responsable?.idUsuario,
-        projectId: _proyecto != null ? (_proyecto!['idProyecto'] ?? _proyecto!['id']) : null, // Enviar ID proyecto
+        projectId: _proyecto != null
+            ? (_proyecto!['idProyecto'] ?? _proyecto!['id'])
+            : null, // Enviar ID proyecto
       );
 
       if (mounted) {
         setState(() => _isSaving = false);
         Navigator.pop(context, true);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Row(
@@ -598,7 +669,8 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
             ),
             backgroundColor: Color(0xFF10B981),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(8))),
           ),
         );
       }
