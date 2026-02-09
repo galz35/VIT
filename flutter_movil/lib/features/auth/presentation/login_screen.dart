@@ -1,15 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../../core/theme/app_theme.dart';
 import 'auth_controller.dart';
-import 'forgot_password_screen.dart';
-
-/// ============================================
-/// PANTALLA DE LOGIN - Diseño Verde Premium
-/// ============================================
-/// Login moderno con fondo verde sutil, logo animado,
-/// inputs elegantes y botón con gradiente.
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,352 +10,317 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> 
-    with SingleTickerProviderStateMixin {
-  final _correoCtrl = TextEditingController();
-  final _passCtrl = TextEditingController();
+class _LoginScreenState extends State<LoginScreen> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
   bool _obscurePassword = true;
-  
-  late AnimationController _animController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _animController, curve: Curves.easeOut),
-    );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
-    
-    _animController.forward();
-  }
-
-  @override
-  void dispose() {
-    _animController.dispose();
-    _correoCtrl.dispose();
-    _passCtrl.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
-    final size = MediaQuery.of(context).size;
+    final theme = Theme.of(context);
+    
+    // Usamos colores fijos para garantizar fidelidad al diseño React
+    const slate900 = Color(0xFF0F172A);
+    const slate500 = Color(0xFF64748B);
+    const emerald600 = Color(0xFF059669);
 
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: MomentusTheme.backgroundGradient,
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(
-              horizontal: MomentusTheme.spaceXl,
-              vertical: size.height < 700 
-                  ? MomentusTheme.spaceLg 
-                  : MomentusTheme.spaceXxl,
-            ),
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SizedBox(height: size.height * 0.08),
-                    
-                    // Logo y Título
-                    _buildHeader(context),
-                    
-                    SizedBox(height: size.height * 0.06),
-                    
-                    // Card de Login
-                    _buildLoginCard(context, auth),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Footer
-                    _buildFooter(context),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Column(
-      children: [
-        // Logo con gradiente
-        Container(
-          width: 88,
-          height: 88,
-          decoration: BoxDecoration(
-            gradient: MomentusTheme.primaryGradient,
-            borderRadius: BorderRadius.circular(MomentusTheme.radiusXl),
-            boxShadow: MomentusTheme.buttonShadow,
-          ),
-          child: const Icon(
-            Icons.check_circle_rounded,
-            size: 44,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 28),
-        
-        // Nombre de la app
-        Text(
-          'Momentus',
-          style: Theme.of(context).textTheme.displaySmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            letterSpacing: -1,
-          ),
-        ),
-        const SizedBox(height: 8),
-        
-        // Subtítulo
-        Text(
-          'Gestiona tu día con claridad',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: MomentusTheme.slate500,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLoginCard(BuildContext context, AuthController auth) {
-    return Container(
-      padding: const EdgeInsets.all(28),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(MomentusTheme.radiusXl),
-        boxShadow: MomentusTheme.cardShadow,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Título del card
-          Text(
-            'Iniciar Sesión',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Ingresa tus credenciales para continuar',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          
-          const SizedBox(height: 28),
-          
-          // Error message
-          if (auth.error != null) ...[
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: MomentusTheme.error.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(MomentusTheme.radiusMd),
-                border: Border.all(
-                  color: MomentusTheme.error.withValues(alpha: 0.2),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.error_outline_rounded,
-                    color: MomentusTheme.error,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      auth.error!,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: MomentusTheme.error,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-          ],
-          
-          // Email or Carnet Input
-          TextField(
-            controller: _correoCtrl,
-            keyboardType: TextInputType.text, // Puede ser texto o número
-            textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(
-              labelText: 'Correo o Carnet',
-              hintText: 'Ej. tu@email.com o Carnet',
-              prefixIcon: Icon(
-                Icons.account_circle_outlined,
-                color: MomentusTheme.slate400,
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 18),
-          
-          // Password Input
-          TextField(
-            controller: _passCtrl,
-            obscureText: _obscurePassword,
-            textInputAction: TextInputAction.done,
-            onSubmitted: (_) => _handleLogin(auth),
-            decoration: InputDecoration(
-              labelText: 'Contraseña',
-              prefixIcon: const Icon(
-                Icons.lock_outline_rounded,
-                color: MomentusTheme.slate400,
-              ),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscurePassword 
-                      ? Icons.visibility_outlined 
-                      : Icons.visibility_off_outlined,
-                  color: MomentusTheme.slate400,
-                ),
-                onPressed: () {
-                  setState(() => _obscurePassword = !_obscurePassword);
-                },
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 28),
-          
-          // Botón de Login
-          _buildLoginButton(context, auth),
-          
-          const SizedBox(height: 18),
-          
-          // Olvidé contraseña
-          Center(
-            child: TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
-                );
-              },
-              child: Text(
-                '¿Olvidaste tu contraseña?',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: MomentusTheme.primary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLoginButton(BuildContext context, AuthController auth) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      height: 56,
-      decoration: BoxDecoration(
-        gradient: auth.loading ? null : MomentusTheme.primaryGradient,
-        color: auth.loading ? MomentusTheme.slate200 : null,
-        borderRadius: BorderRadius.circular(MomentusTheme.radiusMd),
-        boxShadow: auth.loading ? null : MomentusTheme.buttonShadow,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: auth.loading ? null : () => _handleLogin(auth),
-          borderRadius: BorderRadius.circular(MomentusTheme.radiusMd),
-          child: Center(
-            child: auth.loading
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      valueColor: AlwaysStoppedAnimation(MomentusTheme.slate500),
-                    ),
-                  )
-                : const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Iniciar Sesión',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Icon(
-                        Icons.arrow_forward_rounded,
-                        color: Colors.white,
-                        size: 20,
+      backgroundColor: const Color(0xFFF8FAFC), // Slate 50
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // === LOGO Y TÍTULO ===
+              Hero(
+                tag: 'app_logo',
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: emerald600.withOpacity(0.2),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
+                  child: const Icon(
+                    Icons.layers_outlined, // Icono abstracto tipo Planner
+                    size: 48,
+                    color: emerald600,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              
+              Text(
+                'PLANNER-EF',
+                style: theme.textTheme.displayMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -1,
+                  color: slate900,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ShaderMask(
+                shaderCallback: (bounds) => const LinearGradient(
+                  colors: [emerald600, Color(0xFF10B981)], // Emerald Gradient
+                ).createShader(bounds),
+                child: Text(
+                  'EFICIENCIA Y LEGADO',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 2,
+                    color: Colors.white, // Mask requires white base
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 48),
+
+              // === TARJETA DE LOGIN ===
+              Container(
+                constraints: const BoxConstraints(maxWidth: 400),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: slate900.withOpacity(0.08),
+                      blurRadius: 32,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    // Línea superior de color (como en React: Pink/Orange -> Ahora Emerald Gradient)
+                    Container(
+                      height: 4,
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [emerald600, Color(0xFF34D399), Color(0xFF10B981)],
+                        ),
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                      ),
+                    ),
+                    
+                    Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              'Iniciar Sesión',
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: slate900,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Accede a tu cuenta institucional',
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: slate500,
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+
+                            // Input Email/Carnet
+                            TextFormField(
+                              controller: _emailController,
+                              style: const TextStyle(color: slate900),
+                              decoration: InputDecoration(
+                                labelText: 'Correo o Carnet',
+                                hintText: 'usuario@claro.com.ni',
+                                prefixIcon: const Icon(Icons.email_outlined, color: slate500),
+                                filled: true,
+                                fillColor: const Color(0xFFF8FAFC),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: emerald600, width: 2),
+                                ),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Por favor ingresa tu usuario';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 20),
+
+                            // Input Password
+                            TextFormField(
+                              controller: _passwordController,
+                              obscureText: _obscurePassword,
+                              style: const TextStyle(color: slate900),
+                              decoration: InputDecoration(
+                                labelText: 'Contraseña',
+                                prefixIcon: const Icon(Icons.lock_outline, color: slate500),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                                    color: const Color(0xFF94A3B8),
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                ),
+                                filled: true,
+                                fillColor: const Color(0xFFF8FAFC),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: emerald600, width: 2),
+                                ),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.length < 6) {
+                                  return 'Mínimo 6 caracteres';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 32),
+
+                            // Mensaje de Error
+                            if (auth.error != null)
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                margin: const EdgeInsets.only(bottom: 20),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFEF2F2),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: const Color(0xFFFECACA)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.error_outline, color: Color(0xFFEF4444), size: 20),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        auth.error!,
+                                        style: const TextStyle(
+                                          color: Color(0xFFB91C1C),
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                            // Botón Login (Negro Slate como React)
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: slate900.withOpacity(0.2),
+                                    blurRadius: 16,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF0F172A), Color(0xFF334155)], // Slate Dark 
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                              ),
+                              child: ElevatedButton(
+                                onPressed: auth.loading
+                                    ? null
+                                    : () {
+                                        if (_formKey.currentState!.validate()) {
+                                          context.read<AuthController>().login(
+                                                _emailController.text.trim(),
+                                                _passwordController.text,
+                                              );
+                                        }
+                                      },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                  padding: const EdgeInsets.symmetric(vertical: 18),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: auth.loading
+                                    ? const SizedBox(
+                                        height: 24,
+                                        width: 24,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            'INGRESAR',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 1,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          SizedBox(width: 8),
+                                          Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20),
+                                        ],
+                                      ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: 48),
+              Text(
+                '© 2026 Momentus Corp',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: const Color(0xFF94A3B8), // Slate 400
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
-  }
-
-  Widget _buildFooter(BuildContext context) {
-    return Column(
-      children: [
-        // Divider con texto
-        Row(
-          children: [
-            const Expanded(child: Divider(color: MomentusTheme.slate200)),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'Momentus © 2026',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
-            const Expanded(child: Divider(color: MomentusTheme.slate200)),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Versión 1.0.0',
-          style: Theme.of(context).textTheme.labelSmall,
-        ),
-      ],
-    );
-  }
-
-  Future<void> _handleLogin(AuthController auth) async {
-    // Ocultar teclado
-    FocusScope.of(context).unfocus();
-    
-    final ok = await auth.login(
-      _correoCtrl.text.trim(),
-      _passCtrl.text.trim(),
-    );
-    
-    if (!ok && mounted) {
-      // Animar el error (shake effect podría ir aquí)
-    }
   }
 }

@@ -15,11 +15,13 @@ import '../../tasks/presentation/tasks_screen.dart';
 import '../../team/presentation/team_screen.dart';
 import '../../team/presentation/team_blockers_screen.dart';
 
+// Iconos adicionales
+import 'package:flutter/cupertino.dart';
+
 /// ============================================
 /// HOME SHELL - Navegación Principal Premium
 /// ============================================
-/// Estructura principal con bottom nav verde y drawer elegante.
-
+/// Estructura principal con bottom nav y drawer elegante.
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -30,25 +32,27 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int _currentIndex = 0;
 
+  // Pantallas principales accesibles desde BottomNav
   final _screens = const [
-    TasksScreen(),
-    PendingScreen(),
-    ProjectsScreen(),
-    TeamScreen(),
-    ReportsScreen(),
+    AgendaScreen(), // Hoy / Agenda
+    PendingScreen(), // Pendientes
+    ProjectsScreen(), // Proyectos
+    TeamScreen(), // Equipo
+    ReportsScreen(), // Dashboard
   ];
 
   final _navItems = const [
-    _NavItem(icon: Icons.today_outlined, activeIcon: Icons.today_rounded, label: 'Hoy'),
-    _NavItem(icon: Icons.task_alt_outlined, activeIcon: Icons.task_alt_rounded, label: 'Pendientes'),
-    _NavItem(icon: Icons.folder_outlined, activeIcon: Icons.folder_rounded, label: 'Proyectos'),
-    _NavItem(icon: Icons.groups_outlined, activeIcon: Icons.groups_rounded, label: 'Equipo'),
-    _NavItem(icon: Icons.bar_chart_outlined, activeIcon: Icons.bar_chart_rounded, label: 'Dashboard'),
+    _NavItem(icon: CupertinoIcons.calendar_today, activeIcon: CupertinoIcons.calendar, label: 'Hoy'),
+    _NavItem(icon: CupertinoIcons.check_mark_circled, activeIcon: CupertinoIcons.check_mark_circled_solid, label: 'Pendientes'),
+    _NavItem(icon: CupertinoIcons.folder, activeIcon: CupertinoIcons.folder_solid, label: 'Proyectos'),
+    _NavItem(icon: CupertinoIcons.group, activeIcon: CupertinoIcons.group_solid, label: 'Equipo'),
+    _NavItem(icon: CupertinoIcons.chart_bar, activeIcon: CupertinoIcons.chart_bar_fill, label: 'Dashboard'),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC), // Slate 50
       drawer: _buildDrawer(context),
       body: IndexedStack(
         index: _currentIndex,
@@ -64,26 +68,54 @@ class _HomeShellState extends State<HomeShell> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: MomentusTheme.slate900.withValues(alpha: 0.06),
-            blurRadius: 12,
+            color: const Color(0xFF0F172A).withOpacity(0.06),
+            blurRadius: 16,
             offset: const Offset(0, -4),
           ),
         ],
       ),
       child: SafeArea(
         top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        child: Container(
+          height: 70,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(_navItems.length, (index) {
               final item = _navItems[index];
               final isSelected = _currentIndex == index;
               
-              return _buildNavItem(
-                item: item,
-                isSelected: isSelected,
+              return InkWell(
                 onTap: () => setState(() => _currentIndex = index),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected ? const Color(0xFFECFDF5) : Colors.transparent, // Emerald 50
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        isSelected ? item.activeIcon : item.icon,
+                        color: isSelected ? const Color(0xFF059669) : const Color(0xFF94A3B8), // Emerald 600 vs Slate 400
+                        size: 24,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        item.label,
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 10,
+                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                          color: isSelected ? const Color(0xFF059669) : const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               );
             }),
           ),
@@ -92,45 +124,264 @@ class _HomeShellState extends State<HomeShell> {
     );
   }
 
-  Widget _buildNavItem({
-    required _NavItem item,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOut,
-        padding: EdgeInsets.symmetric(
-          horizontal: isSelected ? 16 : 12,
-          vertical: 8,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected ? MomentusTheme.green50 : Colors.transparent,
-          borderRadius: BorderRadius.circular(MomentusTheme.radiusMd),
-        ),
+  Widget _buildDrawer(BuildContext context) {
+    final auth = context.read<AuthController>();
+    final user = auth.user;
+    
+    return Drawer(
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.horizontal(right: Radius.circular(0)), // Recto
+      ),
+      child: SafeArea(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: Icon(
-                isSelected ? item.activeIcon : item.icon,
-                key: ValueKey(isSelected),
-                color: isSelected ? MomentusTheme.primary : MomentusTheme.slate400,
-                size: 24,
+            // === HEADER PLANNER-EF ===
+            Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Row(
+                children: [
+                 Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF059669), // Emerald 600
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'P',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        fontSize: 20,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'PLANNER-EF',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w800,
+                      fontSize: 20,
+                      letterSpacing: -0.5,
+                      color: Color(0xFF0F172A), // Slate 900
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              item.label,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? MomentusTheme.primary : MomentusTheme.slate500,
+
+            const Divider(height: 1, color: Color(0xFFE2E8F0)),
+
+            // === MENU ITEMS ===
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                children: [
+                  _buildSectionTitle('MI ESPACIO'),
+                  _buildDrawerItem(
+                    icon: CupertinoIcons.calendar,
+                    label: 'Mi Agenda',
+                    active: _currentIndex == 0,
+                    onTap: () {
+                      setState(() => _currentIndex = 0);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: CupertinoIcons.doc_text,
+                    label: 'Mis Notas',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const NotesScreen()));
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: CupertinoIcons.person_crop_circle_badge_checkmark,
+                    label: 'Mi Asignación',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const MyAssignmentScreen()));
+                    },
+                  ),
+
+                  const SizedBox(height: 24),
+                  _buildSectionTitle('GESTIÓN EQUIPO'),
+                   _buildDrawerItem(
+                    icon: CupertinoIcons.exclamationmark_shield,
+                    label: 'Bloqueos Activos',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const TeamBlockersScreen()));
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: CupertinoIcons.arrow_2_circlepath,
+                    label: 'Sincronización',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const SyncScreen()));
+                    },
+                  ),
+
+                  const SizedBox(height: 24),
+                  _buildSectionTitle('SISTEMA'),
+                   _buildDrawerItem(
+                    icon: CupertinoIcons.settings,
+                    label: 'Configuración',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            // === FOOTER USER PROFILE (Estilo Pill React) ===
+            Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF0F172A).withOpacity(0.04),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      // Avatar con Iniciales
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF059669),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF059669).withOpacity(0.2),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          user?.nombre.isNotEmpty == true ? user!.nombre[0].toUpperCase() : 'U',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              user?.nombre ?? 'Usuario',
+                              style: const TextStyle(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: Color(0xFF0F172A),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              user?.correo ?? 'Sin correo',
+                              style: const TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 11,
+                                color: Color(0xFF64748B),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                       // Flag NI
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text('🇳🇮', style: TextStyle(fontSize: 16)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  // Botones de acción rápida
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {},
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF059669),
+                            side: const BorderSide(color: Color(0xFF059669)),
+                            padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 8),
+                            minimumSize: const Size(0, 32),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(CupertinoIcons.shield_fill, size: 14),
+                              SizedBox(width: 4),
+                              Text('Seguridad', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            auth.logout();
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFFEF4444), // Rose
+                            side: const BorderSide(color: Color(0xFFFECACA)),
+                            padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 8),
+                            backgroundColor: const Color(0xFFFEF2F2),
+                            minimumSize: const Size(0, 32),
+                             shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.logout, size: 14),
+                              SizedBox(width: 4),
+                              Text('Salir', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
@@ -139,131 +390,18 @@ class _HomeShellState extends State<HomeShell> {
     );
   }
 
-  Widget _buildDrawer(BuildContext context) {
-    final auth = context.read<AuthController>();
-    
-    return Drawer(
-      child: Column(
-        children: [
-          // Header del Drawer
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + 24,
-              bottom: 24,
-              left: 24,
-              right: 24,
-            ),
-            decoration: const BoxDecoration(
-              gradient: MomentusTheme.primaryGradient,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Avatar
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
-                  ),
-                  child: const Icon(
-                    Icons.person_rounded,
-                    color: Colors.white,
-                    size: 32,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                
-                const Text(
-                  'Momentus',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Tu día, organizado',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          // Items del menú
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              children: [
-                _buildDrawerItem(
-                  icon: Icons.calendar_today_outlined,
-                  label: 'Hoy / Agenda',
-                  page: const AgendaScreen(),
-                ),
-                _buildDrawerItem(
-                  icon: Icons.note_outlined,
-                  label: 'Notas',
-                  page: const NotesScreen(),
-                ),
-                _buildDrawerItem(
-                  icon: Icons.assignment_outlined,
-                  label: 'Mi Asignación',
-                  page: const MyAssignmentScreen(),
-                ),
-                _buildDrawerItem(
-                  icon: Icons.warning_amber_outlined,
-                  label: 'Bloqueos del Equipo',
-                  page: const TeamBlockersScreen(),
-                ),
-                
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  child: Divider(),
-                ),
-                
-                _buildDrawerItem(
-                  icon: Icons.sync_outlined,
-                  label: 'Sincronización',
-                  page: const SyncScreen(),
-                ),
-                _buildDrawerItem(
-                  icon: Icons.settings_outlined,
-                  label: 'Ajustes',
-                  page: const SettingsScreen(),
-                ),
-              ],
-            ),
-          ),
-          
-          // Footer - Cerrar sesión
-          Container(
-            padding: const EdgeInsets.all(20),
-            child: SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  auth.logout();
-                },
-                icon: const Icon(Icons.logout_rounded),
-                label: const Text('Cerrar Sesión'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: MomentusTheme.error,
-                  side: BorderSide(color: MomentusTheme.error.withValues(alpha: 0.5)),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-              ),
-            ),
-          ),
-        ],
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 0, 8),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.2,
+          color: Color(0xFF94A3B8), // Slate 400
+        ),
       ),
     );
   }
@@ -271,30 +409,38 @@ class _HomeShellState extends State<HomeShell> {
   Widget _buildDrawerItem({
     required IconData icon,
     required String label,
-    required Widget page,
+    required VoidCallback onTap,
+    bool active = false,
   }) {
-    return ListTile(
-      leading: Icon(icon, color: MomentusTheme.slate600),
-      title: Text(
-        label,
-        style: const TextStyle(
-          fontWeight: FontWeight.w500,
-          color: MomentusTheme.slate700,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4),
+      child: ListTile(
+        onTap: onTap,
+        dense: true,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        tileColor: active ? const Color(0xFFECFDF5) : Colors.transparent, // Green 50
+        leading: Icon(
+          icon,
+          size: 20,
+          color: active ? const Color(0xFF059669) : const Color(0xFF64748B),
         ),
+        title: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+            fontSize: 14,
+            color: active ? const Color(0xFF059669) : const Color(0xFF64748B),
+          ),
+        ),
+        trailing: active 
+          ? Container(
+              width: 6, 
+              height: 6, 
+              decoration: const BoxDecoration(color: Color(0xFF059669), shape: BoxShape.circle)
+            )
+          : null,
       ),
-      trailing: const Icon(
-        Icons.chevron_right_rounded,
-        color: MomentusTheme.slate400,
-        size: 20,
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(MomentusTheme.radiusSm),
-      ),
-      onTap: () {
-        Navigator.pop(context);
-        Navigator.push(context, MaterialPageRoute(builder: (_) => page));
-      },
     );
   }
 }
