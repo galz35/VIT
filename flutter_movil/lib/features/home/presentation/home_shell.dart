@@ -202,29 +202,10 @@ class _HomeShellState extends State<HomeShell> {
                 padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                 children: [
                   const _SectionTitle('MI ESPACIO'),
-                  ListTile(
-                    onTap: () {
-                      setState(() => _currentIndex = 0);
-                      Navigator.pop(context);
-                    },
-                    dense: true,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    tileColor: _currentIndex == 0 ? const Color(0xFFECFDF5) : Colors.transparent,
-                    leading: Icon(
-                      CupertinoIcons.calendar,
-                      size: 20,
-                      color: _currentIndex == 0 ? const Color(0xFF059669) : const Color(0xFF64748B),
-                    ),
-                    title: Text(
-                      'Mi Agenda',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontWeight: _currentIndex == 0 ? FontWeight.w700 : FontWeight.w500,
-                        fontSize: 14,
-                        color: _currentIndex == 0 ? const Color(0xFF059669) : const Color(0xFF64748B),
-                      ),
-                    ),
-                  ),
+                  _buildDrawerNavItem(0, CupertinoIcons.calendar, 'Mi Agenda'),
+                  _buildDrawerNavItem(1, CupertinoIcons.check_mark_circled, 'Mis Pendientes'),
+                  _buildDrawerNavItem(2, CupertinoIcons.folder, 'Proyectos'),
+                  
                   _buildDrawerItem(
                     icon: CupertinoIcons.doc_text,
                     label: 'Mis Notas',
@@ -244,6 +225,9 @@ class _HomeShellState extends State<HomeShell> {
 
                   const SizedBox(height: 24),
                   const _SectionTitle('GESTIÓN EQUIPO'),
+                  _buildDrawerNavItem(3, CupertinoIcons.group, 'Mi Equipo'),
+                  _buildDrawerNavItem(4, CupertinoIcons.chart_bar, 'Dashboard / Reportes'),
+
                    _buildDrawerItem(
                     icon: CupertinoIcons.exclamationmark_shield,
                     label: 'Bloqueos Activos',
@@ -420,6 +404,36 @@ class _HomeShellState extends State<HomeShell> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerNavItem(int index, IconData icon, String label) {
+    final isSelected = _currentIndex == index;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4),
+      child: ListTile(
+        onTap: () {
+          setState(() => _currentIndex = index);
+          Navigator.pop(context);
+        },
+        dense: true,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        tileColor: isSelected ? const Color(0xFFECFDF5) : Colors.transparent,
+        leading: Icon(
+          icon,
+          size: 20,
+          color: isSelected ? const Color(0xFF059669) : const Color(0xFF64748B),
+        ),
+        title: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            fontSize: 14,
+            color: isSelected ? const Color(0xFF059669) : const Color(0xFF64748B),
+          ),
         ),
       ),
     );
