@@ -1,13 +1,14 @@
 
-
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 import '../../agenda/domain/agenda_models.dart';
 import 'agenda_controller.dart';
-
 import '../../home/presentation/home_shell.dart';
+import '../../tasks/presentation/task_detail_sheet.dart';
+import '../../../core/network/api_client.dart';
 
 class AgendaScreen extends StatelessWidget {
   const AgendaScreen({super.key});
@@ -88,11 +89,125 @@ class _AgendaView extends StatelessWidget {
           ? _buildSkeleton(context)
           : controller.error != null
               ? Center(child: Text(controller.error!, style: const TextStyle(color: Colors.red)))
-              : _buildContent(context, controller.data!),
+              : _AgendaContent(data: controller.data!, onRefresh: controller.loadAgenda),
     );
   }
 
-  Widget _buildContent(BuildContext context, AgendaResponse data) {
+  Widget _buildSkeleton(BuildContext context) {
+    Widget box(double height, double width) => Container(
+      height: height,
+      width: width,
+      decoration: BoxDecoration(
+        color: Colors.grey.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+    );
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // KPIs Skeleton
+        Row(
+          children: [
+            Expanded(child: box(80, double.infinity)),
+            const SizedBox(width: 12),
+            Expanded(child: box(80, double.infinity)),
+            const SizedBox(width: 12),
+            Expanded(child: box(80, double.infinity)),
+          ],
+        ),
+        const SizedBox(height: 32),
+        
+        // Title Skeleton
+        box(20, 150),
+        const SizedBox(height: 16),
+        
+        // Task List Skeleton (3 items)
+        for(int i=0; i<3; i++)
+          Container(
+            height: 80,
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+            ),
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                box(24, 24), // Checkbox
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      box(16, double.infinity), // Title
+                      const SizedBox(height: 8),
+                      box(12, 100), // Subtitle
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Widget stateful para manejar las interacciones con tareas
+class _AgendaContent extends StatefulWidget {
+  final AgendaResponse data;
+  final VoidCallback onRefresh;
+
+  const _AgendaContent({required this.data, required this.onRefresh});
+
+  @override
+  State<_AgendaContent> createState() => _AgendaContentState();
+}
+
+class _AgendaContentState extends State<_AgendaContent> {
+  
+  Future<void> _markTaskDone(Tarea t) async {
+    try {
+      await ApiClient.dio.patch('/tareas/${t.idTarea}', data: {'estado': 'Hecha', 'progreso': 100});
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.celebration, color: Colors.white, size: 20),
+                SizedBox(width: 8),
+                Text('¡Tarea completada! 🎉'),
+              ],
+            ),
+            backgroundColor: Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        widget.onRefresh();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  void _openTaskDetail(Tarea t) {
+    TaskDetailSheet.show(
+      context,
+      t.toJson(),
+      onUpdated: widget.onRefresh,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final data = widget.data;
     final total = data.tareasSugeridas.length + data.backlog.length;
     final hechas = data.tareasSugeridas.where((t) => t.estado == 'Hecha').length;
     
@@ -141,13 +256,39 @@ class _AgendaView extends StatelessWidget {
         const SizedBox(height: 12),
         
         if (data.tareasSugeridas.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(32.0),
-            child: Center(
-              child: Text(
-                'No hay tareas programadas para hoy',
-                style: TextStyle(color: Color(0xFF94A3B8)),
-              ),
+          Container(
+            padding: const EdgeInsets.all(32.0),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFECFDF5),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(CupertinoIcons.check_mark, size: 32, color: Color(0xFF059669)),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  '¡Todo al día!',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'No hay tareas programadas para hoy',
+                  style: TextStyle(color: Color(0xFF94A3B8)),
+                ),
+              ],
             ),
           )
         else
@@ -263,7 +404,6 @@ class _AgendaView extends StatelessWidget {
     
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDone ? const Color(0xFFF0FDF4) : Colors.white, // Green 50 si hecha
         borderRadius: BorderRadius.circular(16),
@@ -278,142 +418,123 @@ class _AgendaView extends StatelessWidget {
           color: isDone ? const Color(0xFFBBF7D0) : const Color(0xFFE2E8F0),
         ),
       ),
-      child: Row(
-        children: [
-          // Checkbox Custom
-          Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              color: isDone ? const Color(0xFF10B981) : Colors.transparent,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: isDone ? const Color(0xFF10B981) : const Color(0xFFCBD5E1),
-                width: 2,
-              ),
-            ),
-            child: isDone
-                ? const Icon(Icons.check, size: 16, color: Colors.white)
-                : null,
-          ),
-          const SizedBox(width: 16),
-          
-          // Contenido
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  t.titulo,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: isDone ? const Color(0xFF059669) : const Color(0xFF1E293B), // Emerald 600 vs Slate 800
-                    decoration: isDone ? TextDecoration.lineThrough : null,
-                  ),
-                ),
-                if (t.proyectoNombre != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      t.proyectoNombre!,
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF64748B), // Slate 500
-                      ),
+      child: InkWell(
+        onTap: () => _openTaskDetail(t),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // Checkbox Custom - Clickeable
+              InkWell(
+                onTap: isDone ? null : () => _markTaskDone(t),
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: isDone ? const Color(0xFF10B981) : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isDone ? const Color(0xFF10B981) : const Color(0xFFCBD5E1),
+                      width: 2,
                     ),
                   ),
-              ],
-            ),
-          ),
-          
-          // Badge Prioridad
-          if (!isDone && t.prioridad == 'Alta')
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEF2F2),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: const Color(0xFFFECACA)),
-              ),
-              child: const Text(
-                'Alta',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFEF4444),
+                  child: isDone
+                      ? const Icon(Icons.check, size: 16, color: Colors.white)
+                      : null,
                 ),
               ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSkeleton(BuildContext context) {
-    // Helper para placeholder boxes
-    Widget box(double height, double width) => Container(
-      height: height,
-      width: width,
-      decoration: BoxDecoration(
-        color: Colors.grey.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-    );
-
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        // KPIs Skeleton
-        Row(
-          children: [
-            Expanded(child: box(80, double.infinity)),
-            const SizedBox(width: 12),
-            Expanded(child: box(80, double.infinity)),
-            const SizedBox(width: 12),
-            Expanded(child: box(80, double.infinity)),
-          ],
-        ),
-        const SizedBox(height: 32),
-        
-        // Title Skeleton
-        box(20, 150),
-        const SizedBox(height: 16),
-        
-        // Task List Skeleton (3 items)
-        for(int i=0; i<3; i++)
-          Container(
-            height: 80,
-            margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
-            ),
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                box(24, 24), // Checkbox
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      box(16, double.infinity), // Title
-                      const SizedBox(height: 8),
-                      box(12, 100), // Subtitle
+              const SizedBox(width: 16),
+              
+              // Contenido
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      t.titulo,
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: isDone ? const Color(0xFF059669) : const Color(0xFF1E293B),
+                        decoration: isDone ? TextDecoration.lineThrough : null,
+                      ),
+                    ),
+                    if (t.proyectoNombre != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        t.proyectoNombre!,
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
                     ],
-                  ),
+                    // Barra de progreso si hay progreso parcial
+                    if (!isDone && t.progreso > 0 && t.progreso < 100) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: t.progreso / 100,
+                                backgroundColor: const Color(0xFFF1F5F9),
+                                color: const Color(0xFF10B981),
+                                minHeight: 4,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${t.progreso}%',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF10B981),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
                 ),
-              ],
-            ),
+              ),
+              
+              // Badge Prioridad + Chevron
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!isDone && t.prioridad == 'Alta')
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: const Color(0xFFFECACA)),
+                      ),
+                      child: const Text(
+                        'Alta',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFEF4444),
+                        ),
+                      ),
+                    ),
+                  const Icon(CupertinoIcons.chevron_right, size: 16, color: Color(0xFFCBD5E1)),
+                ],
+              ),
+            ],
           ),
-      ],
+        ),
+      ),
     );
   }
 }
-

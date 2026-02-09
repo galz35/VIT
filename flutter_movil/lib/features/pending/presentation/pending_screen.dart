@@ -5,6 +5,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_utils.dart';
 import '../../common/data/offline_resource_service.dart';
 import '../../home/presentation/home_shell.dart';
+import '../../tasks/presentation/task_detail_sheet.dart';
 
 class PendingScreen extends StatefulWidget {
   const PendingScreen({super.key});
@@ -123,7 +124,13 @@ class _PendingScreenState extends State<PendingScreen> {
     }
   }
 
-
+  void _openTaskDetail(Map<String, dynamic> task) {
+    TaskDetailSheet.show(
+      context,
+      task,
+      onUpdated: _refresh,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -289,9 +296,7 @@ class _PendingScreenState extends State<PendingScreen> {
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: InkWell(
-        onTap: () {
-          // Navegación futura
-        },
+        onTap: () => _openTaskDetail(item),
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(16),

@@ -6,6 +6,7 @@ import '../../../core/network/api_utils.dart';
 import '../../common/data/offline_resource_service.dart';
 import '../../home/presentation/home_shell.dart';
 import 'project_detail_screen.dart';
+import 'create_project_sheet.dart';
 
 class ProjectsScreen extends StatefulWidget {
   const ProjectsScreen({super.key});
@@ -69,9 +70,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
           IconButton(
             icon: const Icon(CupertinoIcons.add, color: Color(0xFF059669)),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Creación de proyectos próximamente')),
-              );
+              CreateProjectSheet.show(context, onCreated: _fetchProjects);
             },
           ),
         ],

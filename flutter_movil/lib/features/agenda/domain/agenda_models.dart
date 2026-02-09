@@ -93,6 +93,23 @@ class Tarea {
       orden: json['orden'] ?? 0,
     );
   }
+
+  /// Convierte a Map para usar con TaskDetailSheet
+  Map<String, dynamic> toJson() {
+    return {
+      'idTarea': idTarea,
+      'titulo': titulo,
+      'descripcion': descripcion,
+      'estado': estado,
+      'prioridad': prioridad,
+      'idProyecto': idProyecto,
+      'proyectoNombre': proyectoNombre,
+      'fechaObjetivo': fechaObjetivo,
+      'fechaVencimiento': fechaObjetivo,
+      'progreso': progreso,
+      'orden': orden,
+    };
+  }
 }
 
 class Bloqueo {
