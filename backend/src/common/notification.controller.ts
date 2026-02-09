@@ -1,6 +1,6 @@
 
 import { Controller, Post, Body, UseGuards, Req, Logger } from '@nestjs/common';
-import { NVarChar, ejecutarSP } from '../db/base.repo';
+import { NVarChar, Int, ejecutarSP } from '../db/base.repo';
 import { AuthGuard } from '@nestjs/passport';
 
 @Controller('notifications')
@@ -24,7 +24,7 @@ export class NotificationController {
         if (!token) return { success: false, message: 'Token required' };
 
         await ejecutarSP('sp_Dispositivos_Registrar', {
-            idUsuario: { valor: idUsuario, tipo: 'Int' },
+            idUsuario: { valor: idUsuario, tipo: Int },
             tokenFCM: { valor: token, tipo: NVarChar },
             plataforma: { valor: platform || 'android', tipo: NVarChar }
         });
