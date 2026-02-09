@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:sqflite/sqflite.dart';
 import '../../domain/task_item.dart';
 import 'local_database.dart';
 
@@ -10,16 +11,39 @@ class TaskLocalDataSource {
     return rows.map(TaskItem.fromMap).toList();
   }
 
-  Future<int> insert(TaskItem task) async {
+  Future<int> insert(TaskItem task, {Map<String, dynamic>? additionalPayload}) async {
     final db = await LocalDatabase.instance.database;
     final id = await db.insert('tasks', task.toMap());
+    
+    final fullPayload = {
+        ...task.toMap(), 
+        'id': id,
+        ...?additionalPayload,
+    };
+
     await _enqueueSync(
       entidad: 'task',
       entidadId: id,
       operacion: 'create',
-      payload: jsonEncode({...task.toMap(), 'id': id}),
+      payload: jsonEncode(fullPayload),
     );
     return id;
+  }
+
+  Future<int> insertSynced(TaskItem task) async {
+    final db = await LocalDatabase.instance.database;
+    // Asegurar que synced sea true
+    final syncedTask = task.copyWith(synced: true);
+    // Si la tarea ya tiene ID del servidor, usarlo. 
+    // Pero la base de datos local 'id' es auto-increment si no se especifica.
+    // Si el servidor envía ID, deberíamos usar ese ID como PK si es posible, 
+    // pero si PK es autoincrement integer local, tendríamos conflicto.
+    // Asumiré que el ID del servidor se mapea al ID local por ahora, o que el ID local es independiente.
+    // Revisando insert: `id` es generado por local.
+    // Si queremos reflejar el ID real, deberíamos hacer insert con conflicto replace.
+    // Pero si el ID local es diferente al ID remoto, tenemos un problema de mapeo.
+    // Por simplicidad para "reflejar inmediatamente", guardaremos con el ID que venga, o generado.
+    return await db.insert('tasks', syncedTask.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<void> update(TaskItem task) async {

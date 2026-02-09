@@ -33,14 +33,36 @@ class _UserSearchSheetState extends State<UserSearchSheet> {
   final _searchCtrl = TextEditingController();
   List<Empleado> _results = [];
   bool _loading = false;
+  bool _showingRecents = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecents();
+  }
+
+  void _loadRecents() async {
+    final recents = await _repo.getRecents();
+    if (mounted && _searchCtrl.text.isEmpty) {
+      setState(() {
+        _results = recents;
+        _showingRecents = true;
+        _loading = false;
+      });
+    }
+  }
 
   void _onSearch(String query) async {
     if (query.length < 2) {
-      if (_results.isNotEmpty) setState(() => _results = []);
+      _loadRecents();
       return;
     }
 
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _showingRecents = false;
+    });
+
     final results = await _repo.search(query);
     if (mounted) {
       setState(() {
@@ -91,6 +113,18 @@ class _UserSearchSheetState extends State<UserSearchSheet> {
             ),
           ),
 
+          if (_showingRecents && _results.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  Icon(Icons.history, size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 8),
+                  Text('Recientes', style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
@@ -102,12 +136,16 @@ class _UserSearchSheetState extends State<UserSearchSheet> {
                           final user = _results[index];
                           return ListTile(
                             leading: CircleAvatar(
-                              backgroundColor: Colors.blue[100],
-                              child: Text(user.nombreCompleto.isNotEmpty ? user.nombreCompleto[0].toUpperCase() : '?'),
+                              backgroundColor: _showingRecents ? Colors.grey[200] : Colors.blue[100],
+                              child: Text(
+                                user.nombreCompleto.isNotEmpty ? user.nombreCompleto[0].toUpperCase() : '?',
+                                style: TextStyle(color: _showingRecents ? Colors.grey[700] : Colors.blue[900]),
+                              ),
                             ),
                             title: Text(user.nombreCompleto),
                             subtitle: Text('${user.cargo ?? 'Sin cargo'} • ${user.area ?? 'Sin área'}'),
                             onTap: () {
+                              _repo.saveRecent(user);
                               widget.onSelected(user);
                             },
                           );
