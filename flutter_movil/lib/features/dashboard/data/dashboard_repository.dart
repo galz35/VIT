@@ -1,5 +1,5 @@
 import '../../../core/network/api_client.dart';
-import '../../common/data/offline_resource_service.dart';
+
 import 'dashboard_models.dart';
 
 class DashboardRepository {

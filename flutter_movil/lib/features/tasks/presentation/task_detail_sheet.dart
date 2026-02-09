@@ -1,10 +1,10 @@
 
+
+
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/network/api_client.dart';
-import '../../../core/theme/app_theme.dart';
 
 /// ============================================
 /// TASK DETAIL SHEET - Modal de Detalle de Tarea (V2)
@@ -121,8 +121,10 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _isLoadingFull = false);
-      print('Error loading full task: $e');
+      if (mounted) {
+        setState(() => _isLoadingFull = false);
+      }
+      debugPrint('Error loading full task: $e');
     }
   }
 
@@ -183,8 +185,11 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
     );
     if (picked != null) {
       setState(() {
-        if (isStart) _fechaInicio = picked;
-        else _fechaObjetivo = picked;
+        if (isStart) {
+          _fechaInicio = picked;
+        } else {
+          _fechaObjetivo = picked;
+        }
         _hasChanges = true;
       });
     }
@@ -460,9 +465,13 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
           children: ['Baja', 'Media', 'Alta'].map((p) {
              final isSelected = _prioridad == p;
              Color color;
-             if (p == 'Alta') color = const Color(0xFFEF4444);
-             else if (p == 'Media') color = const Color(0xFFF59E0B);
-             else color = const Color(0xFF10B981); // Baja green or blue? Usually Green/Blue
+             if (p == 'Alta') {
+               color = const Color(0xFFEF4444);
+             } else if (p == 'Media') {
+               color = const Color(0xFFF59E0B);
+             } else {
+               color = const Color(0xFF10B981); // Baja green or blue? Usually Green/Blue
+             }
 
              return GestureDetector(
                onTap: () => setState(() { _prioridad = p; _hasChanges = true; }),
@@ -596,8 +605,12 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
             onChanged: (v) => setState(() { 
                 _progreso = v.toInt(); 
                 _hasChanges = true; 
-                if (_progreso == 100 && _estado != 'Hecha') _estado = 'Hecha';
-                if (_progreso < 100 && _estado == 'Hecha') _estado = 'EnCurso';
+                if (_progreso == 100 && _estado != 'Hecha') {
+                  _estado = 'Hecha';
+                }
+                if (_progreso < 100 && _estado == 'Hecha') {
+                  _estado = 'EnCurso';
+                }
             }),
           ),
         ),

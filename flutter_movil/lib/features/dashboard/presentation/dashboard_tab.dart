@@ -298,9 +298,13 @@ class _ProjectItem extends StatelessWidget {
     
     // Determine color based on percent
     Color barColor;
-    if (percent >= 80) barColor = const Color(0xFF10B981); // Green
-    else if (percent >= 50) barColor = const Color(0xFF3B82F6); // Blue
-    else barColor = const Color(0xFFF59E0B); // Amber
+    if (percent >= 80) {
+      barColor = const Color(0xFF10B981); // Green
+    } else if (percent >= 50) {
+      barColor = const Color(0xFF3B82F6); // Blue
+    } else {
+      barColor = const Color(0xFFF59E0B); // Amber
+    }
 
     return Container(
       padding: const EdgeInsets.all(16),

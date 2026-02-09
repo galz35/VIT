@@ -258,11 +258,11 @@ class _AgendaListState extends State<_AgendaList> {
           ],
 
           // === MI AGENDA (Sugeridas) ===
-         Row(
+         const Row(
            children: [
-             const Icon(Icons.wb_sunny_rounded, size: 16, color: Color(0xFFF59E0B)),
-             const SizedBox(width: 8),
-             const Text(
+             Icon(Icons.wb_sunny_rounded, size: 16, color: Color(0xFFF59E0B)),
+             SizedBox(width: 8),
+             Text(
                 'MI AGENDA HOY',
                 style: TextStyle(
                   fontSize: 12,
