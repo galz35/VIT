@@ -63,7 +63,6 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
           IconButton(
             icon: const Icon(CupertinoIcons.add, color: Color(0xFF059669)),
             onPressed: () {
-              // TODO: Crear Proyecto
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Creación de proyectos próximamente')),
               );
@@ -101,16 +100,16 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                   color: const Color(0xFFFFF7ED), // Orange 50
-                  child: Row(
+                  child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.cloud_off, size: 16, color: Color(0xFFF97316)),
-                      const SizedBox(width: 8),
+                      Icon(Icons.cloud_off, size: 16, color: Color(0xFFF97316)),
+                      SizedBox(width: 8),
                       Text(
                         'Modo Offline - Datos cacheados',
                         style: TextStyle(
                           fontSize: 12,
-                          color: const Color(0xFF9A3412),
+                          color: Color(0xFF9A3412), // Orange 800
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -147,8 +146,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     final desc = (p['descripcion'] ?? 'Sin descripción').toString();
     final estado = (p['estado'] ?? 'ACTIVO').toString().toUpperCase();
     final avance = ((p['avance'] ?? 0) as num).toDouble(); 
-    // Si no trae avance, usar 0. 
-
+    
     Color statusColor = const Color(0xFF10B981); // Emerald
     Color statusBg = const Color(0xFFECFDF5);
     
@@ -262,7 +260,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
               const SizedBox(height: 16),
               
-              // Progress Bar (Si aplica)
+              // Progress Bar
               if (avance > 0) ...[
                 Row(
                   children: [
@@ -309,7 +307,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   Widget _buildSkeleton() {
     Widget box(double w, double h) => Container(
       width: w, height: h, 
-      decoration: BoxDecoration(color: Colors.grey.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(8)),
     );
 
     return ListView.builder(
@@ -321,7 +319,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+          border: Border.all(color: const Color(0xFFF1F5F9)),
         ),
         child: Column(
           children: [

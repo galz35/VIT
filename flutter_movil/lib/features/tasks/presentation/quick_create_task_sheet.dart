@@ -234,7 +234,7 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
       
       // Asignación de ID de usuario (por ahora null, se asigna al usuario actual por defecto en backend)
       // Si _assignedTo fuera real, buscaríamos el ID aquí.
-      final int? assignedToId = null; 
+      const int? assignedToId = null; 
 
       await repo.createTask(
         title: title,
@@ -249,8 +249,8 @@ class _QuickCreateTaskSheetState extends State<QuickCreateTaskSheet> {
         // Feedback
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Row(
-              children: const [
+            content: const Row(
+              children: [
                 Icon(Icons.check_circle, color: Colors.white, size: 20),
                 SizedBox(width: 8),
                 Text('Tarea creada exitosamente'),
