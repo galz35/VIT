@@ -1,221 +1,350 @@
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/network/api_client.dart';
-import '../../../core/network/api_utils.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../common/data/offline_resource_service.dart';
+import '../../agenda/domain/agenda_models.dart';
+import 'agenda_controller.dart';
 
-/// Pantalla Hoy/Agenda.
-///
-/// - Online: consume /mi-dia
-/// - Offline: fallback automático a cache local (kv_cache)
-/// - Acciones rápidas: marcar hecha, posponer
-class AgendaScreen extends StatefulWidget {
+class AgendaScreen extends StatelessWidget {
   const AgendaScreen({super.key});
 
   @override
-  State<AgendaScreen> createState() => _AgendaScreenState();
-}
-
-class _AgendaScreenState extends State<AgendaScreen> {
-  static const _cacheKey = 'agenda_today';
-  static const _offline = OfflineResourceService();
-
-  late Future<OfflineMapResult> _future;
-
-  @override
-  void initState() {
-    super.initState();
-    _future = _fetchAgenda();
-  }
-
-  Future<OfflineMapResult> _fetchAgenda() {
-    return _offline.loadMap(
-      cacheKey: _cacheKey,
-      remote: () async {
-        final fecha = DateFormat('yyyy-MM-dd').format(DateTime.now());
-        final response = await ApiClient.dio.get('/mi-dia', queryParameters: {'fecha': fecha});
-        return unwrapApiData(response.data);
-      },
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => AgendaController()..loadAgenda(),
+      child: const _AgendaView(),
     );
   }
+}
 
-  Future<void> _refresh() async {
-    final result = await _fetchAgenda();
-    if (mounted) {
-      setState(() => _future = Future.value(result));
-    }
-  }
-
-  Future<void> _markDone(Map<String, dynamic> task) async {
-    final id = task['idTarea'] ?? task['id'];
-    if (id == null) return;
-
-    try {
-      await ApiClient.dio.patch('/tareas/$id', data: {'estado': 'Hecha'});
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Tarea completada')),
-        );
-      }
-      _refresh();
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al actualizar')),
-        );
-      }
-    }
-  }
-
-  Future<void> _postpone(Map<String, dynamic> task) async {
-    final id = task['idTarea'] ?? task['id'];
-    if (id == null) return;
-
-    final tomorrow = DateTime.now().add(const Duration(days: 1));
-    final fechaNueva = DateFormat('yyyy-MM-dd').format(tomorrow);
-
-    try {
-      await ApiClient.dio.patch('/tareas/$id', data: {'fechaVencimiento': fechaNueva});
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('📅 Tarea pospuesta para mañana')),
-        );
-      }
-      _refresh();
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al posponer')),
-        );
-      }
-    }
-  }
+class _AgendaView extends StatelessWidget {
+  const _AgendaView();
 
   @override
   Widget build(BuildContext context) {
+    final controller = context.watch<AgendaController>();
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Formato fecha: "Lun 24 Ene"
+    final fechaFormat = DateFormat('EEE d MMM', 'es_ES').format(controller.currentDate);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Hoy / Agenda')),
-      body: FutureBuilder<OfflineMapResult>(
-        future: _future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final payload = snapshot.data;
-          if (payload == null) {
-            return Center(
-              child: ElevatedButton(
-                onPressed: () => setState(() => _future = _fetchAgenda()),
-                child: const Text('Reintentar'),
+      backgroundColor: const Color(0xFFF8FAFC), // Slate 50
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.chevron_left_rounded, color: Color(0xFF64748B)),
+              onPressed: controller.loading ? null : controller.prevDay,
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9), // Slate 100
+                borderRadius: BorderRadius.circular(8),
               ),
-            );
-          }
-
-          final data = payload.data;
-          final tareas = (data['tareasSugeridas'] as List<dynamic>? ?? <dynamic>[]).cast<dynamic>();
-          final backlog = (data['backlog'] as List<dynamic>? ?? <dynamic>[]).cast<dynamic>();
-          final bloqueos = (data['bloqueosActivos'] as List<dynamic>? ?? <dynamic>[]).cast<dynamic>();
-
-          return RefreshIndicator(
-            onRefresh: _refresh,
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                if (payload.fromCache)
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: MomentusTheme.warning.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(MomentusTheme.radiusMd),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.cloud_off, color: MomentusTheme.warning),
-                        SizedBox(width: 8),
-                        Text('Mostrando caché local (sin conexión)'),
-                      ],
+              child: Row(
+                children: [
+                  const Icon(Icons.calendar_today_rounded, size: 14, color: Color(0xFF475569)),
+                  const SizedBox(width: 8),
+                  Text(
+                    fechaFormat,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: Color(0xFF0F172A), // Slate 900
                     ),
                   ),
-                _MetricCard(label: 'Tareas sugeridas', value: tareas.length, color: MomentusTheme.primary),
-                _MetricCard(label: 'Backlog', value: backlog.length, color: MomentusTheme.warning),
-                _MetricCard(label: 'Bloqueos activos', value: bloqueos.length, color: MomentusTheme.error),
-                const SizedBox(height: 16),
-                Text('Tareas del día', style: Theme.of(context).textTheme.headlineSmall),
-                const SizedBox(height: 8),
-                if (tareas.isEmpty)
-                  const Card(
-                    child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Text('🎉 Excelente, no hay tareas sugeridas para hoy.'),
-                    ),
-                  )
-                else
-                  ...tareas.take(20).map((t) {
-                    final m = (t as Map).cast<String, dynamic>();
-                    final estado = (m['estado'] ?? 'Pendiente').toString();
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        title: Text((m['titulo'] ?? 'Sin título').toString()),
-                        subtitle: Text(estado),
-                        trailing: estado != 'Hecha'
-                            ? PopupMenuButton<String>(
-                                icon: const Icon(Icons.more_vert),
-                                onSelected: (value) {
-                                  if (value == 'done') _markDone(m);
-                                  if (value == 'postpone') _postpone(m);
-                                },
-                                itemBuilder: (_) => [
-                                  const PopupMenuItem(value: 'done', child: Text('✅ Marcar hecha')),
-                                  const PopupMenuItem(value: 'postpone', child: Text('📅 Posponer')),
-                                ],
-                              )
-                            : const Icon(Icons.check_circle, color: MomentusTheme.success),
-                      ),
-                    );
-                  }),
-              ],
+                ],
+              ),
             ),
-          );
-        },
+            IconButton(
+              icon: const Icon(Icons.chevron_right_rounded, color: Color(0xFF64748B)),
+              onPressed: controller.loading ? null : controller.nextDay,
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, color: Color(0xFF64748B)),
+            onPressed: () => controller.loadAgenda(),
+          ),
+        ],
       ),
+      body: controller.loading
+          ? const Center(child: CircularProgressIndicator())
+          : controller.error != null
+              ? Center(child: Text(controller.error!, style: const TextStyle(color: Colors.red)))
+              : _buildContent(context, controller.data!),
     );
   }
-}
 
-class _MetricCard extends StatelessWidget {
-  const _MetricCard({required this.label, required this.value, required this.color});
+  Widget _buildContent(BuildContext context, AgendaResponse data) {
+    final total = data.tareasSugeridas.length + data.backlog.length;
+    final hechas = data.tareasSugeridas.where((t) => t.estado == 'Hecha').length;
+    
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // === KPIS HEADER ===
+        Row(
+          children: [
+            _buildKpiCard('Total', total.toString(), const Color(0xFF6366F1)), // Indigo
+            const SizedBox(width: 12),
+            _buildKpiCard('Hechas', hechas.toString(), const Color(0xFF10B981)), // Emerald
+            const SizedBox(width: 12),
+            _buildKpiCard('Pendientes', (total - hechas).toString(), const Color(0xFFF59E0B)), // Amber
+          ],
+        ),
+        
+        const SizedBox(height: 24),
 
-  final String label;
-  final int value;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(MomentusTheme.radiusMd),
-          ),
-          child: Center(
-            child: Text(
-              '$value',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: color),
+        // === BLOQUEOS ACTIVOS (Alerta) ===
+        if (data.bloqueosActivos.isNotEmpty) ...[
+          const Text(
+            'BLOQUEOS CRÍTICOS',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFFB91C1C), // Red 800
+              letterSpacing: 1,
             ),
+          ),
+          const SizedBox(height: 8),
+          ...data.bloqueosActivos.map((b) => _buildBloqueoCard(b)).toList(),
+          const SizedBox(height: 24),
+        ],
+
+        // === MI AGENDA (Sugeridas) ===
+        const Text(
+          'MI AGENDA HOY',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF64748B), // Slate 500
+            letterSpacing: 1,
           ),
         ),
-        title: Text(label),
+        const SizedBox(height: 12),
+        
+        if (data.tareasSugeridas.isEmpty)
+          const Padding(
+            padding: EdgeInsets.all(32.0),
+            child: Center(
+              child: Text(
+                'No hay tareas programadas para hoy',
+                style: TextStyle(color: Color(0xFF94A3B8)),
+              ),
+            ),
+          )
+        else
+          ...data.tareasSugeridas.map((t) => _buildTaskCard(t)).toList(),
+          
+        const SizedBox(height: 24),
+
+        // === BACKLOG ===
+        if (data.backlog.isNotEmpty) ...[
+          const Text(
+            'BACKLOG / OTRAS',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF94A3B8), // Slate 400
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...data.backlog.map((t) => _buildTaskCard(t, isBacklog: true)).toList(),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildKpiCard(String label, String value, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0F172A).withOpacity(0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Column(
+          children: [
+            Text(
+              value,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: color,
+                height: 1,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label.toUpperCase(),
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF94A3B8), // Slate 400
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBloqueoCard(Bloqueo b) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF2F2), // Red 50
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFECACA)), // Red 200
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.warning_amber_rounded, color: Color(0xFFEF4444), size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Bloqueo: ${b.motivo}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF991B1B), // Red 800
+                    fontSize: 14,
+                  ),
+                ),
+                if (b.destinoTexto != null)
+                  Text(
+                    'Para: ${b.destinoTexto}',
+                    style: const TextStyle(color: Color(0xFFB91C1C), fontSize: 13),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTaskCard(Tarea t, {bool isBacklog = false}) {
+    final isDone = t.estado == 'Hecha';
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDone ? const Color(0xFFF0FDF4) : Colors.white, // Green 50 si hecha
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(
+          color: isDone ? const Color(0xFFBBF7D0) : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Checkbox Custom
+          Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: isDone ? const Color(0xFF10B981) : Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isDone ? const Color(0xFF10B981) : const Color(0xFFCBD5E1),
+                width: 2,
+              ),
+            ),
+            child: isDone
+                ? const Icon(Icons.check, size: 16, color: Colors.white)
+                : null,
+          ),
+          const SizedBox(width: 16),
+          
+          // Contenido
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  t.titulo,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: isDone ? const Color(0xFF059669) : const Color(0xFF1E293B), // Emerald 600 vs Slate 800
+                    decoration: isDone ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+                if (t.proyectoNombre != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      t.proyectoNombre!,
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF64748B), // Slate 500
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          
+          // Badge Prioridad
+          if (!isDone && t.prioridad == 'Alta')
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFFECACA)),
+              ),
+              child: const Text(
+                'Alta',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFFEF4444),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
 }
-
