@@ -40,7 +40,7 @@ class _MyAssignmentScreenState extends State<MyAssignmentScreen> {
         // Assuming 'planning/mi-asignacion' takes a query param or body for filter
         // React: clarityService.get('planning/mi-asignacion', { params: { filtro } })
         final response = await ApiClient.dio.get('planning/mi-asignacion',
-            queryParameters: {'filtro': 'pendientes'});
+            queryParameters: {'estado': 'pendientes'});
         return response.data as Map<String, dynamic>;
       },
     );

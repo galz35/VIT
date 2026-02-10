@@ -207,7 +207,10 @@ export async function obtenerTareaPorId(idTarea: number) {
         proyectoTipo?: string,
         proyectoRequiereAprobacion?: boolean,
         creadorNombre?: string,
-        creadorCorreo?: string
+        creadorCorreo?: string,
+        responsableNombre?: string,
+        responsableCarnet?: string,
+        idResponsable?: number
     }>(`
         SELECT 
             t.idTarea, t.nombre as titulo, t.descripcion, t.estado, t.prioridad, t.fechaCreacion, t.fechaObjetivo, t.fechaCompletado, t.porcentaje, t.idPadre, t.orden, t.esHito, t.idAsignado, t.idPlan,
@@ -216,10 +219,15 @@ export async function obtenerTareaPorId(idTarea: number) {
             p.tipo as proyectoTipo, 
             p.requiereAprobacion as proyectoRequiereAprobacion,
             uc.nombre as creadorNombre,
-            uc.correo as creadorCorreo
+            uc.correo as creadorCorreo,
+            ua.idUsuario as idResponsable,
+            ua.nombreCompleto as responsableNombre,
+            ta.carnet as responsableCarnet
         FROM p_Tareas t
         LEFT JOIN p_Proyectos p ON t.idProyecto = p.idProyecto
         LEFT JOIN p_Usuarios uc ON t.idCreador = uc.idUsuario
+        LEFT JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea AND ta.tipo = 'Responsable'
+        LEFT JOIN p_Usuarios ua ON ta.idUsuario = ua.idUsuario
         WHERE t.idTarea = @idTarea
     `, { idTarea: { valor: idTarea, tipo: Int } });
 

@@ -518,7 +518,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     final titulo = task['titulo']?.toString() ?? 'Sin título';
     final estado = task['estado']?.toString() ?? 'Pendiente';
     String asignado = 'Sin asignar';
-    if (task['asignadoNombre'] != null &&
+    // Priority: responsableNombre (from SP) > asignadoNombre > nombreCompleto > nested objects
+    if (task['responsableNombre'] != null &&
+        task['responsableNombre'].toString().isNotEmpty) {
+      asignado = task['responsableNombre'].toString();
+    } else if (task['asignadoNombre'] != null &&
         task['asignadoNombre'].toString().isNotEmpty) {
       asignado = task['asignadoNombre'].toString();
     } else if (task['nombreCompleto'] != null &&

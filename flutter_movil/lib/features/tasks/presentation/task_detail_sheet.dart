@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_utils.dart';
+import '../../../core/services/team_cache_service.dart';
 import '../../../core/theme/app_theme.dart';
 
 /// ============================================
@@ -97,10 +98,12 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
     _prioridad = _taskData['prioridad']?.toString() ?? 'Media';
     _progreso = (progreso is num) ? progreso.toInt() : 0;
 
-    _assignedId = _taskData['usuarioId']?.toString() ??
+    _assignedId = _taskData['idResponsable']?.toString() ??
+        _taskData['usuarioId']?.toString() ??
         _taskData['asignadoId']?.toString();
-    _assignedName = _taskData['asignadoNombre']?.toString() ??
-        _taskData['nombreCompleto'] ??
+    _assignedName = _taskData['responsableNombre']?.toString() ??
+        _taskData['asignadoNombre']?.toString() ??
+        _taskData['nombreCompleto']?.toString() ??
         'Sin asignar';
 
     debugPrint(
@@ -139,11 +142,18 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
           }
           _isLoadingFull = false;
 
-          // Actualizar datos de asignación
-          if (data['usuarioId'] != null || data['asignadoId'] != null) {
-            _assignedId = (data['usuarioId'] ?? data['asignadoId']).toString();
+          // Actualizar datos de asignación (priorizar responsable del SP)
+          if (data['idResponsable'] != null ||
+              data['usuarioId'] != null ||
+              data['asignadoId'] != null) {
+            _assignedId = (data['idResponsable'] ??
+                    data['usuarioId'] ??
+                    data['asignadoId'])
+                .toString();
           }
-          if (data['asignadoNombre'] != null) {
+          if (data['responsableNombre'] != null) {
+            _assignedName = data['responsableNombre'].toString();
+          } else if (data['asignadoNombre'] != null) {
             _assignedName = data['asignadoNombre'].toString();
           }
 
@@ -208,7 +218,7 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
     setState(() => _saving = true);
     try {
       final id = _taskData['idTarea'] ?? _taskData['id'];
-      final payload = {
+      final payload = <String, dynamic>{
         'titulo': _tituloCtrl.text.trim(),
         'descripcion': _descripcionCtrl.text.trim(),
         'linkEvidencia': _evidenciaCtrl.text.trim(),
@@ -217,15 +227,11 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
         'progreso': _progreso,
         'fechaObjetivo': _fechaObjetivo?.toIso8601String(),
         'fechaInicioPlanificada': _fechaInicio?.toIso8601String(),
-        'usuarioId': _assignedId,
-        'asignadoId': _assignedId, // Compatible ambos
+        if (_assignedId != null) 'idResponsable': _assignedId,
       };
 
-      // Comentario especial
       if (_comentarioCtrl.text.trim().isNotEmpty) {
         payload['comentario'] = _comentarioCtrl.text.trim();
-        payload['agregarComentario'] =
-            true; // Flag for backend if needed, or api handles it
       }
 
       await ApiClient.dio.patch('tareas/$id', data: payload);
@@ -826,6 +832,16 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
   }
 
   Future<void> _loadTeam() async {
+    // Usar cache pre-cargado al login (instantáneo + offline)
+    final cached = TeamCacheService.instance.members;
+    if (cached.isNotEmpty) {
+      if (mounted) {
+        setState(() => _teamMembers = cached);
+      }
+      return;
+    }
+
+    // Fallback: cargar desde API si cache vacío
     try {
       final response = await ApiClient.dio.get('planning/team');
       if (mounted) {

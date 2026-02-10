@@ -1,11 +1,13 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/services/push_notification_service.dart';
+import '../../../core/services/team_cache_service.dart';
 import '../data/auth_repository.dart';
 import '../domain/session_user.dart';
 
 class AuthController extends ChangeNotifier {
-  AuthController({AuthRepository? repository}) : _repository = repository ?? AuthRepository();
+  AuthController({AuthRepository? repository})
+      : _repository = repository ?? AuthRepository();
 
   final AuthRepository _repository;
 
@@ -25,6 +27,8 @@ class AuthController extends ChangeNotifier {
       // Si restauramos sesión, registrar token FCM
       if (user != null) {
         _registerFcmToken();
+        // Pre-cargar equipo en cache SQLite
+        TeamCacheService.instance.preload();
       }
     } catch (_) {
       user = null;
@@ -44,6 +48,8 @@ class AuthController extends ChangeNotifier {
       user = await _repository.login(correo: correo, password: password);
       // Registrar token FCM con el backend después del login exitoso
       _registerFcmToken();
+      // Pre-cargar equipo en cache SQLite
+      TeamCacheService.instance.preload();
       return true;
     } catch (e) {
       error = 'No se pudo iniciar sesión. Verifica tus credenciales.';
@@ -56,6 +62,7 @@ class AuthController extends ChangeNotifier {
 
   Future<void> logout() async {
     await _repository.logout();
+    TeamCacheService.instance.clear();
     user = null;
     notifyListeners();
   }

@@ -101,7 +101,7 @@ class _PendingScreenState extends State<PendingScreen> {
     });
 
     try {
-      await ApiClient.dio.patch('/tareas/$id', data: {'estado': 'Hecha'});
+      await ApiClient.dio.patch('tareas/$id', data: {'estado': 'Hecha'});
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

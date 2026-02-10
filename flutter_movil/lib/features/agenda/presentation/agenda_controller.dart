@@ -39,22 +39,22 @@ class AgendaController extends ChangeNotifier {
   }
 
   // Estado de Selección para Planificación
-  int? selectedMainTaskId;
+  Set<int> selectedMainTaskIds = {};
   Set<int> selectedOtherTaskIds = {};
   bool startDayLoading = false;
 
   void toggleMainTask(int id) {
-    if (selectedMainTaskId == id) {
-      selectedMainTaskId = null;
+    if (selectedMainTaskIds.contains(id)) {
+      selectedMainTaskIds.remove(id);
     } else {
-      selectedMainTaskId = id;
+      selectedMainTaskIds.add(id);
       selectedOtherTaskIds.remove(id); // No puede estar en ambos
     }
     notifyListeners();
   }
 
   void toggleOtherTask(int id) {
-    if (selectedMainTaskId == id) return; // Ya es principal
+    if (selectedMainTaskIds.contains(id)) return; // Ya es principal
 
     if (selectedOtherTaskIds.contains(id)) {
       selectedOtherTaskIds.remove(id);
@@ -65,7 +65,7 @@ class AgendaController extends ChangeNotifier {
   }
 
   Future<void> saveCheckin(int userId) async {
-    if (selectedMainTaskId == null && selectedOtherTaskIds.isEmpty) {
+    if (selectedMainTaskIds.isEmpty && selectedOtherTaskIds.isEmpty) {
       error = "Selecciona al menos una tarea para iniciar tu día.";
       notifyListeners();
       return;
@@ -83,7 +83,7 @@ class AgendaController extends ChangeNotifier {
         "fecha": fechaStr,
         "entregableTexto":
             "Objetivo del día", // Opcional: Podríamos pedir input
-        "entrego": selectedMainTaskId != null ? [selectedMainTaskId] : [],
+        "entrego": selectedMainTaskIds.toList(),
         "avanzo": selectedOtherTaskIds.toList(),
         "extras": [],
         "estadoAnimo": "Normal"
@@ -95,7 +95,7 @@ class AgendaController extends ChangeNotifier {
       await loadAgenda();
 
       // Limpiar selección
-      selectedMainTaskId = null;
+      selectedMainTaskIds.clear();
       selectedOtherTaskIds.clear();
     } catch (e) {
       error = 'Error al guardar plan: $e';

@@ -6,6 +6,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_utils.dart';
 import '../../common/data/offline_resource_service.dart';
 import '../../home/presentation/home_shell.dart'; // MomentusAppBar
+import 'team_tracking_screen.dart';
 
 /// Módulo Equipos - Diseño Premium
 class TeamScreen extends StatefulWidget {
@@ -291,9 +292,22 @@ class _TeamScreenState extends State<TeamScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       // Nuevo AppBar Consistente
-      appBar: const MomentusAppBar(
+      appBar: MomentusAppBar(
         title: 'Mi Equipo',
         subtitle: 'Gestiona tu equipo de trabajo',
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.calendar_month_rounded,
+                color: Color(0xFF64748B)),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const TeamTrackingScreen()));
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [

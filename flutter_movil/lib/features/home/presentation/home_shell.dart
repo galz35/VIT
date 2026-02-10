@@ -55,8 +55,7 @@ class _HomeShellState extends State<HomeShell> {
         children: _screens,
       ),
       bottomNavigationBar: _buildModernNavBar(context),
-      floatingActionButton: _currentIndex == 0 ||
-              _currentIndex == 1 // Solo en Agenda y Pendientes
+      floatingActionButton: _currentIndex == 1
           ? FloatingActionButton(
               onPressed: () => _showQuickCreateTask(context),
               child: const Icon(CupertinoIcons.add, color: Colors.white),

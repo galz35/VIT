@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
-import '../data/notification_preferences_service.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../home/presentation/home_shell.dart';
+import '../../../core/theme/app_theme.dart';
 
-/// Pantalla de Ajustes - Diseño Premium
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -14,223 +14,225 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final NotificationPreferencesService _notificationPreferencesService =
-      NotificationPreferencesService();
+  bool _notificationsEnabled = true;
+  bool _faceIdEnabled = false;
+  bool _autoLockEnabled = true;
+  bool _loading = false;
 
-  NotificationPreferences _preferences = const NotificationPreferences(
-    enabled: true,
-    assignmentAlerts: true,
-    pendingReminders: true,
-  );
-  bool _loading = true;
+  Future<void> _logout() async {
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Cerrar Sesión'),
+        content: const Text('¿Estás seguro que deseas salir de tu cuenta?'),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('Cancelar'),
+            onPressed: () => Navigator.pop(context, false),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Salir'),
+          ),
+        ],
+      ),
+    );
 
-  @override
-  void initState() {
-    super.initState();
-    _loadPreferences();
-  }
-
-  Future<void> _loadPreferences() async {
-    final preferences = await _notificationPreferencesService.load();
-    if (!mounted) return;
-    setState(() {
-      _preferences = preferences;
-      _loading = false;
-    });
-  }
-
-  Future<void> _updatePreferences(NotificationPreferences updated) async {
-    setState(() => _preferences = updated);
-    await _notificationPreferencesService.save(updated);
+    if (confirmed == true) {
+      if (!mounted) return;
+      setState(() => _loading = true);
+      await context.read<AuthController>().logout();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return Scaffold(
-        appBar: _buildAppBar(),
-        body: const Center(
-            child: CircularProgressIndicator(color: Color(0xFF6366F1))),
+      return const Scaffold(
+        appBar: MomentusAppBar(title: 'Ajustes', subtitle: 'Configuración'),
+        body: Center(
+            child: CircularProgressIndicator(color: MomentusTheme.primary)),
       );
     }
 
+    final auth = context.watch<AuthController>();
+    final user = auth.user;
+    final userInitial =
+        (user?.nombre.isNotEmpty == true) ? user!.nombre[0] : 'U';
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: _buildAppBar(),
+      appBar: const MomentusAppBar(
+        title: 'Ajustes',
+        subtitle: 'Configuración y perfil',
+      ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         children: [
-          // Sección: Notificaciones
-          _buildSectionHeader('Notificaciones', Icons.notifications_outlined),
-          const SizedBox(height: 12),
-          _buildSettingsCard([
-            _SwitchTile(
-              icon: Icons.notifications_active,
-              iconColor: const Color(0xFF6366F1),
-              title: 'Notificaciones activas',
-              subtitle:
-                  'Permitir avisos de nuevas asignaciones y recordatorios.',
-              value: _preferences.enabled,
-              onChanged: (value) {
-                _updatePreferences(_preferences.copyWith(enabled: value));
-              },
-            ),
-            _SwitchTile(
-              icon: Icons.assignment_ind_outlined,
-              iconColor: const Color(0xFF10B981),
-              title: 'Nuevas asignaciones',
-              subtitle: 'Avisar cuando se te asigne una nueva tarea.',
-              value: _preferences.enabled && _preferences.assignmentAlerts,
-              enabled: _preferences.enabled,
-              onChanged: (value) {
-                _updatePreferences(
-                    _preferences.copyWith(assignmentAlerts: value));
-              },
-            ),
-            _SwitchTile(
-              icon: Icons.alarm_on_outlined,
-              iconColor: const Color(0xFFF59E0B),
-              title: 'Recordatorios de pendientes',
-              subtitle: 'Avisar si tienes tareas por vencer o atrasadas.',
-              value: _preferences.enabled && _preferences.pendingReminders,
-              enabled: _preferences.enabled,
-              onChanged: (value) {
-                _updatePreferences(
-                    _preferences.copyWith(pendingReminders: value));
-              },
-              isLast: true,
-            ),
-          ]),
-
-          const SizedBox(height: 24),
-
-          // Sección: Sincronización
-          _buildSectionHeader('Sincronización', Icons.sync),
-          const SizedBox(height: 12),
-          _buildSettingsCard([
-            _InfoTile(
-              icon: Icons.cloud_done,
-              iconColor: const Color(0xFF3B82F6),
-              title: 'Estado de sincronización',
-              subtitle: 'Conectado • Última sync hace 5 min',
-              trailing: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withAlpha(20),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
+          // Profile Section Header
+          const _SectionTitle(title: 'MI CUENTA'),
+          _SettingsGroup(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
                   children: [
-                    Icon(Icons.check_circle,
-                        size: 14, color: Color(0xFF10B981)),
-                    SizedBox(width: 4),
-                    Text(
-                      'Online',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF10B981),
+                    CircleAvatar(
+                      radius: 30,
+                      backgroundColor: MomentusTheme.red50,
+                      child: Text(
+                        userInitial.toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: MomentusTheme.primary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            user?.nombre ?? 'Usuario',
+                            style: const TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            user?.correo ?? 'usuario@empresa.com',
+                            style: const TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 14,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981)
+                                  .withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.verified,
+                                    size: 14, color: Color(0xFF10B981)),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Conectado',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF10B981),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-              isLast: true,
-            ),
-          ]),
+            ],
+          ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
 
-          // Sección: Apariencia
-          _buildSectionHeader('Apariencia', Icons.palette_outlined),
-          const SizedBox(height: 12),
-          _buildSettingsCard([
-            const _InfoTile(
-              icon: Icons.brightness_6,
-              iconColor: Color(0xFF8B5CF6),
-              title: 'Tema visual',
-              subtitle: 'Indigo Enterprise - Modo claro',
-              isLast: true,
-            ),
-          ]),
+          const _SectionTitle(title: 'PREFERENCIAS'),
+          _SettingsGroup(
+            children: [
+              _SwitchTile(
+                icon: CupertinoIcons.bell_fill,
+                iconColor: const Color(0xFF3B82F6),
+                title: 'Notificaciones Push',
+                subtitle: 'Alertas de tareas nuevas y recordatorios',
+                value: _notificationsEnabled,
+                onChanged: (v) => setState(() => _notificationsEnabled = v),
+              ),
+              _SwitchTile(
+                icon: CupertinoIcons.lock_shield_fill,
+                iconColor: const Color(0xFF8B5CF6),
+                title: 'Bloqueo Automático',
+                subtitle: 'Exigir PIN al reanudar la app',
+                value: _autoLockEnabled,
+                onChanged: (v) => setState(() => _autoLockEnabled = v),
+              ),
+              _SwitchTile(
+                icon: CupertinoIcons.viewfinder_circle_fill,
+                iconColor: const Color(0xFF10B981),
+                title: 'FaceID / Biometría',
+                subtitle: 'Desbloqueo seguro (Próximamente)',
+                value: _faceIdEnabled,
+                enabled: false,
+                onChanged: (v) => setState(() => _faceIdEnabled = v),
+                isLast: true,
+              ),
+            ],
+          ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
 
-          // Sección: Seguridad
-          _buildSectionHeader('Seguridad', Icons.security),
-          const SizedBox(height: 12),
-          _buildSettingsCard([
-            const _InfoTile(
-              icon: Icons.fingerprint,
-              iconColor: Color(0xFFEC4899),
-              title: 'Autenticación biométrica',
-              subtitle: 'Próximamente - Bloqueo con huella o Face ID',
-            ),
-            const _InfoTile(
-              icon: Icons.timer_outlined,
-              iconColor: Color(0xFF64748B),
-              title: 'Cierre automático',
-              subtitle: 'Bloquear app después de 5 minutos de inactividad',
-              isLast: true,
-            ),
-          ]),
+          const _SectionTitle(title: 'INFORMACIÓN'),
+          const _SettingsGroup(
+            children: [
+              _InfoTile(
+                icon: CupertinoIcons.info_circle_fill,
+                iconColor: Color(0xFF64748B),
+                title: 'Versión de la App',
+                subtitle: 'v1.2.5 build 2024.1',
+              ),
+              _InfoTile(
+                icon: CupertinoIcons.doc_text_fill,
+                iconColor: Color(0xFF64748B),
+                title: 'Términos y Privacidad',
+                subtitle: 'Políticas de uso de datos',
+                isLast: true,
+              ),
+            ],
+          ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 48),
 
-          // Botón de Cerrar Sesión
+          // Logout Button
           Container(
+            width: double.infinity,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFEF4444).withAlpha(50)),
+              border: Border.all(
+                  color: const Color(0xFFEF4444).withValues(alpha: 0.2)),
             ),
             child: Material(
               color: const Color(0xFFFEF2F2),
               borderRadius: BorderRadius.circular(12),
               child: InkWell(
-                onTap: () async {
-                  final auth = context.read<AuthController>();
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: const Text('Cerrar sesión'),
-                      content:
-                          const Text('¿Estás seguro que deseas cerrar sesión?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx, false),
-                          child: const Text('Cancelar'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () => Navigator.pop(ctx, true),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFEF4444),
-                          ),
-                          child: const Text('Cerrar sesión'),
-                        ),
-                      ],
-                    ),
-                  );
-                  if (confirm == true && mounted) {
-                    auth.logout();
-                  }
-                },
+                onTap: _logout,
                 borderRadius: BorderRadius.circular(12),
                 child: const Padding(
-                  padding: EdgeInsets.all(16),
+                  padding: EdgeInsets.symmetric(vertical: 16),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.logout, color: Color(0xFFEF4444)),
-                      SizedBox(width: 10),
+                      Icon(CupertinoIcons.square_arrow_right,
+                          color: Color(0xFFEF4444), size: 20),
+                      SizedBox(width: 8),
                       Text(
-                        'Cerrar sesión',
+                        'Cerrar Sesión',
                         style: TextStyle(
                           fontFamily: 'Inter',
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                           color: Color(0xFFEF4444),
                         ),
                       ),
@@ -242,83 +244,60 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
 
           const SizedBox(height: 32),
-
-          // Versión
-          Center(
+          const Center(
             child: Text(
-              'Momentus Móvil v1.0.0',
+              'Momentus Mobile © 2024 Designer Studio',
               style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                color: Colors.grey[400],
-              ),
+                  fontSize: 12, color: Color(0xFF94A3B8), fontFamily: 'Inter'),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
         ],
       ),
     );
   }
+}
 
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0,
-      leading: IconButton(
-        icon: const Icon(Icons.menu_rounded, color: Color(0xFF1E293B)),
-        onPressed: () => HomeShell.scaffoldKey.currentState?.openDrawer(),
-      ),
-      title: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Ajustes',
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontWeight: FontWeight.w900,
-              fontSize: 20,
-              color: Color(0xFF0F172A),
-            ),
-          ),
-          Text(
-            'Configuración de la aplicación',
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF64748B),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+class _SectionTitle extends StatelessWidget {
+  final String title;
+  const _SectionTitle({required this.title});
 
-  Widget _buildSectionHeader(String title, IconData icon) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: const Color(0xFF64748B)),
-        const SizedBox(width: 8),
-        Text(
-          title.toUpperCase(),
-          style: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1,
-            color: Color(0xFF64748B),
-          ),
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          color: Color(0xFF94A3B8),
+          letterSpacing: 1.2,
         ),
-      ],
+      ),
     );
   }
+}
 
-  Widget _buildSettingsCard(List<Widget> children) {
+class _SettingsGroup extends StatelessWidget {
+  final List<Widget> children;
+  const _SettingsGroup({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(children: children),
     );
@@ -362,7 +341,7 @@ class _SwitchTile extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: iconColor.withAlpha(20),
+                color: iconColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, color: iconColor, size: 20),
@@ -397,15 +376,10 @@ class _SwitchTile extends StatelessWidget {
             Switch(
               value: value,
               onChanged: enabled ? onChanged : null,
-              thumbColor: WidgetStateProperty.resolveWith((states) {
-                if (states.contains(WidgetState.selected)) {
-                  return const Color(0xFF6366F1);
-                }
-                return null;
-              }),
+              activeThumbColor: MomentusTheme.primary,
               trackColor: WidgetStateProperty.resolveWith((states) {
                 if (states.contains(WidgetState.selected)) {
-                  return const Color(0xFF6366F1).withAlpha(100);
+                  return MomentusTheme.primary.withValues(alpha: 0.2);
                 }
                 return null;
               }),
@@ -422,7 +396,6 @@ class _InfoTile extends StatelessWidget {
   final Color iconColor;
   final String title;
   final String subtitle;
-  final Widget? trailing;
   final bool isLast;
 
   const _InfoTile({
@@ -430,7 +403,6 @@ class _InfoTile extends StatelessWidget {
     required this.iconColor,
     required this.title,
     required this.subtitle,
-    this.trailing,
     this.isLast = false,
   });
 
@@ -450,7 +422,7 @@ class _InfoTile extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: iconColor.withAlpha(20),
+                color: iconColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, color: iconColor, size: 20),
@@ -481,11 +453,6 @@ class _InfoTile extends StatelessWidget {
                 ],
               ),
             ),
-            if (trailing != null)
-              Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: trailing,
-              ),
           ],
         ),
       ),

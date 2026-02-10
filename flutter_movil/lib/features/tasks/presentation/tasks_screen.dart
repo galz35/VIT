@@ -1,207 +1,263 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 import '../domain/task_item.dart';
 import 'task_controller.dart';
-import '../../common/presentation/user_search_sheet.dart';
+import 'quick_create_task_sheet.dart';
+import '../../home/presentation/home_shell.dart';
+import '../../../core/theme/app_theme.dart';
+import 'task_detail_sheet.dart';
+// import '../../common/presentation/user_search_sheet.dart'; // Future use
 
-class TasksScreen extends StatelessWidget {
+class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
 
-  Future<void> _openCreateTask(BuildContext context) async {
-    // Navigate to create task screen or show sheet
-    // Implementation pending or existing elsewhere
+  @override
+  State<TasksScreen> createState() => _TasksScreenState();
+}
+
+class _TasksScreenState extends State<TasksScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<TaskController>().loadTasks();
+    });
+  }
+
+  void _openCreateTask(BuildContext context) {
+    QuickCreateTaskSheet.show(context, onCreated: () {
+      context.read<TaskController>().loadTasks();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<TaskController>();
     final items = controller.visibleTasks;
+    final total = controller.tasks.length;
+    final pending = controller.pendingCount;
+    final completed = total - pending;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Momentus Tasks'),
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: const MomentusAppBar(
+        title: 'Mis Tareas',
+        subtitle: 'Gestión y seguimiento',
         actions: [
-          IconButton(
-            onPressed: () => controller.loadTasks(),
-            icon: const Icon(Icons.refresh),
-          ),
+          // IconButton not const due to controller.loadTasks
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => _openCreateTask(context),
-        icon: const Icon(Icons.add),
-        label: const Text('Nueva tarea'),
+        backgroundColor: MomentusTheme.primary,
+        child: const Icon(CupertinoIcons.add, color: Colors.white),
       ),
-      body: controller.loading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
+      body: Column(
+        children: [
+          // KPI Header
+          _KpiHeader(
+            total: total,
+            pending: pending,
+            completed: completed,
+            unsynced: controller.unsyncedCount,
+          ),
+
+          // Search & Filter
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: Column(
+                TextField(
+                  onChanged: controller.setQuery,
+                  style: const TextStyle(fontFamily: 'Inter'),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(CupertinoIcons.search,
+                        color: Color(0xFF94A3B8), size: 20),
+                    hintText: 'Buscar tarea...',
+                    hintStyle: const TextStyle(
+                        fontFamily: 'Inter', color: Color(0xFF94A3B8)),
+                    filled: true,
+                    fillColor: const Color(0xFFF1F5F9),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: 12, horizontal: 16),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
                     children: [
-                      _Kpis(
-                        pending: controller.pendingCount,
-                        unsynced: controller.unsyncedCount,
-                        total: controller.tasks.length,
+                      _FilterChip(
+                        label: 'Todas',
+                        selected: controller.filter == TaskFilter.all,
+                        onTap: () => controller.setFilter(TaskFilter.all),
                       ),
-                      const SizedBox(height: 10),
-                      TextField(
-                        onChanged: controller.setQuery,
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.search),
-                          hintText: 'Buscar por título...',
-                          filled: true,
-                          fillColor: const Color(0xFFF8FAFC),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding:
-                              const EdgeInsets.symmetric(horizontal: 16),
-                        ),
+                      const SizedBox(width: 8),
+                      _FilterChip(
+                        label: 'Pendientes',
+                        selected: controller.filter == TaskFilter.pending,
+                        onTap: () => controller.setFilter(TaskFilter.pending),
                       ),
-                      const SizedBox(height: 12),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            _FilterChip(
-                              label: 'Todas',
-                              selected: controller.filter == TaskFilter.all,
-                              onTap: () => controller.setFilter(TaskFilter.all),
-                            ),
-                            _FilterChip(
-                              label: 'Pendientes',
-                              selected: controller.filter == TaskFilter.pending,
-                              onTap: () =>
-                                  controller.setFilter(TaskFilter.pending),
-                            ),
-                            _FilterChip(
-                              label: 'Completadas',
-                              selected:
-                                  controller.filter == TaskFilter.completed,
-                              onTap: () =>
-                                  controller.setFilter(TaskFilter.completed),
-                            ),
-                          ],
-                        ),
+                      const SizedBox(width: 8),
+                      _FilterChip(
+                        label: 'Completadas',
+                        selected: controller.filter == TaskFilter.completed,
+                        onTap: () => controller.setFilter(TaskFilter.completed),
+                      ),
+                      const SizedBox(width: 8),
+                      _FilterChip(
+                        label: 'Sin Sync',
+                        selected: controller.filter == TaskFilter.unsynced,
+                        onTap: () => controller.setFilter(TaskFilter.unsynced),
+                        isWarning: true,
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: items.isEmpty
-                      ? const Center(
-                          child: Text('No hay resultados para este filtro.'))
-                      : ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
-                          itemCount: items.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(height: 12),
-                          itemBuilder: (_, index) {
-                            final task = items[index];
-                            return _TaskCard(
-                              task: task,
-                              onComplete: task.estado == 'Hecha' ||
-                                      task.estado == 'completada'
-                                  ? null
-                                  : () => controller.markDone(task),
-                              onAssign: () async {
-                                final user =
-                                    await UserSearchSheet.show(context);
-                                if (user != null) {
-                                  // TODO: Implement assignment in controller if not already present
-                                  // controller.assignTask(task, user);
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(
-                                              'Asignado a ${user.nombreCompleto}')),
-                                    );
-                                  }
-                                }
-                              },
-                            );
-                          },
-                        ),
-                ),
               ],
             ),
+          ),
+
+          // Task List
+          Expanded(
+            child: controller.loading
+                ? const _SkeletonList()
+                : items.isEmpty
+                    ? _EmptyState(filter: controller.filter)
+                    : ListView.separated(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: items.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (_, index) {
+                          final task = items[index];
+                          return _TaskItem(
+                            task: task,
+                            onToggle: () => controller.markDone(task),
+                          );
+                        },
+                      ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _Kpis extends StatelessWidget {
-  final int pending;
-  final int unsynced;
+class _KpiHeader extends StatelessWidget {
   final int total;
+  final int pending;
+  final int completed;
+  final int unsynced;
 
-  const _Kpis(
-      {required this.pending, required this.unsynced, required this.total});
+  const _KpiHeader({
+    required this.total,
+    required this.pending,
+    required this.completed,
+    required this.unsynced,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      child: Row(
+        children: [
+          Expanded(
             child: _KpiCard(
-                label: 'Pendientes',
-                value: '$pending',
-                color: const Color(0xFFF59E0B))),
-        const SizedBox(width: 12),
-        Expanded(
+              label: 'Pendientes',
+              value: '$pending',
+              icon: CupertinoIcons.clock,
+              color: const Color(0xFFF59E0B),
+              bgColor: const Color(0xFFFFFBEB),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
             child: _KpiCard(
-                label: 'Total',
-                value: '$total',
-                color: const Color(0xFF64748B))),
-      ],
+              label: 'Completadas',
+              value: '$completed',
+              icon: CupertinoIcons.check_mark_circled,
+              color: const Color(0xFF10B981),
+              bgColor: const Color(0xFFECFDF5),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _KpiCard(
+              label: 'Total',
+              value: '$total',
+              icon: CupertinoIcons.layers_alt,
+              color: const Color(0xFF64748B),
+              bgColor: const Color(0xFFF1F5F9),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _KpiCard extends StatelessWidget {
-  const _KpiCard(
-      {required this.label, required this.value, required this.color});
-
   final String label;
   final String value;
+  final IconData icon;
   final Color color;
+  final Color bgColor;
+
+  const _KpiCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+    required this.bgColor,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: bgColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: color.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF64748B),
-                  fontWeight: FontWeight.w600)),
-          const SizedBox(height: 4),
-          Text(value,
-              style: TextStyle(
-                  fontSize: 24,
+          Row(
+            children: [
+              Icon(icon, size: 16, color: color),
+              const Spacer(),
+              Text(
+                value,
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 18,
                   fontWeight: FontWeight.w800,
                   color: color,
-                  fontFamily: 'Inter')),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: color.withValues(alpha: 0.8),
+            ),
+          ),
         ],
       ),
     );
@@ -209,243 +265,204 @@ class _KpiCard extends StatelessWidget {
 }
 
 class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final bool isWarning;
+
   const _FilterChip({
     required this.label,
     required this.selected,
     required this.onTap,
+    this.isWarning = false,
   });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ActionChip(
-        label: Text(label),
-        onPressed: onTap,
-        backgroundColor: selected ? const Color(0xFF0F172A) : Colors.white,
-        labelStyle: TextStyle(
-          color: selected ? Colors.white : const Color(0xFF64748B),
-          fontWeight: FontWeight.w600,
-          fontFamily: 'Inter',
+    final activeColor = isWarning
+        ? const Color(0xFFEF4444)
+        : const Color(0xFF0F172A); // Slate 900
+    final activeBg =
+        isWarning ? const Color(0xFFFEF2F2) : const Color(0xFF0F172A);
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? activeBg : const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? activeColor : const Color(0xFFE2E8F0),
+          ),
         ),
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: BorderSide(
-                color:
-                    selected ? Colors.transparent : const Color(0xFFE2E8F0))),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 13,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            color: selected
+                ? (isWarning ? activeColor : Colors.white)
+                : const Color(0xFF64748B),
+          ),
+        ),
       ),
     );
   }
 }
 
-class _TaskCard extends StatelessWidget {
-  const _TaskCard(
-      {required this.task, required this.onComplete, this.onAssign});
+class _TaskItem extends StatelessWidget {
+  final dynamic task; // TaskItem
+  final VoidCallback onToggle;
 
-  final TaskItem task;
-  final VoidCallback? onComplete;
-  final VoidCallback? onAssign;
+  const _TaskItem({required this.task, required this.onToggle});
 
   @override
   Widget build(BuildContext context) {
-    // Status Logic
-    final isDone = task.estado == 'Hecha' ||
-        task.estado == 'completada' ||
-        task.estado == 'Terminado';
-    final isBlocked = task.estado == 'Bloqueada';
+    // Verificamos si la tarea está completada revisando su estado
+    final bool isDone = task.estado == 'completada' || task.estado == 'Hecha';
+    final bool isSynced = task.synced;
 
-    Color statusColor = const Color(0xFF64748B);
-    Color statusBg = const Color(0xFFF1F5F9);
-
-    if (isDone) {
-      statusColor = const Color(0xFF10B981);
-      statusBg = const Color(0xFFECFDF5);
-    } else if (isBlocked) {
-      statusColor = const Color(0xFFEF4444);
-      statusBg = const Color(0xFFFEF2F2);
-    } else if (task.estado == 'En Curso' || task.estado == 'EnCurso') {
-      statusColor = const Color(0xFF3B82F6);
-      statusBg = const Color(0xFFEFF6FF);
+    String? fechaFmt;
+    if (task.fechaObjetivo != null) {
+      fechaFmt = DateFormat('d MMM', 'es_ES').format(task.fechaObjetivo!);
     }
 
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-            color: isDone
-                ? const Color(0xFF10B981).withValues(alpha: 0.2)
-                : const Color(0xFFE2E8F0)),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Material(
         color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
         child: InkWell(
-          onTap: () {},
-          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            TaskDetailSheet.show(
+              context,
+              (task as TaskItem).toMap().cast<String, dynamic>(),
+              onUpdated: () => context.read<TaskController>().loadTasks(),
+            );
+          },
+          borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top Row: ID, Priority, Status
-                Row(
-                  children: [
-                    Text(
-                      '#${task.id ?? '---'}',
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 11,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF94A3B8),
-                        letterSpacing: 0.5,
+                // Checkbox custom
+                InkWell(
+                  onTap: isDone ? null : onToggle,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color:
+                          isDone ? const Color(0xFF10B981) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isDone
+                            ? const Color(0xFF10B981)
+                            : const Color(0xFFCBD5E1),
+                        width: 2,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    // Priority Badge
-                    _PriorityBadge(priority: task.prioridad),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: statusBg,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        task.estado.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: statusColor,
-                          fontFamily: 'Inter',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 10),
-
-                Text(task.titulo,
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1E293B),
-                      height: 1.3,
-                      decoration: isDone ? TextDecoration.lineThrough : null,
-                    )),
-
-                if (task.proyectoNombre != null &&
-                    task.proyectoNombre!.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    task.proyectoNombre!.toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF64748B),
-                      fontFamily: 'Inter',
-                    ),
+                    child: isDone
+                        ? const Icon(Icons.check, size: 16, color: Colors.white)
+                        : null,
                   ),
-                ],
+                ),
+                const SizedBox(width: 16),
 
-                const SizedBox(height: 16),
-
-                // Footer: Assignee, Date, Action
-                Row(
-                  children: [
-                    // Assignee
-                    InkWell(
-                      onTap: onAssign,
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 12,
-                              backgroundColor: const Color(0xFFF1F5F9),
-                              child: Text(
-                                (task.responsableNombre ?? 'U')[0]
-                                    .toUpperCase(),
-                                style: const TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF475569)),
+                // Content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        task.titulo,
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: isDone
+                              ? const Color(0xFF94A3B8)
+                              : const Color(0xFF1E293B),
+                          decoration:
+                              isDone ? TextDecoration.lineThrough : null,
+                        ),
+                      ),
+                      if (task.descripcion.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          task.descripcion,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 13,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 8),
+                      // Meta Row
+                      Row(
+                        children: [
+                          _PriorityBadge(priority: task.prioridad),
+                          if (fechaFmt != null) ...[
+                            const SizedBox(width: 8),
+                            Row(children: [
+                              const Icon(CupertinoIcons.calendar,
+                                  size: 12, color: Color(0xFF94A3B8)),
+                              const SizedBox(width: 4),
+                              Text(fechaFmt,
+                                  style: const TextStyle(
+                                      fontSize: 11, color: Color(0xFF94A3B8))),
+                            ]),
+                          ],
+                          if (!isSynced) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFEF2F2),
+                                borderRadius: BorderRadius.circular(4),
+                                border:
+                                    Border.all(color: const Color(0xFFFECACA)),
                               ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              task.responsableNombre?.split(' ')[0] ??
-                                  'Asignar',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: task.responsableNombre != null
-                                    ? const Color(0xFF334155)
-                                    : const Color(0xFF94A3B8),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.cloud_off,
+                                      size: 10, color: Color(0xFFEF4444)),
+                                  SizedBox(width: 4),
+                                  Text('Sync',
+                                      style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFFEF4444))),
+                                ],
                               ),
                             ),
                           ],
-                        ),
-                      ),
-                    ),
-
-                    const Spacer(),
-
-                    if (task.fechaObjetivo != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.calendar_today,
-                                size: 10, color: Color(0xFF64748B)),
-                            const SizedBox(width: 4),
-                            Text(
-                              DateFormat('d MMM').format(task.fechaObjetivo!),
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF64748B),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                    if (onComplete != null) ...[
-                      const SizedBox(width: 8),
-                      SizedBox(
-                        width: 28,
-                        height: 28,
-                        child: IconButton(
-                          onPressed: onComplete,
-                          padding: EdgeInsets.zero,
-                          icon: const Icon(Icons.radio_button_unchecked,
-                              color: Color(0xFF94A3B8)),
-                          // Or use check_circle for done
-                        ),
+                        ],
                       ),
                     ],
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -457,33 +474,166 @@ class _TaskCard extends StatelessWidget {
 }
 
 class _PriorityBadge extends StatelessWidget {
-  final String priority;
+  final String priority; // Alta, Media, Baja
+
   const _PriorityBadge({required this.priority});
 
   @override
   Widget build(BuildContext context) {
     Color color;
+    Color bg;
+
     switch (priority.toLowerCase()) {
       case 'alta':
-        color = const Color(0xFFDC2626);
-        break;
-      case 'media':
-        color = const Color(0xFFF59E0B);
+        color = const Color(0xFFEF4444);
+        bg = const Color(0xFFFEF2F2);
         break;
       case 'baja':
         color = const Color(0xFF10B981);
+        bg = const Color(0xFFECFDF5);
         break;
-      default:
-        color = const Color(0xFF94A3B8);
+      default: // Media
+        color = const Color(0xFFF59E0B);
+        bg = const Color(0xFFFFFBEB);
     }
 
     return Container(
-      width: 8,
-      height: 8,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Text(
+        priority,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
       ),
     );
+  }
+}
+
+class _SkeletonList extends StatelessWidget {
+  const _SkeletonList();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: 6,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (_, __) => Container(
+        height: 80,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 150,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: 100,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  final TaskFilter filter;
+
+  const _EmptyState({required this.filter});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
+              color: MomentusTheme.slate50,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              filter == TaskFilter.completed
+                  ? CupertinoIcons.check_mark_circled
+                  : CupertinoIcons.doc_text_search,
+              size: 48,
+              color: MomentusTheme.slate300,
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'No hay tareas',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0F172A),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _getMessage(),
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              color: Color(0xFF64748B),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getMessage() {
+    switch (filter) {
+      case TaskFilter.pending:
+        return '¡Todo listo! No tienes pendientes.';
+      case TaskFilter.completed:
+        return 'Aún no has completado tareas.';
+      case TaskFilter.unsynced:
+        return 'Todas tus tareas están sincronizadas.';
+      default:
+        return 'Crea una nueva tarea para comenzar.';
+    }
   }
 }
