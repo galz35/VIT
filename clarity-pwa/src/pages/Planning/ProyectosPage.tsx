@@ -383,7 +383,6 @@ export const ProyectosPage: React.FC = () => {
                 // Filter out deleted/cancelled
                 items = filterActive(items);
 
-                const totalItems = Number(result.total ?? items.length); // Recalc total if needed? Better use items.length if we filtered
                 const lp = Number(result.lastPage ?? 1);
 
                 // Guardar siempre en listaCompleta para permitir filtrado local posterior
