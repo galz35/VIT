@@ -47,9 +47,8 @@ class MomentusButton extends StatelessWidget {
       width: width,
       height: 52,
       decoration: BoxDecoration(
-        gradient: useGradient && !isLoading 
-            ? MomentusTheme.primaryGradient 
-            : null,
+        gradient:
+            useGradient && !isLoading ? MomentusTheme.primaryGradient : null,
         color: isLoading ? MomentusTheme.slate200 : null,
         borderRadius: BorderRadius.circular(MomentusTheme.radiusMd),
         boxShadow: isLoading ? null : MomentusTheme.buttonShadow,
@@ -67,7 +66,7 @@ class MomentusButton extends StatelessWidget {
 
   Widget _buildContent(BuildContext context, bool isOnGradient) {
     final color = isOnGradient ? Colors.white : MomentusTheme.primary;
-    
+
     if (isLoading) {
       return SizedBox(
         width: 22,
@@ -75,8 +74,7 @@ class MomentusButton extends StatelessWidget {
         child: CircularProgressIndicator(
           strokeWidth: 2.5,
           valueColor: AlwaysStoppedAnimation(
-            isOutlined ? MomentusTheme.primary : MomentusTheme.slate500
-          ),
+              isOutlined ? MomentusTheme.primary : MomentusTheme.slate500),
         ),
       );
     }
@@ -167,7 +165,9 @@ class _MomentusTextFieldState extends State<MomentusTextField> {
         suffixIcon: widget.obscureText
             ? IconButton(
                 icon: Icon(
-                  _obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                  _obscure
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
                   color: MomentusTheme.slate400,
                 ),
                 onPressed: () => setState(() => _obscure = !_obscure),
@@ -241,9 +241,13 @@ class MomentusTaskCard extends StatelessWidget {
                     height: 26,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: isCompleted ? MomentusTheme.primary : Colors.transparent,
+                      color: isCompleted
+                          ? MomentusTheme.primary
+                          : Colors.transparent,
                       border: Border.all(
-                        color: isCompleted ? MomentusTheme.primary : MomentusTheme.slate300,
+                        color: isCompleted
+                            ? MomentusTheme.primary
+                            : MomentusTheme.slate300,
                         width: 2,
                       ),
                     ),
@@ -253,7 +257,7 @@ class MomentusTaskCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 14),
-                
+
                 // Contenido
                 Expanded(
                   child: Column(
@@ -261,10 +265,16 @@ class MomentusTaskCard extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          decoration: isCompleted ? TextDecoration.lineThrough : null,
-                          color: isCompleted ? MomentusTheme.slate400 : null,
-                        ),
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(
+                              decoration: isCompleted
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                              color:
+                                  isCompleted ? MomentusTheme.slate400 : null,
+                            ),
                       ),
                       if (subtitle != null) ...[
                         const SizedBox(height: 4),
@@ -280,10 +290,12 @@ class MomentusTaskCard extends StatelessWidget {
                         children: [
                           // Badge de prioridad
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
                               color: _priorityColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(MomentusTheme.radiusFull),
+                              borderRadius: BorderRadius.circular(
+                                  MomentusTheme.radiusFull),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -298,7 +310,8 @@ class MomentusTaskCard extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  priority[0].toUpperCase() + priority.substring(1),
+                                  priority[0].toUpperCase() +
+                                      priority.substring(1),
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
@@ -329,7 +342,7 @@ class MomentusTaskCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                
+
                 // Flecha
                 const Icon(
                   Icons.chevron_right_rounded,
@@ -369,7 +382,7 @@ class MomentusStatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cardColor = color ?? MomentusTheme.primary;
-    
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -393,17 +406,19 @@ class MomentusStatCard extends StatelessWidget {
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: cardColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(MomentusTheme.radiusMd),
+                        borderRadius:
+                            BorderRadius.circular(MomentusTheme.radiusMd),
                       ),
                       child: Icon(icon, color: cardColor, size: 22),
                     ),
                     const Spacer(),
                     Text(
                       value,
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: cardColor,
-                      ),
+                      style:
+                          Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: cardColor,
+                              ),
                     ),
                   ],
                 ),
@@ -458,13 +473,13 @@ class MomentusEmptyState extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(28),
               decoration: const BoxDecoration(
-                color: MomentusTheme.green50,
+                color: MomentusTheme.slate50,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
                 size: 48,
-                color: MomentusTheme.green300,
+                color: MomentusTheme.slate300,
               ),
             ),
             const SizedBox(height: 28),
@@ -556,8 +571,8 @@ class MomentusSectionHeader extends StatelessWidget {
           Text(
             title,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+                  fontWeight: FontWeight.w600,
+                ),
           ),
           if (actionText != null)
             TextButton(
@@ -589,8 +604,8 @@ class MomentusAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = backgroundColor ?? MomentusTheme.green100;
-    
+    final bgColor = backgroundColor ?? MomentusTheme.red100;
+
     return Container(
       width: size,
       height: size,
@@ -612,7 +627,7 @@ class MomentusAvatar extends StatelessWidget {
                   fontFamily: 'Inter',
                   fontWeight: FontWeight.w600,
                   fontSize: size * 0.38,
-                  color: MomentusTheme.green700,
+                  color: MomentusTheme.red900,
                 ),
               ),
             )

@@ -1,3 +1,4 @@
+import 'dart:developer';
 import '../../../core/network/cache_store.dart';
 
 /// Servicio reutilizable para patrón de lectura híbrida:
@@ -17,7 +18,9 @@ class OfflineResourceService {
       final items = await remote();
       await CacheStore.instance.save(cacheKey, items);
       return OfflineListResult(items: items, fromCache: false);
-    } catch (_) {
+    } catch (e, stack) {
+      log('⚠️ [OfflineService] Falló carga remota para $cacheKey. Usando cache.',
+          name: 'OfflineResourceService', error: e, stackTrace: stack);
       final cached = await CacheStore.instance.getList(cacheKey);
       return OfflineListResult(items: cached, fromCache: true);
     }
@@ -31,9 +34,12 @@ class OfflineResourceService {
       final map = await remote();
       await CacheStore.instance.save(cacheKey, map);
       return OfflineMapResult(data: map, fromCache: false);
-    } catch (_) {
+    } catch (e, stack) {
+      log('⚠️ [OfflineService] Falló carga remota para $cacheKey. Usando cache.',
+          name: 'OfflineResourceService', error: e, stackTrace: stack);
       final cached = await CacheStore.instance.getMap(cacheKey);
-      return OfflineMapResult(data: cached ?? <String, dynamic>{}, fromCache: true);
+      return OfflineMapResult(
+          data: cached ?? <String, dynamic>{}, fromCache: true);
     }
   }
 }

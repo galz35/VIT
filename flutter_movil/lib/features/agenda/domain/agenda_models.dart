@@ -1,4 +1,3 @@
-
 class AgendaResponse {
   final Checkin? checkinHoy;
   final List<Tarea> tareasSugeridas;
@@ -16,11 +15,24 @@ class AgendaResponse {
 
   factory AgendaResponse.fromJson(Map<String, dynamic> json) {
     return AgendaResponse(
-      checkinHoy: json['checkinHoy'] != null ? Checkin.fromJson(json['checkinHoy']) : null,
-      tareasSugeridas: (json['tareasSugeridas'] as List?)?.map((e) => Tarea.fromJson(e)).toList() ?? [],
-      backlog: (json['backlog'] as List?)?.map((e) => Tarea.fromJson(e)).toList() ?? [],
-      bloqueosActivos: (json['bloqueosActivos'] as List?)?.map((e) => Bloqueo.fromJson(e)).toList() ?? [],
-      bloqueosMeCulpan: (json['bloqueosMeCulpan'] as List?)?.map((e) => Bloqueo.fromJson(e)).toList() ?? [],
+      checkinHoy: json['checkinHoy'] != null
+          ? Checkin.fromJson(json['checkinHoy'])
+          : null,
+      tareasSugeridas: (json['tareasSugeridas'] as List?)
+              ?.map((e) => Tarea.fromJson(e))
+              .toList() ??
+          [],
+      backlog:
+          (json['backlog'] as List?)?.map((e) => Tarea.fromJson(e)).toList() ??
+              [],
+      bloqueosActivos: (json['bloqueosActivos'] as List?)
+              ?.map((e) => Bloqueo.fromJson(e))
+              .toList() ??
+          [],
+      bloqueosMeCulpan: (json['bloqueosMeCulpan'] as List?)
+              ?.map((e) => Bloqueo.fromJson(e))
+              .toList() ??
+          [],
     );
   }
 }
@@ -32,6 +44,7 @@ class Checkin {
   final String? nota;
   final String? estadoAnimo;
   final int? energia;
+  final List<CheckinTarea> tareas;
 
   Checkin({
     required this.idCheckin,
@@ -40,6 +53,7 @@ class Checkin {
     this.nota,
     this.estadoAnimo,
     this.energia,
+    this.tareas = const [],
   });
 
   factory Checkin.fromJson(Map<String, dynamic> json) {
@@ -50,6 +64,30 @@ class Checkin {
       nota: json['nota'],
       estadoAnimo: json['estadoAnimo'],
       energia: json['energia'],
+      tareas: (json['tareas'] as List?)
+              ?.map((e) => CheckinTarea.fromJson(e))
+              .toList() ??
+          [],
+    );
+  }
+}
+
+class CheckinTarea {
+  final String tipo; // 'Entrego' | 'Avanzo' | 'Extra'
+  final int idTarea;
+  final Tarea? tarea;
+
+  CheckinTarea({
+    required this.tipo,
+    required this.idTarea,
+    this.tarea,
+  });
+
+  factory CheckinTarea.fromJson(Map<String, dynamic> json) {
+    return CheckinTarea(
+      tipo: json['tipo'] ?? 'Extra',
+      idTarea: json['idTarea'] ?? 0,
+      tarea: json['tarea'] != null ? Tarea.fromJson(json['tarea']) : null,
     );
   }
 }

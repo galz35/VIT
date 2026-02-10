@@ -30,7 +30,7 @@ class _TeamBlockersScreenState extends State<TeamBlockersScreen> {
     return _offlineService.loadList(
       cacheKey: 'team_blockers',
       remote: () async {
-        final response = await ApiClient.dio.get('/equipo/bloqueos');
+        final response = await ApiClient.dio.get('equipo/bloqueos');
         return unwrapApiList(response.data);
       },
     );
@@ -44,9 +44,11 @@ class _TeamBlockersScreenState extends State<TeamBlockersScreen> {
 
   List<dynamic> _applyFilter(List<dynamic> blockers) {
     if (_filter == 'Todos') return blockers;
-    
+
     return blockers.where((b) {
-      final estado = (b['estado'] ?? b['activo']?.toString() ?? 'activo').toString().toLowerCase();
+      final estado = (b['estado'] ?? b['activo']?.toString() ?? 'activo')
+          .toString()
+          .toLowerCase();
       if (_filter == 'Activos') {
         return estado.contains('activ') || estado == 'true' || estado == '1';
       } else {
@@ -80,15 +82,17 @@ class _TeamBlockersScreenState extends State<TeamBlockersScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
-                _filterChip('Activos', Icons.warning_amber_rounded, MomentusTheme.error),
+                _filterChip('Activos', Icons.warning_amber_rounded,
+                    MomentusTheme.error),
                 const SizedBox(width: 8),
-                _filterChip('Resueltos', Icons.check_circle_outline, MomentusTheme.success),
+                _filterChip('Resueltos', Icons.check_circle_outline,
+                    MomentusTheme.success),
                 const SizedBox(width: 8),
                 _filterChip('Todos', Icons.list, MomentusTheme.slate500),
               ],
             ),
           ),
-          
+
           // Lista de bloqueos
           Expanded(
             child: RefreshIndicator(
@@ -110,7 +114,7 @@ class _TeamBlockersScreenState extends State<TeamBlockersScreen> {
 
                   final result = snapshot.data!;
                   final blockers = _applyFilter(result.items);
-                  
+
                   // Actualizar estado de caché
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (mounted && _fromCache != result.fromCache) {
@@ -120,14 +124,14 @@ class _TeamBlockersScreenState extends State<TeamBlockersScreen> {
 
                   if (blockers.isEmpty) {
                     return _buildEmptyState(
-                      icon: _filter == 'Activos' 
-                          ? Icons.celebration 
+                      icon: _filter == 'Activos'
+                          ? Icons.celebration
                           : Icons.search_off,
-                      message: _filter == 'Activos' 
-                          ? '¡Sin bloqueos activos!' 
+                      message: _filter == 'Activos'
+                          ? '¡Sin bloqueos activos!'
                           : 'No hay bloqueos',
-                      subtitle: _filter == 'Activos' 
-                          ? 'El equipo está trabajando sin impedimentos' 
+                      subtitle: _filter == 'Activos'
+                          ? 'El equipo está trabajando sin impedimentos'
                           : 'Prueba cambiando el filtro',
                     );
                   }
@@ -135,7 +139,8 @@ class _TeamBlockersScreenState extends State<TeamBlockersScreen> {
                   return ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: blockers.length,
-                    itemBuilder: (context, index) => _buildBlockerCard(blockers[index]),
+                    itemBuilder: (context, index) =>
+                        _buildBlockerCard(blockers[index]),
                   );
                 },
               ),
@@ -148,7 +153,7 @@ class _TeamBlockersScreenState extends State<TeamBlockersScreen> {
 
   Widget _filterChip(String label, IconData icon, Color color) {
     final isSelected = _filter == label;
-    
+
     return FilterChip(
       selected: isSelected,
       label: Row(
@@ -185,8 +190,8 @@ class _TeamBlockersScreenState extends State<TeamBlockersScreen> {
             Text(
               message,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: MomentusTheme.slate600,
-              ),
+                    color: MomentusTheme.slate600,
+                  ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -201,14 +206,21 @@ class _TeamBlockersScreenState extends State<TeamBlockersScreen> {
   }
 
   Widget _buildBlockerCard(Map<String, dynamic> blocker) {
-    final titulo = blocker['titulo']?.toString() ?? blocker['descripcion']?.toString() ?? 'Sin descripción';
-    final usuario = blocker['usuarioNombre']?.toString() ?? blocker['usuario']?.toString() ?? 'Usuario';
-    final fecha = blocker['fechaCreacion']?.toString() ?? blocker['fecha']?.toString() ?? '-';
-    final estado = blocker['estado']?.toString() ?? (blocker['activo'] == true ? 'Activo' : 'Resuelto');
-    
-    final isActive = estado.toLowerCase().contains('activ') || 
-                     blocker['activo'] == true || 
-                     blocker['activo'] == 1;
+    final titulo = blocker['titulo']?.toString() ??
+        blocker['descripcion']?.toString() ??
+        'Sin descripción';
+    final usuario = blocker['usuarioNombre']?.toString() ??
+        blocker['usuario']?.toString() ??
+        'Usuario';
+    final fecha = blocker['fechaCreacion']?.toString() ??
+        blocker['fecha']?.toString() ??
+        '-';
+    final estado = blocker['estado']?.toString() ??
+        (blocker['activo'] == true ? 'Activo' : 'Resuelto');
+
+    final isActive = estado.toLowerCase().contains('activ') ||
+        blocker['activo'] == true ||
+        blocker['activo'] == 1;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -217,7 +229,9 @@ class _TeamBlockersScreenState extends State<TeamBlockersScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(MomentusTheme.radiusLg),
         border: Border.all(
-          color: isActive ? MomentusTheme.error.withValues(alpha: 0.3) : MomentusTheme.slate200,
+          color: isActive
+              ? MomentusTheme.error.withValues(alpha: 0.3)
+              : MomentusTheme.slate200,
           width: isActive ? 2 : 1,
         ),
         boxShadow: MomentusTheme.cardShadow,
@@ -231,8 +245,8 @@ class _TeamBlockersScreenState extends State<TeamBlockersScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: isActive 
-                      ? MomentusTheme.error.withValues(alpha: 0.1) 
+                  color: isActive
+                      ? MomentusTheme.error.withValues(alpha: 0.1)
                       : MomentusTheme.success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -265,10 +279,11 @@ class _TeamBlockersScreenState extends State<TeamBlockersScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isActive 
-                      ? MomentusTheme.error.withValues(alpha: 0.1) 
+                  color: isActive
+                      ? MomentusTheme.error.withValues(alpha: 0.1)
                       : MomentusTheme.success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -277,15 +292,16 @@ class _TeamBlockersScreenState extends State<TeamBlockersScreen> {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: isActive ? MomentusTheme.error : MomentusTheme.success,
+                    color:
+                        isActive ? MomentusTheme.error : MomentusTheme.success,
                   ),
                 ),
               ),
             ],
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // Descripción
           Text(
             titulo,
@@ -305,7 +321,7 @@ class _TeamBlockersScreenState extends State<TeamBlockersScreen> {
       final date = DateTime.parse(dateStr);
       final now = DateTime.now();
       final diff = now.difference(date);
-      
+
       if (diff.inDays == 0) {
         return 'Hoy ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
       } else if (diff.inDays == 1) {

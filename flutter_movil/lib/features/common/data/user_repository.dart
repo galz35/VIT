@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_utils.dart';
 import '../domain/empleado.dart';
 
 class UserRepository {
@@ -9,10 +11,12 @@ class UserRepository {
 
   Future<List<Empleado>> search(String query) async {
     try {
-      final response = await ApiClient.dio.get('/acceso/empleados/buscar', queryParameters: {'q': query, 'limit': 10});
-      final list = response.data as List;
+      final response = await ApiClient.dio.get('acceso/empleados/buscar',
+          queryParameters: {'q': query, 'limit': 10});
+      final list = unwrapApiList(response.data);
       return list.map((e) => Empleado.fromJson(e)).toList();
     } catch (e) {
+      debugPrint('❌ Error searching users: $e');
       return [];
     }
   }
@@ -35,15 +39,17 @@ class UserRepository {
     list.insert(0, empleado);
     // Limitar a 5
     if (list.length > 5) list.removeLast();
-    
-    final str = jsonEncode(list.map((e) => {
-      'idUsuario': e.idUsuario,
-      'nombreCompleto': e.nombreCompleto,
-      'carnet': e.carnet,
-      'cargo': e.cargo,
-      'area': e.area,
-    }).toList());
-    
+
+    final str = jsonEncode(list
+        .map((e) => {
+              'idUsuario': e.idUsuario,
+              'nombreCompleto': e.nombreCompleto,
+              'carnet': e.carnet,
+              'cargo': e.cargo,
+              'area': e.area,
+            })
+        .toList());
+
     await _storage.write(key: _recentsKey, value: str);
   }
 }

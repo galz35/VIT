@@ -51,7 +51,9 @@ export class TasksService {
         const hasAccess = await this.visibilidadService.verificarAccesoPorId(managerId, subordinateId);
 
         if (!hasAccess) {
-            console.warn(`[TasksService] Access Denied: Manager ${managerId} -> Subordinate ${subordinateId}`);
+            const mCarnet = await this.visibilidadService.obtenerCarnetPorId(managerId);
+            const sCarnet = await this.visibilidadService.obtenerCarnetPorId(subordinateId);
+            console.warn(`[TasksService] Access Denied: Manager #${managerId} (${mCarnet || 'N/A'}) -> Subordinate #${subordinateId} (${sCarnet || 'N/A'})`);
         }
 
         return hasAccess;

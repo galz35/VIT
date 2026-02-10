@@ -46,3 +46,23 @@ debug/
 # AWS Keys
 *.pem
 *.ppk
+
+# Flutter / Dart
+**/build/
+**/*.apk
+**/*.aab
+**/*.ipa
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/GeneratedPluginRegistrant.*
+**/android/local.properties
+**/android/key.properties
+**/*.jks
+**/*.keystore

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import '../../projects/data/projects_repository.dart';
 
@@ -8,7 +7,8 @@ class CreateProjectSheet extends StatefulWidget {
 
   const CreateProjectSheet({super.key, this.onCreated, this.project});
 
-  static Future<void> show(BuildContext context, {VoidCallback? onCreated, Map<String, dynamic>? project}) {
+  static Future<void> show(BuildContext context,
+      {VoidCallback? onCreated, Map<String, dynamic>? project}) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -33,7 +33,7 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
   final _nameCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
   final _repo = ProjectsRepository();
-  
+
   final _tipos = ['Administrativo', 'Logistica', 'Estrategico', 'AMX', 'Otros'];
   String _tipo = 'Administrativo';
   bool _saving = false;
@@ -61,7 +61,9 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
   Future<void> _save() async {
     if (_nameCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('El nombre es obligatorio'), backgroundColor: Colors.red),
+        const SnackBar(
+            content: Text('El nombre es obligatorio'),
+            backgroundColor: Colors.red),
       );
       return;
     }
@@ -78,20 +80,25 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
           'tipo': _tipo,
         });
         if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Proyecto actualizado'), backgroundColor: Colors.green),
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Proyecto actualizado'),
+                backgroundColor: Colors.black87),
           );
         }
       } else {
         // Create
         await _repo.createProject(
           nombre: _nameCtrl.text.trim(),
-          descripcion: _descCtrl.text.trim().isNotEmpty ? _descCtrl.text.trim() : null,
+          descripcion:
+              _descCtrl.text.trim().isNotEmpty ? _descCtrl.text.trim() : null,
           tipo: _tipo,
         );
         if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Proyecto creado con éxito!'), backgroundColor: Colors.green),
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Proyecto creado con éxito!'),
+                backgroundColor: Colors.green),
           );
         }
       }
@@ -115,7 +122,8 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
     final isEditing = widget.project != null;
 
     return Container(
-      padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
+      padding: EdgeInsets.fromLTRB(
+          24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -128,21 +136,28 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
             // Handle
             Center(
               child: Container(
-                width: 40, 
-                height: 4, 
-                decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2)),
               ),
             ),
             const SizedBox(height: 20),
 
             Text(
               isEditing ? 'Editar Proyecto' : 'Nuevo Proyecto',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, fontFamily: 'Inter'),
+              style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Inter'),
             ),
             const SizedBox(height: 24),
 
             // Nombre
-            const Text('Nombre del Proyecto *', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey)),
+            const Text('Nombre del Proyecto *',
+                style:
+                    TextStyle(fontWeight: FontWeight.w600, color: Colors.grey)),
             const SizedBox(height: 8),
             TextField(
               controller: _nameCtrl,
@@ -150,13 +165,17 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
                 hintText: 'Ej. Implementación Q1',
                 filled: true,
                 fillColor: Colors.grey[100],
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none),
               ),
             ),
             const SizedBox(height: 16),
 
             // Tipo
-            const Text('Tipo', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey)),
+            const Text('Tipo',
+                style:
+                    TextStyle(fontWeight: FontWeight.w600, color: Colors.grey)),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -178,7 +197,9 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
             const SizedBox(height: 16),
 
             // Descripción
-            const Text('Descripción', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey)),
+            const Text('Descripción',
+                style:
+                    TextStyle(fontWeight: FontWeight.w600, color: Colors.grey)),
             const SizedBox(height: 8),
             TextField(
               controller: _descCtrl,
@@ -187,7 +208,9 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
                 hintText: 'Detalles opcionales...',
                 filled: true,
                 fillColor: Colors.grey[100],
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none),
               ),
             ),
             const SizedBox(height: 32),
@@ -199,11 +222,17 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
                 backgroundColor: const Color(0xFF0F172A),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
-              child: _saving 
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : Text(isEditing ? 'GUARDAR CAMBIOS' : 'CREAR PROYECTO', style: const TextStyle(fontWeight: FontWeight.bold)),
+              child: _saving
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2))
+                  : Text(isEditing ? 'GUARDAR CAMBIOS' : 'CREAR PROYECTO',
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         ),

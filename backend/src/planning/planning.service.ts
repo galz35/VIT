@@ -166,7 +166,7 @@ export class PlanningService {
         }
 
         // Si falló todo
-        console.warn(`[Access Denied] User ${idSolicitante} tried to access Task ${tarea.idTarea} (Project ${tarea.idProyecto}). Role: ${user?.rolGlobal}`);
+        console.warn(`[Access Denied] User #${idSolicitante} (${user?.carnet || 'No Carnet'}) tried to access Task ${tarea.idTarea} (Project ${tarea.idProyecto ?? 'N/A'}). Role: ${user?.rolGlobal}`);
         throw new ForbiddenException(`No tienes permisos para ver/editar esta tarea (Restringido por Jerarquía y Proyecto: ${tarea.idProyecto || 'N/A'}).`);
         */
     }

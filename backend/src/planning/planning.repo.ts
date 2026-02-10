@@ -157,9 +157,10 @@ export async function actualizarDatosProyecto(idProyecto: number, updates: Parti
 
 export async function eliminarProyecto(idProyecto: number, forceCascade: boolean = false) {
     // FORCE SOFT DELETE (No se usa el SP para evitar borrado físico)
+    // FIX: Removed 'activo' column update as it doesn't exist in p_Proyectos
     await ejecutarQuery(`
         UPDATE p_Proyectos 
-        SET estado = 'Cancelado', activo = 0 
+        SET estado = 'Cancelado'
         WHERE idProyecto = @idProyecto
     `, {
         idProyecto: { valor: idProyecto, tipo: Int }
@@ -167,9 +168,10 @@ export async function eliminarProyecto(idProyecto: number, forceCascade: boolean
 }
 
 export async function restaurarProyecto(idProyecto: number) {
+    // FIX: Removed 'activo' column update as it doesn't exist in p_Proyectos
     await ejecutarQuery(`
         UPDATE p_Proyectos 
-        SET estado = 'Activo', activo = 1 
+        SET estado = 'Activo'
         WHERE idProyecto = @idProyecto
     `, {
         idProyecto: { valor: idProyecto, tipo: Int }

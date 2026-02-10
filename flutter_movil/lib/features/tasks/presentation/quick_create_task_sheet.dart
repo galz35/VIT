@@ -17,6 +17,20 @@ class QuickCreateTaskSheet extends StatefulWidget {
 
   const QuickCreateTaskSheet({super.key, this.preSelectedProject});
 
+  static Future<void> show(BuildContext context,
+      {VoidCallback? onCreated}) async {
+    final result = await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const QuickCreateTaskSheet(),
+    );
+
+    if (result == true && onCreated != null) {
+      onCreated();
+    }
+  }
+
   @override
   State<QuickCreateTaskSheet> createState() => _QuickCreateTaskSheetState();
 }

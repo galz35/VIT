@@ -25,8 +25,7 @@ class ApiClient {
       sendTimeout: const Duration(seconds: 15),
       headers: {'Content-Type': 'application/json'},
     ),
-  )
-    ..interceptors.add(
+  )..interceptors.add(
       InterceptorsWrapper(
         // ==========================================
         // REQUEST
@@ -69,11 +68,17 @@ class ApiClient {
           }
 
           try {
-            final refreshResponse = await dio.post('/auth/refresh', data: {'refreshToken': refresh});
+            final refreshResponse =
+                await dio.post('auth/refresh', data: {'refreshToken': refresh});
             final data = refreshResponse.data as Map<String, dynamic>;
             final payload = (data['data'] ?? data) as Map<String, dynamic>;
-            final newAccess = (payload['access_token'] ?? payload['accessToken'] ?? payload['token'] ?? '') as String;
-            final newRefresh = (payload['refresh_token'] ?? payload['refreshToken'] ?? refresh) as String;
+            final newAccess = (payload['access_token'] ??
+                payload['accessToken'] ??
+                payload['token'] ??
+                '') as String;
+            final newRefresh = (payload['refresh_token'] ??
+                payload['refreshToken'] ??
+                refresh) as String;
 
             if (newAccess.isEmpty) {
               handler.next(error);

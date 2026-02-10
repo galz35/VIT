@@ -18,21 +18,27 @@ class AuthRepository {
   static const _keyUserName = 'momentus_user_name';
   static const _keyUserMail = 'momentus_user_mail';
 
-  Future<SessionUser> login({required String correo, required String password}) async {
-    final response = await _dio.post('/auth/login', data: {
+  Future<SessionUser> login(
+      {required String correo, required String password}) async {
+    final response = await _dio.post('auth/login', data: {
       'correo': correo,
       'password': password,
     });
 
     final rawData = response.data as Map<String, dynamic>;
-    
+
     // La API envuelve la respuesta en { success: true, data: {...} }
     final data = (rawData['data'] ?? rawData) as Map<String, dynamic>;
-    
+
     // La API usa snake_case: access_token, refresh_token
-    final accessToken = (data['access_token'] ?? data['accessToken'] ?? data['token'] ?? '') as String;
-    final refreshToken = (data['refresh_token'] ?? data['refreshToken'] ?? '') as String;
-    final usuario = (data['user'] ?? data['usuario'] ?? <String, dynamic>{}) as Map<String, dynamic>;
+    final accessToken = (data['access_token'] ??
+        data['accessToken'] ??
+        data['token'] ??
+        '') as String;
+    final refreshToken =
+        (data['refresh_token'] ?? data['refreshToken'] ?? '') as String;
+    final usuario = (data['user'] ?? data['usuario'] ?? <String, dynamic>{})
+        as Map<String, dynamic>;
 
     final user = SessionUser(
       id: (usuario['idUsuario'] ?? usuario['id'] ?? 0) as int,

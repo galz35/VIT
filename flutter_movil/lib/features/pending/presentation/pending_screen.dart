@@ -1,11 +1,12 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_utils.dart';
 import '../../common/data/offline_resource_service.dart';
-import '../../home/presentation/home_shell.dart';
+import '../../home/presentation/home_shell.dart'; // MomentusAppBar
 import '../../tasks/presentation/task_detail_sheet.dart';
+import '../../../core/theme/app_theme.dart';
 
 class PendingScreen extends StatefulWidget {
   const PendingScreen({super.key});
@@ -32,7 +33,8 @@ class _PendingScreenState extends State<PendingScreen> {
     return _offline.loadList(
       cacheKey: _cacheKey,
       remote: () async {
-        final response = await ApiClient.dio.get('/tareas/mias', queryParameters: {'estado': 'Pendiente'});
+        final response = await ApiClient.dio
+            .get('tareas/mias', queryParameters: {'estado': 'Pendiente'});
         return unwrapApiList(response.data);
       },
     );
@@ -54,14 +56,17 @@ class _PendingScreenState extends State<PendingScreen> {
       if (_query.isNotEmpty) {
         final titulo = (task['titulo'] ?? '').toString().toLowerCase();
         final desc = (task['descripcion'] ?? '').toString().toLowerCase();
-        if (!titulo.contains(_query.toLowerCase()) && !desc.contains(_query.toLowerCase())) {
+        if (!titulo.contains(_query.toLowerCase()) &&
+            !desc.contains(_query.toLowerCase())) {
           return false;
         }
       }
 
       if (_filterDate == 'Todas') return true;
 
-      final fechaStr = (task['fechaVencimiento'] ?? task['fecha_vencimiento'] ?? '').toString();
+      final fechaStr =
+          (task['fechaVencimiento'] ?? task['fecha_vencimiento'] ?? '')
+              .toString();
       if (fechaStr.isEmpty) return _filterDate == 'Todas';
 
       final fecha = DateTime.tryParse(fechaStr);
@@ -72,8 +77,8 @@ class _PendingScreenState extends State<PendingScreen> {
       if (_filterDate == 'Hoy') {
         return fechaDate.isAtSameMomentAs(today);
       } else if (_filterDate == 'Esta semana') {
-        return fechaDate.isAfter(today.subtract(const Duration(days: 1))) && 
-               fechaDate.isBefore(weekEnd);
+        return fechaDate.isAfter(today.subtract(const Duration(days: 1))) &&
+            fechaDate.isBefore(weekEnd);
       } else if (_filterDate == 'Atrasadas') {
         return fechaDate.isBefore(today);
       }
@@ -89,7 +94,8 @@ class _PendingScreenState extends State<PendingScreen> {
     final previousFuture = _future;
     setState(() {
       _future = _future.then((data) {
-        final newItems = List<dynamic>.from(data.items)..removeWhere((t) => (t['idTarea'] ?? t['id']) == id);
+        final newItems = List<dynamic>.from(data.items)
+          ..removeWhere((t) => (t['idTarea'] ?? t['id']) == id);
         return OfflineListResult(items: newItems, fromCache: data.fromCache);
       });
     });
@@ -106,11 +112,9 @@ class _PendingScreenState extends State<PendingScreen> {
                 Text('Tarea completada'),
               ],
             ),
-            backgroundColor: Color(0xFF10B981),
+            backgroundColor: MomentusTheme.slate900,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
             duration: Duration(seconds: 2),
-            // Sin acción Undo por ahora para simplificar const
           ),
         );
       }
@@ -136,28 +140,10 @@ class _PendingScreenState extends State<PendingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.menu_rounded, color: Color(0xFF64748B)),
-          onPressed: () => HomeShell.scaffoldKey.currentState?.openDrawer(),
-          tooltip: 'Menú',
-        ),
-        title: const Text(
-          'Mis Pendientes',
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF0F172A),
-            fontSize: 18,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: false,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(color: const Color(0xFFE2E8F0), height: 1),
-        ),
+      // Usamos MomentusAppBar para header consistente y menú de perfil
+      appBar: const MomentusAppBar(
+        title: 'Mis Pendientes',
+        subtitle: 'Gestión personal de tareas',
       ),
       body: FutureBuilder<OfflineListResult>(
         future: _future,
@@ -167,12 +153,12 @@ class _PendingScreenState extends State<PendingScreen> {
           }
 
           final data = snapshot.data;
-          
+
           if (data == null && snapshot.hasError) {
-             return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(child: Text('Error: ${snapshot.error}'));
           }
           if (data == null) {
-             return const Center(child: CircularProgressIndicator()); 
+            return const Center(child: CircularProgressIndicator());
           }
 
           final pending = _filter(data.items);
@@ -181,7 +167,7 @@ class _PendingScreenState extends State<PendingScreen> {
             children: [
               Container(
                 color: Colors.white,
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 child: Column(
                   children: [
                     TextField(
@@ -190,14 +176,16 @@ class _PendingScreenState extends State<PendingScreen> {
                       decoration: InputDecoration(
                         hintText: 'Buscar tarea...',
                         hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
-                        prefixIcon: const Icon(CupertinoIcons.search, color: Color(0xFF94A3B8), size: 20),
+                        prefixIcon: const Icon(CupertinoIcons.search,
+                            color: Color(0xFF94A3B8), size: 20),
                         filled: true,
                         fillColor: const Color(0xFFF1F5F9),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -218,15 +206,13 @@ class _PendingScreenState extends State<PendingScreen> {
                   ],
                 ),
               ),
-              
               const SizedBox(height: 1),
-
               Expanded(
                 child: pending.isEmpty
-                    ? const _PendingEmptyState() // Extracted custom widget for const constructor
+                    ? const _PendingEmptyState()
                     : RefreshIndicator(
                         onRefresh: _refresh,
-                        color: const Color(0xFF059669),
+                        color: MomentusTheme.primary,
                         child: ListView.builder(
                           padding: const EdgeInsets.all(16),
                           itemCount: pending.length,
@@ -249,10 +235,11 @@ class _PendingScreenState extends State<PendingScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9), 
+          color: isSelected ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? const Color(0xFF0F172A) : const Color(0xFFE2E8F0),
+            color:
+                isSelected ? const Color(0xFF0F172A) : const Color(0xFFE2E8F0),
           ),
         ),
         child: Text(
@@ -270,10 +257,12 @@ class _PendingScreenState extends State<PendingScreen> {
 
   Widget _buildTaskItem(Map<String, dynamic> item) {
     final titulo = (item['titulo'] ?? 'Sin título').toString();
-    final proyecto = item['proyecto']?['nombre'] ?? item['nombreProyecto']; 
-    final fechaRaw = (item['fechaVencimiento'] ?? item['fecha_vencimiento'] ?? '').toString();
+    final proyecto = item['proyecto']?['nombre'] ?? item['nombreProyecto'];
+    final fechaRaw =
+        (item['fechaVencimiento'] ?? item['fecha_vencimiento'] ?? '')
+            .toString();
     String? fechaFmt;
-    
+
     if (fechaRaw.isNotEmpty) {
       final date = DateTime.tryParse(fechaRaw);
       if (date != null) {
@@ -288,7 +277,8 @@ class _PendingScreenState extends State<PendingScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.04), // Dynamic value, ok for non-const
+            color: const Color(0xFF0F172A)
+                .withValues(alpha: 0.04), // Consistent custom shadow
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -308,8 +298,14 @@ class _PendingScreenState extends State<PendingScreen> {
                 child: Checkbox(
                   value: false,
                   onChanged: (_) => _markDone(item),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                  activeColor: const Color(0xFF10B981),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6)),
+                  fillColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) {
+                      return MomentusTheme.primary;
+                    }
+                    return Colors.transparent;
+                  }),
                   side: const BorderSide(color: Color(0xFFCBD5E1), width: 2),
                 ),
               ),
@@ -343,7 +339,8 @@ class _PendingScreenState extends State<PendingScreen> {
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          const Icon(CupertinoIcons.calendar, size: 12, color: Color(0xFF94A3B8)),
+                          const Icon(CupertinoIcons.calendar,
+                              size: 12, color: Color(0xFF94A3B8)),
                           const SizedBox(width: 4),
                           Text(
                             fechaFmt,
@@ -358,7 +355,8 @@ class _PendingScreenState extends State<PendingScreen> {
                   ],
                 ),
               ),
-              const Icon(CupertinoIcons.chevron_right, size: 16, color: Color(0xFFCBD5E1)),
+              const Icon(CupertinoIcons.chevron_right,
+                  size: 16, color: Color(0xFFCBD5E1)),
             ],
           ),
         ),
@@ -368,9 +366,12 @@ class _PendingScreenState extends State<PendingScreen> {
 
   Widget _buildSkeleton() {
     Widget box(double w, double h) => Container(
-      width: w, height: h,
-      decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(8)),
-    );
+          width: w,
+          height: h,
+          decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(8)),
+        );
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -379,8 +380,7 @@ class _PendingScreenState extends State<PendingScreen> {
         const SizedBox(height: 16),
         box(double.infinity, 40),
         const SizedBox(height: 24),
-        for (int i = 0; i < 5; i++)
-          const _SkeletonItem() // Extracted for const
+        for (int i = 0; i < 5; i++) const _SkeletonItem()
       ],
     );
   }
@@ -398,10 +398,11 @@ class _PendingEmptyState extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: const BoxDecoration(
-              color: Color(0xFFECFDF5),
+              color: MomentusTheme.slate50,
               shape: BoxShape.circle,
             ),
-            child: const Icon(CupertinoIcons.check_mark, size: 48, color: Color(0xFF059669)),
+            child: const Icon(CupertinoIcons.check_mark,
+                size: 48, color: MomentusTheme.slate300),
           ),
           const SizedBox(height: 24),
           const Text(
@@ -434,9 +435,12 @@ class _SkeletonItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget box(double w, double h) => Container(
-      width: w, height: h,
-      decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(8)),
-    );
+          width: w,
+          height: h,
+          decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(8)),
+        );
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -444,12 +448,14 @@ class _SkeletonItem extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF1F5F9)), // Use const color
+        border: Border.all(color: const Color(0xFFF1F5F9)),
       ),
       child: Row(children: [
         box(24, 24),
         const SizedBox(width: 16),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Expanded(
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           box(150, 16),
           const SizedBox(height: 8),
           box(100, 12),

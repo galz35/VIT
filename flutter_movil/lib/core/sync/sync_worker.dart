@@ -18,28 +18,29 @@ class SyncWorker {
   final _localSource = TaskLocalDataSource();
   final _storage = const FlutterSecureStorage();
   final _connectivity = Connectivity();
-  
+
   StreamSubscription? _subscription;
   bool _isSyncing = false;
 
   /// Inicia el worker de sincronización
   void initialize() {
     log('🔄 SyncWorker: Inicializando...', name: 'Sync');
-    
+
     try {
       // 1. Intentar sincronizar al inicio si hay red
       // Usamos un Future.microtask para no bloquear el hilo principal durante el arranque
       Future.microtask(() => _checkAndSync().catchError((e) {
-        log('⚠️ Error inicial en SyncWorker check: $e', name: 'Sync');
-      }));
+            log('⚠️ Error inicial en SyncWorker check: $e', name: 'Sync');
+          }));
 
       // 2. Escuchar cambios de red
       _subscription = _connectivity.onConnectivityChanged.listen((result) {
         try {
-          if (result.contains(ConnectivityResult.mobile) || 
+          if (result.contains(ConnectivityResult.mobile) ||
               result.contains(ConnectivityResult.wifi)) {
-             log('🌐 SyncWorker: Conexión detectada, iniciando sync...', name: 'Sync');
-             _checkAndSync();
+            log('🌐 SyncWorker: Conexión detectada, iniciando sync...',
+                name: 'Sync');
+            _checkAndSync();
           }
         } catch (e) {
           log('⚠️ Error procesando cambio de red: $e', name: 'Sync');
@@ -67,7 +68,7 @@ class SyncWorker {
     try {
       // === FASE 1: PUSH (Subir cambios locales) ===
       final pendingEvents = await _localSource.getPendingSyncEvents();
-      
+
       final token = await _storage.read(key: 'momentus_access_token');
       if (token == null) {
         log('⚠️ SyncWorker: No hay token, abortando sync', name: 'Sync');
@@ -80,12 +81,13 @@ class SyncWorker {
       dio.options.headers['Authorization'] = 'Bearer $token';
 
       if (pendingEvents.isNotEmpty) {
-        log('🔄 SyncWorker: Procesando ${pendingEvents.length} eventos pendientes...', name: 'Sync');
+        log('🔄 SyncWorker: Procesando ${pendingEvents.length} eventos pendientes...',
+            name: 'Sync');
 
         for (final event in pendingEvents) {
           final id = event['id'] as int;
           final attempts = (event['sync_attempts'] as int? ?? 0) + 1;
-          
+
           try {
             await _processEvent(dio, event);
             await _localSource.removeSyncEvent(id);
@@ -102,13 +104,13 @@ class SyncWorker {
       }
 
       // === FASE 2: PULL (Descargar datos nuevos del servidor) ===
-      log('⬇️ SyncWorker: Descargando datos frescos del servidor...', name: 'Sync');
+      log('⬇️ SyncWorker: Descargando datos frescos del servidor...',
+          name: 'Sync');
       await _pullFreshData(dio);
 
       // Notificar a los listeners que hay datos nuevos
       _onSyncCompleteController.add(null);
       log('✅ SyncWorker: Sincronización completa (Push + Pull)', name: 'Sync');
-
     } catch (e) {
       log('❌ Error general en SyncWorker: $e', name: 'Sync');
     } finally {
@@ -120,12 +122,12 @@ class SyncWorker {
   Future<void> _pullFreshData(Dio dio) async {
     try {
       // Obtener tareas del usuario actual
-      final response = await dio.get('/tasks/me');
-      
+      final response = await dio.get('tasks/me');
+
       if (response.statusCode == 200) {
         final tasks = response.data as List<dynamic>? ?? [];
         log('⬇️ Recibidas ${tasks.length} tareas del servidor', name: 'Sync');
-        
+
         // Aquí podrías actualizar la BD local con las tareas frescas
         // Por ahora solo logueamos; la implementación completa requiere
         // lógica de merge (conflictos, timestamps, etc.)
@@ -139,15 +141,58 @@ class SyncWorker {
   Future<void> _processEvent(Dio dio, Map<String, dynamic> event) async {
     final entidad = event['entidad'] as String;
     final operacion = event['operacion'] as String;
-    final payload = jsonDecode(event['payload'] as String) as Map<String, dynamic>;
+    final payload =
+        jsonDecode(event['payload'] as String) as Map<String, dynamic>;
 
     // Mapeo de operaciones a endpoints
     if (entidad == 'task') {
       if (operacion == 'create') {
-        await dio.post('/tasks', data: payload);
+        // Filtrar payload para evitar errores 400 por campos no permitidos (strict validation)
+        final allowedKeys = [
+          'titulo',
+          'prioridad',
+          'esfuerzo',
+          'tipo',
+          'descripcion',
+          'idProyecto',
+          'idResponsable',
+          'fechaObjetivo',
+          'comportamiento',
+          'fechaInicioPlanificada',
+          'idTareaPadre',
+          'linkEvidencia',
+          'idUsuario'
+        ];
+        final cleanPayload = Map<String, dynamic>.from(payload)
+          ..removeWhere((key, value) => !allowedKeys.contains(key));
+
+        await dio.post('tasks', data: cleanPayload);
       } else if (operacion == 'update') {
         final id = event['entidad_id'];
-        await dio.put('/tasks/$id', data: payload);
+
+        // Filtrar payload para update
+        final allowedKeys = [
+          'titulo',
+          'estado',
+          'prioridad',
+          'progreso',
+          'esfuerzo',
+          'tipo',
+          'fechaInicioPlanificada',
+          'fechaObjetivo',
+          'descripcion',
+          'motivo',
+          'motivoBloqueo',
+          'alcance',
+          'comentario',
+          'linkEvidencia',
+          'idTareaPadre',
+          'idResponsable'
+        ];
+        final cleanPayload = Map<String, dynamic>.from(payload)
+          ..removeWhere((key, value) => !allowedKeys.contains(key));
+
+        await dio.put('tasks/$id', data: cleanPayload);
       }
     }
     // Agregar más entidades aquí si es necesario

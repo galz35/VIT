@@ -1,70 +1,31 @@
-
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 
 import '../../agenda/domain/agenda_models.dart';
 import 'agenda_controller.dart';
 import '../../home/presentation/home_shell.dart';
-import '../../tasks/presentation/task_detail_sheet.dart';
-import '../../../core/network/api_client.dart';
-import '../../dashboard/presentation/dashboard_tab.dart';
+import '../../auth/presentation/auth_controller.dart';
+import '../../tasks/presentation/quick_create_task_sheet.dart';
+import '../../../core/theme/app_theme.dart'; // Import AppTheme
 
 class AgendaScreen extends StatelessWidget {
   const AgendaScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        backgroundColor: Colors.white, // Fondo blanco para less "gris"
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.menu_rounded, color: Color(0xFF1E293B)),
-            onPressed: () => HomeShell.scaffoldKey.currentState?.openDrawer(),
-          ),
-          title: const Text(
-            'Mi Día',
-            style: TextStyle(
-              fontFamily: 'Inter',
-              color: Color(0xFF0F172A),
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-            ),
-          ),
-          bottom: const TabBar(
-            labelColor: Color(0xFF6366F1), // Indigo 500
-            unselectedLabelColor: Color(0xFF94A3B8), // Slate 400
-            indicatorColor: Color(0xFF6366F1),
-            indicatorWeight: 3,
-            labelStyle: TextStyle(
-              fontFamily: 'Inter',
-              fontWeight: FontWeight.w700,
-              fontSize: 13,
-            ),
-            indicatorSize: TabBarIndicatorSize.tab,
-            tabs: [
-              Tab(text: 'MIS TAREAS'),
-              Tab(text: 'DASHBOARD'),
-            ],
-          ),
-        ),
-        body: const TabBarView(
-          children: [
-            AgendaTab(),
-            DashboardTab(),
-          ],
-        ),
+    return const Scaffold(
+      backgroundColor: Color(0xFFF8FAFC),
+      appBar: MomentusAppBar(
+        title: 'Mi Agenda',
+        subtitle: 'Plan de trabajo diario',
       ),
+      body: AgendaTab(),
     );
   }
 }
 
-/// Pestaña de Agenda (Tareas)
 class AgendaTab extends StatelessWidget {
   const AgendaTab({super.key});
 
@@ -83,513 +44,797 @@ class _AgendaTabContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<AgendaController>();
+    final authController = context.read<AuthController>();
 
     return Column(
       children: [
-        // Date Navigation Header
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-             color: Colors.white,
-             border: Border(bottom: BorderSide(color: Colors.grey[100]!)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.chevron_left_rounded, color: Color(0xFF64748B)),
-                onPressed: controller.loading ? null : controller.prevDay,
-                tooltip: 'Día anterior',
-              ),
-              
-              InkWell(
-                onTap: () {
-                    // Date picker logic could go here
-                    // controller.loadAgenda(DateTime.now()); // Reset to today
-                },
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9), // Slate 100
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.calendar_today_rounded, size: 16, color: Color(0xFF475569)),
-                      const SizedBox(width: 8),
-                      Text(
-                        DateFormat('EEEE d MMMM', 'es_ES').format(controller.currentDate).toUpperCase(),
-                        style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                          color: Color(0xFF334155),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+        // --- Navegación de Fecha ---
+        _DateNavigator(controller: controller),
 
-              IconButton(
-                icon: const Icon(Icons.chevron_right_rounded, color: Color(0xFF64748B)),
-                onPressed: controller.loading ? null : controller.nextDay,
-                tooltip: 'Día siguiente',
-              ),
-            ],
-          ),
-        ),
-
-        // Body
+        // --- Cuerpo ---
         Expanded(
           child: controller.loading
-            ? const Center(child: CircularProgressIndicator())
-            : controller.error != null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.wifi_off_rounded, size: 48, color: Colors.grey),
-                        const SizedBox(height: 16),
-                        Text(controller.error!, style: const TextStyle(color: Colors.grey)),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () => controller.loadAgenda(),
-                          child: const Text('Reintentar'),
-                        ),
-                      ],
-                    ),
-                  )
-                : _AgendaList(data: controller.data!, onRefresh: controller.loadAgenda),
+              ? const Center(
+                  child:
+                      CircularProgressIndicator(color: MomentusTheme.primary))
+              : controller.error != null
+                  ? _ErrorState(
+                      error: controller.error!,
+                      onRetry: () => controller.loadAgenda())
+                  : (controller.data == null)
+                      ? const Center(child: Text("No hay datos disponibles"))
+                      : _buildContent(context, controller, authController),
         ),
       ],
     );
   }
-}
 
-class _AgendaList extends StatefulWidget {
-  final AgendaResponse data;
-  final VoidCallback onRefresh;
-
-  const _AgendaList({required this.data, required this.onRefresh});
-
-  @override
-  State<_AgendaList> createState() => _AgendaListState();
-}
-
-class _AgendaListState extends State<_AgendaList> {
-  
-  Future<void> _markTaskDone(Tarea t) async {
-    try {
-      await ApiClient.dio.patch('/tareas/${t.idTarea}', data: {'estado': 'Hecha', 'progreso': 100});
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.celebration, color: Colors.white, size: 20),
-                SizedBox(width: 8),
-                Text('¡Tarea completada! 🎉'),
-              ],
-            ),
-            backgroundColor: Color(0xFF10B981),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        widget.onRefresh();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
-      }
+  Widget _buildContent(BuildContext context, AgendaController controller,
+      AuthController authController) {
+    // Si ya hay checkin, mostramos vista de ejecución (Checklist)
+    if (controller.data?.checkinHoy != null) {
+      return _ExecutionView(
+        checkin: controller.data!.checkinHoy!,
+        controller: controller,
+      );
     }
-  }
 
-  void _openTaskDetail(Tarea t) {
-    TaskDetailSheet.show(
-      context,
-      t.toJson(),
-      onUpdated: widget.onRefresh,
+    // Si no hay checkin, mostramos vista de planificación
+    return _PlanningView(
+      sugeridas: controller.data!.tareasSugeridas,
+      backlog: controller.data!.backlog,
+      controller: controller,
+      userId: authController.user?.id ?? 0,
     );
+  }
+}
+
+class _DateNavigator extends StatelessWidget {
+  final AgendaController controller;
+  const _DateNavigator({required this.controller});
+
+  Future<void> _selectDate(BuildContext context) async {
+    HapticFeedback.lightImpact();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: controller.currentDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: MomentusTheme.primary,
+              onPrimary: Colors.white,
+              onSurface: Color(0xFF0F172A),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) controller.loadAgenda(picked);
   }
 
   @override
   Widget build(BuildContext context) {
-    final data = widget.data;
-    final total = data.tareasSugeridas.length + data.backlog.length;
-    final hechas = data.tareasSugeridas.where((t) => t.estado == 'Hecha').length;
-    final pendientes = total - hechas;
-
-    return RefreshIndicator(
-      onRefresh: () async => widget.onRefresh(),
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // === KPIS HEADER (Resumen del día) ===
-          Row(
-            children: [
-              _buildKpiCard('Total', total.toString(), const Color(0xFF6366F1), Icons.layers_outlined),
-              const SizedBox(width: 12),
-              _buildKpiCard('Hechas', hechas.toString(), const Color(0xFF10B981), Icons.check_circle_outline),
-              const SizedBox(width: 12),
-              _buildKpiCard('Faltan', pendientes.toString(), const Color(0xFFF59E0B), Icons.timelapse),
-            ],
-          ),
-          
-          const SizedBox(height: 24),
-
-          // === BLOQUEOS ACTIVOS (Alerta) ===
-          if (data.bloqueosActivos.isNotEmpty) ...[
-            const Text(
-              '⚠️ BLOQUEOS CRÍTICOS',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFFB91C1C), // Red 800
-                letterSpacing: 1,
-              ),
-            ),
-            const SizedBox(height: 8),
-            ...data.bloqueosActivos.map((b) => _buildBloqueoCard(b)),
-            const SizedBox(height: 24),
-          ],
-
-          // === MI AGENDA (Sugeridas) ===
-         const Row(
-           children: [
-             Icon(Icons.wb_sunny_rounded, size: 16, color: Color(0xFFF59E0B)),
-             SizedBox(width: 8),
-             Text(
-                'MI AGENDA HOY',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF64748B), // Slate 500
-                  letterSpacing: 1,
-                ),
-              ),
-           ],
-         ),
-          const SizedBox(height: 12),
-          
-          if (data.tareasSugeridas.isEmpty)
-            _buildEmptyState()
-          else
-            ...data.tareasSugeridas.map((t) => _buildTaskCard(t)),
-            
-          const SizedBox(height: 24),
-
-          // === BACKLOG ===
-          if (data.backlog.isNotEmpty) ...[
-            const Text(
-              'BACKLOG / OTRAS',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF94A3B8), // Slate 400
-                letterSpacing: 1,
-              ),
-            ),
-            const SizedBox(height: 12),
-            ...data.backlog.map((t) => _buildTaskCard(t, isBacklog: true)),
-          ],
-          
-          const SizedBox(height: 48), // Bottom padding
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
     return Container(
-      padding: const EdgeInsets.all(32.0),
-      // decoration: BoxDecoration(
-      //   color: Colors.white,
-      //   borderRadius: BorderRadius.circular(16),
-      //   border: Border.all(color: const Color(0xFFE2E8F0)),
-      // ), // Clean look, no border container
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFFECFDF5),
-              shape: BoxShape.circle,
-              boxShadow: [
-                 BoxShadow(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                 )
-              ]
-            ),
-            child: const Icon(CupertinoIcons.check_mark, size: 32, color: Color(0xFF059669)),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            '¡Todo al día!',
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF0F172A),
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'No hay tareas pendientes en tu agenda para hoy.\n¡Disfruta tu tiempo o adelanta backlog!',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF64748B), height: 1.5),
-          ),
-          const SizedBox(height: 24),
-          OutlinedButton.icon(
-             onPressed: () {
-                // Navegar a planificar? o simplemente recargar
-                widget.onRefresh();
-             },
-             icon: const Icon(Icons.refresh),
-             label: const Text('Comprobar agenda'),
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildKpiCard(String label, String value, Color color, IconData icon) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-          border: Border.all(color: const Color(0xFFF1F5F9)),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, size: 20, color: color.withValues(alpha: 0.8)),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                color: color,
-                height: 1,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label.toUpperCase(),
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF94A3B8), // Slate 400
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBloqueoCard(Bloqueo b) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFEF2F2), // Red 50
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFFECACA)), // Red 200
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          const Icon(Icons.warning_amber_rounded, color: Color(0xFFEF4444), size: 24),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Bloqueo: ${b.motivo}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF991B1B), // Red 800
-                    fontSize: 14,
-                  ),
-                ),
-                if (b.destinoTexto != null)
+          IconButton(
+            icon: const Icon(Icons.chevron_left_rounded,
+                color: Color(0xFF64748B)),
+            onPressed: controller.loading
+                ? null
+                : () {
+                    HapticFeedback.selectionClick();
+                    controller.prevDay();
+                  },
+          ),
+          GestureDetector(
+            onTap: () => _selectDate(context),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFBBF7D0)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.calendar_today_rounded,
+                      size: 16, color: Color(0xFF16A34A)),
+                  const SizedBox(width: 8),
                   Text(
-                    'Para: ${b.destinoTexto}',
-                    style: const TextStyle(color: Color(0xFFB91C1C), fontSize: 13),
+                    DateFormat('EEEE, d MMM', 'es_ES')
+                        .format(controller.currentDate)
+                        .toUpperCase(),
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: Color(0xFF15803D),
+                      letterSpacing: 0.5,
+                    ),
                   ),
-              ],
+                ],
+              ),
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.chevron_right_rounded,
+                color: Color(0xFF64748B)),
+            onPressed: controller.loading
+                ? null
+                : () {
+                    HapticFeedback.selectionClick();
+                    controller.nextDay();
+                  },
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildTaskCard(Tarea t, {bool isBacklog = false}) {
-    final isDone = t.estado == 'Hecha';
-    
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: isDone ? const Color(0xFFF0FDF4) : Colors.white, // Green 50 si hecha
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-            spreadRadius: 0
-          ),
-        ],
-        border: Border.all(
-          color: isDone ? const Color(0xFFBBF7D0) : const Color(0xFFF1F5F9),
-        ),
+// ---------------- VIEWS ----------------
+
+/// VISTA DE PLANIFICACIÓN (Planificación del día)
+/// ===============================================
+/// Aquí es donde el usuario selecciona qué hará hoy.
+/// Se muestran tareas atrasadas y sugeridas.
+class _PlanningView extends StatelessWidget {
+  final List<Tarea> sugeridas;
+  final List<Tarea> backlog;
+  final AgendaController controller;
+  final int userId;
+
+  const _PlanningView({
+    required this.sugeridas,
+    required this.backlog,
+    required this.controller,
+    required this.userId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // 1. Filtrar tareas: Atrasadas vs Hoy/Futuras
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+
+    final allTasks = [...sugeridas, ...backlog];
+
+    // Función auxiliar para saber si es atrasada
+    bool isOverdue(Tarea t) {
+      if (t.fechaObjetivo == null) return false;
+      final date = DateTime.tryParse(t.fechaObjetivo!);
+      if (date == null) return false;
+      // Si la fecha es anterior a hoy (00:00:00)
+      return date.isBefore(todayStart);
+    }
+
+    final overdueTasks = allTasks.where((t) => isOverdue(t)).toList();
+    final currentTasks = allTasks.where((t) => !isOverdue(t)).toList();
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      // Botón flotante para la acción principal (Comenzar Día)
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: controller.startDayLoading
+            ? null
+            : () => controller.saveCheckin(userId),
+        label: controller.startDayLoading
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                    color: Colors.white, strokeWidth: 2))
+            : const Text('Confirmar Plan',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+        icon: controller.startDayLoading ? null : const Icon(Icons.check),
+        backgroundColor: MomentusTheme.primary,
+        elevation: 4,
       ),
-      child: InkWell(
-        onTap: () => _openTaskDetail(t),
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              // Checkbox Custom - Clickeable
-              InkWell(
-                onTap: isDone ? null : () => _markTaskDone(t),
-                borderRadius: BorderRadius.circular(12), // Rounder
-                child: Container(
-                  width: 28, // Bigger touch area
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: isDone ? const Color(0xFF10B981) : Colors.transparent,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: isDone ? const Color(0xFF10B981) : const Color(0xFFCBD5E1),
-                      width: 2,
-                    ),
-                  ),
-                  child: isDone
-                      ? const Icon(Icons.check, size: 18, color: Colors.white)
-                      : null,
-                ),
+      body: SingleChildScrollView(
+        padding:
+            const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 80),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // SECCIÓN: ATAJOS RÁPIDOS
+            // Botón tipo "Chip" para agregar tarea rápido (como pide el usuario)
+            Align(
+              alignment: Alignment.centerRight,
+              child: ActionChip(
+                avatar: const Icon(Icons.add,
+                    size: 16, color: MomentusTheme.primary),
+                label: const Text('Agregar tarea rápida',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: MomentusTheme.primary)),
+                backgroundColor: const Color(0xFFF0FDF4),
+                side: const BorderSide(color: Color(0xFFBBF7D0)),
+                onPressed: () {
+                  // Abre el popup (Sheet) para crear tarea
+                  QuickCreateTaskSheet.show(context, onCreated: () {
+                    controller.loadAgenda();
+                  });
+                },
               ),
-              const SizedBox(width: 16),
-              
-              // Contenido
-              Expanded(
+            ),
+
+            const SizedBox(height: 10),
+
+            // SECCIÓN: TAREAS ATRASADAS (Si existen)
+            // Estilo "Alerta" para llamar la atención sin ser agresivo
+            if (overdueTasks.isNotEmpty) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF2F2), // Fondo rojo muy suave
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFFECACA)),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      t.titulo,
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: isDone ? const Color(0xFF059669) : const Color(0xFF1E293B),
-                        decoration: isDone ? TextDecoration.lineThrough : null,
-                        decorationColor: const Color(0xFF059669),
-                      ),
+                    const Row(
+                      children: [
+                        Icon(Icons.history_toggle_off,
+                            color: Color(0xFFEF4444), size: 20),
+                        SizedBox(width: 8),
+                        Text('Tareas Atrasadas',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF991B1B))),
+                      ],
                     ),
-                    if (t.proyectoNombre != null) ...[
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(4)
-                        ),
-                        child: Text(
-                          t.proyectoNombre!,
-                          style: const TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF64748B),
-                          ),
-                        ),
-                      ),
-                    ],
-                    // Barra de progreso si hay progreso parcial
-                    if (!isDone && t.progreso > 0 && t.progreso < 100) ...[
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: LinearProgressIndicator(
-                                value: t.progreso / 100,
-                                backgroundColor: const Color(0xFFF1F5F9),
-                                color: const Color(0xFF3B82F6), // Blue for progress
-                                minHeight: 4,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '${t.progreso}%',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF3B82F6),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                    const SizedBox(height: 12),
+                    // Lista de tareas atrasadas
+                    ...overdueTasks.map((t) => _CheckboxTaskTile(
+                          task: t,
+                          isSelected: controller.selectedOtherTaskIds
+                                  .contains(t.idTarea) ||
+                              controller.selectedMainTaskId == t.idTarea,
+                          isOverdue: true,
+                          onTap: () => {
+                            // Lógica simple: si tocas una atrasada, la marcas como soporte o principal
+                            // Aquí usamos toggleOtherTask por defecto para soporte
+                            controller.toggleOtherTask(t.idTarea)
+                          },
+                        )),
                   ],
                 ),
               ),
-              
-              const SizedBox(width: 8),
+              const SizedBox(height: 24),
+            ],
 
-              // Badge Prioridad + Chevron
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+            // SECCIÓN: FOCO PRINCIPAL (Estilo Libreta / Notebook)
+            // Aquí seleccionamos LA cosa más importante
+            const Text(
+              'FOCO DEL DÍA',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF64748B),
+                letterSpacing: 1.2,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4))
+                  ]),
+              child: Column(
                 children: [
-                  if (!isDone && t.prioridad == 'Alta')
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      margin: const EdgeInsets.only(bottom: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFEF2F2),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFFFECACA)),
-                      ),
-                      child: const Text(
-                        'ALTA',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFFEF4444),
-                        ),
-                      ),
-                    ),
-                  const Icon(CupertinoIcons.chevron_right, size: 16, color: Color(0xFFCBD5E1)),
+                  if (currentTasks.isEmpty && overdueTasks.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(24.0),
+                      child: Center(
+                          child: Text(
+                              'No hay sugerencias para hoy.\n¡Agrega una tarea nueva!',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: Colors.grey))),
+                    )
+                  else if (currentTasks.isNotEmpty)
+                    ...currentTasks.map((t) => _RadioTaskTile(
+                          task: t,
+                          isSelected:
+                              controller.selectedMainTaskId == t.idTarea,
+                          onTap: () => controller.toggleMainTask(t.idTarea),
+                        )),
                 ],
               ),
+            ),
+
+            const SizedBox(height: 32),
+
+            // SECCIÓN: OTRAS TAREAS (Soporte)
+            // Tareas secundarias seleccionadas con Checkbox
+            if (currentTasks
+                .any((t) => t.idTarea != controller.selectedMainTaskId)) ...[
+              const Text(
+                'SOPORTE Y SECUNDARIAS',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF64748B),
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Filtramos la que ya está seleccionada como principal para no repetirla
+              ...currentTasks
+                  .where((t) => t.idTarea != controller.selectedMainTaskId)
+                  .map((t) => _CheckboxTaskTile(
+                        task: t,
+                        isSelected:
+                            controller.selectedOtherTaskIds.contains(t.idTarea),
+                        onTap: () => controller.toggleOtherTask(t.idTarea),
+                      )),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ExecutionView extends StatelessWidget {
+  final Checkin checkin;
+  final AgendaController controller;
+
+  const _ExecutionView({required this.checkin, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final tareas = checkin.tareas;
+    // Ordenar: Entrego primero, luego Avanzo
+    final sortedTasks = List<CheckinTarea>.from(tareas)
+      ..sort((a, b) {
+        if (a.tipo == 'Entrego') return -1;
+        if (b.tipo == 'Entrego') return 1;
+        return 0;
+      });
+
+    final mainTask = sortedTasks.where((t) => t.tipo == 'Entrego').firstOrNull;
+    final otherTasks = sortedTasks.where((t) => t.tipo != 'Entrego').toList();
+
+    return RefreshIndicator(
+      onRefresh: () async => await controller.loadAgenda(),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'TU PLAN DE HOY',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF64748B),
+                letterSpacing: 1.2,
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            if (mainTask != null && mainTask.tarea != null) ...[
+              const _SectionLabel('OBJETIVO PRINCIPAL',
+                  color: Color(0xFFF43F5E)),
+              _ExecutionTaskCard(
+                task: mainTask.tarea!,
+                isMain: true,
+                onToggle: () => controller.completeTask(mainTask.idTarea),
+              ),
+              const SizedBox(height: 32),
+            ],
+
+            if (otherTasks.isNotEmpty) ...[
+              const _SectionLabel('TAREAS DE SOPORTE'),
+              ...otherTasks.where((t) => t.tarea != null).map((t) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _ExecutionTaskCard(
+                      task: t.tarea!,
+                      isMain: false,
+                      onToggle: () => controller.completeTask(t.idTarea),
+                    ),
+                  )),
+            ],
+
+            if (tareas.isEmpty)
+              const _EmptySection('Día libre o sin tareas planificadas.'),
+
+            const SizedBox(height: 40),
+
+            // Botón para agregar emergencias (Extras) podría ir aquí
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------- WIDGETS ----------------
+
+class _RadioTaskTile extends StatelessWidget {
+  final Tarea task;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _RadioTaskTile({
+    required this.task,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // GestureDetector: Detecta toques/clics en su hijo
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick(); // Feedback táctil suave
+        onTap();
+      },
+      // Container: Caja decorada (fondo, bordes, padding)
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8), // Reducimos margen
+        padding: const EdgeInsets.all(12), // Más compacto
+        decoration: BoxDecoration(
+          // Cambiamos color si está seleccionado
+          color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color:
+                isSelected ? const Color(0xFF3B82F6) : const Color(0xFFF1F5F9),
+            width: isSelected ? 1.5 : 1,
           ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              isSelected
+                  ? Icons.radio_button_checked_rounded
+                  : Icons.radio_button_unchecked_rounded,
+              color: isSelected
+                  ? const Color(0xFF3B82F6)
+                  : const Color(0xFFCBD5E1),
+              size: 22, // Icono un poco más pequeño
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    task.titulo,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14, // Fuente más pequeña para que quepa más
+                      color: isSelected
+                          ? const Color(0xFF1E293B)
+                          : const Color(0xFF475569),
+                    ),
+                  ),
+                  if (task.proyectoNombre != null)
+                    Text(
+                      task.proyectoNombre!,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF94A3B8),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CheckboxTaskTile extends StatelessWidget {
+  final Tarea task;
+  final bool isSelected;
+  final bool isOverdue; // Parametro nuevo para indicar si está atrasada
+  final VoidCallback onTap;
+
+  const _CheckboxTaskTile({
+    required this.task,
+    required this.isSelected,
+    this.isOverdue = false,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Definimos colores según si es atrasada o seleccionada
+    final Color borderColor = isOverdue
+        ? const Color(0xFFFECACA) // Rojo suave
+        : isSelected
+            ? const Color(0xFF22C55E)
+            : const Color(0xFFF1F5F9);
+
+    final Color bgColor = isOverdue
+        ? Colors
+            .white // Mantener blanco en atrasadas dentro del contenedor rojo
+        : isSelected
+            ? const Color(0xFFF0FDF4)
+            : Colors.white;
+
+    final Color checkColor = isOverdue
+        ? const Color(0xFFEF4444)
+        : isSelected
+            ? const Color(0xFF22C55E)
+            : const Color(0xFFCBD5E1);
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: Container(
+        margin: const EdgeInsets.only(
+            bottom: 8), // Reducido margen para "List look"
+        padding: const EdgeInsets.symmetric(
+            horizontal: 12, vertical: 12), // Más compacto
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(
+              12), // Bordes menos redondeados para look libreta
+          border: Border.all(
+            color: borderColor,
+            width: isSelected || isOverdue ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              isSelected
+                  ? Icons.check_box_rounded
+                  : Icons.check_box_outline_blank_rounded,
+              color: checkColor,
+              size: 22,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Si es atrasada, mostramos la fecha
+                  if (isOverdue && task.fechaObjetivo != null)
+                    Text(
+                      'Vencía: ${task.fechaObjetivo!.split('T')[0]}',
+                      style: const TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFFDC2626),
+                          fontWeight: FontWeight.bold),
+                    ),
+                  Text(
+                    task.titulo,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontSize: 14,
+                      color:
+                          const Color(0xFF334155), // Texto un poco más oscuro
+                      decoration: isSelected && !isOverdue
+                          ? TextDecoration.lineThrough
+                          : null, // Tachar si seleccionada (opcional)
+                    ),
+                  ),
+                  if (task.proyectoNombre != null)
+                    Text(
+                      task.proyectoNombre!,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF94A3B8),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ExecutionTaskCard extends StatelessWidget {
+  final Tarea task;
+  final bool isMain;
+  final VoidCallback onToggle;
+
+  const _ExecutionTaskCard({
+    required this.task,
+    required this.isMain,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isCompleted = task.estado == 'Hecha';
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        onToggle();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isCompleted
+              ? const Color(0xFFF1F5F9) // Disabled look
+              : (isMain ? const Color(0xFFFFF1F2) : Colors.white),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isCompleted
+                ? Colors.transparent
+                : (isMain ? const Color(0xFFFDA4AF) : const Color(0xFFE2E8F0)),
+          ),
+          boxShadow: isCompleted
+              ? []
+              : [
+                  BoxShadow(
+                    color: isMain
+                        ? const Color(0xFFF43F5E).withValues(alpha: 0.1)
+                        : Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+        ),
+        child: Row(
+          children: [
+            // Checkbox personalizado con animación simple
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color:
+                    isCompleted ? const Color(0xFF10B981) : Colors.transparent,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isCompleted
+                      ? const Color(0xFF10B981)
+                      : const Color(0xFFCBD5E1),
+                  width: 2,
+                ),
+              ),
+              child: isCompleted
+                  ? const Icon(Icons.check, size: 18, color: Colors.white)
+                  : null,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    task.titulo,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: isMain ? 16 : 15,
+                      fontWeight: isMain ? FontWeight.w700 : FontWeight.w500,
+                      color: isCompleted
+                          ? const Color(0xFF94A3B8)
+                          : const Color(0xFF1E293B),
+                      decoration:
+                          isCompleted ? TextDecoration.lineThrough : null,
+                    ),
+                  ),
+                  if (task.proyectoNombre != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      task.proyectoNombre!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isCompleted
+                            ? const Color(0xFFCBD5E1)
+                            : const Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  final String label;
+  final Color color;
+  const _SectionLabel(this.label, {this.color = const Color(0xFF64748B)});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12, left: 4),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          color: color,
+          letterSpacing: 1.1,
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptySection extends StatelessWidget {
+  final String message;
+  const _EmptySection(this.message);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.inbox_outlined, size: 48, color: Color(0xFFE2E8F0)),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Color(0xFF94A3B8)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  final String error;
+  final VoidCallback onRetry;
+  const _ErrorState({required this.error, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Color(0xFFCBD5E1)),
+            const SizedBox(height: 16),
+            Text(error, textAlign: TextAlign.center),
+            const SizedBox(height: 24),
+            ElevatedButton(onPressed: onRetry, child: const Text('Reintentar')),
+          ],
         ),
       ),
     );

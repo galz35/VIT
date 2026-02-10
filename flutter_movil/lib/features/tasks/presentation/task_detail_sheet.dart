@@ -120,7 +120,7 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
       }
 
       debugPrint('📋 Cargando tarea completa: $id');
-      final response = await ApiClient.dio.get('/tareas/$id');
+      final response = await ApiClient.dio.get('tareas/$id');
 
       if (mounted && response.data != null) {
         dynamic data = response.data;
@@ -228,7 +228,7 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
             true; // Flag for backend if needed, or api handles it
       }
 
-      await ApiClient.dio.patch('/tareas/$id', data: payload);
+      await ApiClient.dio.patch('tareas/$id', data: payload);
 
       if (mounted) {
         widget.onUpdated?.call();
@@ -827,7 +827,7 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
 
   Future<void> _loadTeam() async {
     try {
-      final response = await ApiClient.dio.get('/planning/team');
+      final response = await ApiClient.dio.get('planning/team');
       if (mounted) {
         setState(() {
           _teamMembers = unwrapApiList(response.data);

@@ -7,7 +7,7 @@ class TasksRepository {
   final TasksRemoteDataSource _remote;
   final TaskLocalDataSource _local;
 
-  TasksRepository({TasksRemoteDataSource? remote, TaskLocalDataSource? local}) 
+  TasksRepository({TasksRemoteDataSource? remote, TaskLocalDataSource? local})
       : _remote = remote ?? TasksRemoteDataSource(),
         _local = local ?? TaskLocalDataSource();
 
@@ -37,8 +37,8 @@ class TasksRepository {
     int? assignedToUserId,
     int? projectId,
   }) async {
-     try {
-       await _remote.createTaskFull(
+    try {
+      await _remote.createTaskFull(
         title: title,
         date: date,
         tipo: tipo,
@@ -48,22 +48,22 @@ class TasksRepository {
         assignedToUserId: assignedToUserId,
         projectId: projectId,
       );
-     } catch (e) {
-       if (_isNetworkError(e)) {
-         await _saveLocalTask(
-            title: title,
-            date: date,
-            tipo: tipo,
-            prioridad: prioridad,
-            esfuerzo: esfuerzo,
-            descripcion: descripcion,
-            assignedToUserId: assignedToUserId,
-            projectId: projectId,
-         );
-         return;
-       }
-       rethrow;
-     }
+    } catch (e) {
+      if (_isNetworkError(e)) {
+        await _saveLocalTask(
+          title: title,
+          date: date,
+          tipo: tipo,
+          prioridad: prioridad,
+          esfuerzo: esfuerzo,
+          descripcion: descripcion,
+          assignedToUserId: assignedToUserId,
+          projectId: projectId,
+        );
+        return;
+      }
+      rethrow;
+    }
   }
 
   Future<void> _saveLocalTask({
@@ -76,37 +76,40 @@ class TasksRepository {
     int? assignedToUserId,
     int? projectId,
   }) async {
-      final task = TaskItem(
-        titulo: title,
-        descripcion: descripcion ?? '',
-        estado: 'Pendiente',
-        fechaCreacion: DateTime.now(),
-        synced: false,
-      );
-      
-      final payload = {
-        'titulo': title,
-        'fechaObjetivo': date.toIso8601String(),
-        'tipo': tipo,
-        'prioridad': prioridad,
-        'esfuerzo': esfuerzo,
-        if (descripcion != null) 'descripcion': descripcion,
-        if (assignedToUserId != null) 'idResponsable': assignedToUserId,
-        if (projectId != null) 'idProyecto': projectId,
-        'estado': 'Pendiente',
-        'comportamiento': 'SIMPLE',
-      };
-      
-      await _local.insert(task, additionalPayload: payload);
+    final task = TaskItem(
+      titulo: title,
+      descripcion: descripcion ?? '',
+      estado: 'Pendiente',
+      fechaCreacion: DateTime.now(),
+      synced: false,
+      prioridad: prioridad,
+      tipo: tipo,
+      fechaObjetivo: date,
+      responsableId: assignedToUserId,
+    );
+
+    final payload = {
+      'titulo': title,
+      'fechaObjetivo': date.toIso8601String(),
+      'tipo': tipo,
+      'prioridad': prioridad,
+      'esfuerzo': esfuerzo,
+      if (descripcion != null) 'descripcion': descripcion,
+      if (assignedToUserId != null) 'idResponsable': assignedToUserId,
+      if (projectId != null) 'idProyecto': projectId,
+      'comportamiento': 'SIMPLE',
+    };
+
+    await _local.insert(task, additionalPayload: payload);
   }
 
   bool _isNetworkError(Object e) {
     if (e is DioException) {
       return e.type == DioExceptionType.connectionTimeout ||
-             e.type == DioExceptionType.sendTimeout ||
-             e.type == DioExceptionType.receiveTimeout ||
-             e.type == DioExceptionType.connectionError ||
-             e.error.toString().contains('SocketException');
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.connectionError ||
+          e.error.toString().contains('SocketException');
     }
     return false;
   }

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../dashboard/data/dashboard_models.dart';
@@ -46,178 +45,242 @@ class _DashboardView extends StatelessWidget {
     }
 
     final data = controller.data;
-    if (data == null) return const SizedBox();
-
-    final resumen = data.resumen;
-    final completionRate = resumen.total > 0 
-        ? ((resumen.hechas / resumen.total) * 100).round()
-        : 0;
-
-    return RefreshIndicator(
-      onRefresh: controller.loadKPIs,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Header Efectividad
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF4F46E5), Color(0xFF6366F1)], // Indigo 600-500
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color:const Color(0xFF6366F1).withValues(alpha: 0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Dashboard Ejecutivo',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Resumen operativo',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '$completionRate%',
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        color: Colors.white,
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                        height: 1,
-                      ),
-                    ),
-                    const Text(
-                      'EFECTIVIDAD GLOBAL',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        color: Colors.white70,
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          
-          const SizedBox(height: 20),
-
-          // Grid KPIs
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 1.5,
+    if (data == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _MetricCard(
-                label: 'Total Tareas',
-                value: resumen.total.toString(),
-                icon: Icons.layers_outlined,
-                color: const Color(0xFF4B5563), // Gray 600
-                bgColor: const Color(0xFFF9FAFB), // Gray 50
+              const Icon(Icons.dashboard_customize_outlined,
+                  size: 64, color: Color(0xFF94A3B8)),
+              const SizedBox(height: 16),
+              const Text(
+                'Sin datos disponibles',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF475569),
+                ),
               ),
-              _MetricCard(
-                label: 'Completadas',
-                value: resumen.hechas.toString(),
-                icon: Icons.check_circle_outline,
-                color: const Color(0xFF059669), // Emerald 600
-                bgColor: const Color(0xFFECFDF5), // Emerald 50
+              const SizedBox(height: 8),
+              const Text(
+                'Los KPIs se cargarán cuando tengas tareas asignadas.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 13,
+                  color: Color(0xFF94A3B8),
+                ),
               ),
-              _MetricCard(
-                label: 'En Proceso',
-                value: resumen.pendientes.toString(),
-                icon: Icons.timelapse, // Circle icon replacement
-                color: const Color(0xFF2563EB), // Blue 600
-                bgColor: const Color(0xFFEFF6FF), // Blue 50
-              ),
-              _MetricCard(
-                label: 'Bloqueadas',
-                value: resumen.bloqueadas.toString(),
-                icon: Icons.warning_amber_rounded,
-                color: const Color(0xFFDC2626), // Red 600
-                bgColor: const Color(0xFFFEF2F2), // Red 50
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: controller.loadKPIs,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Recargar'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4F46E5),
+                  foregroundColor: Colors.white,
+                ),
               ),
             ],
           ),
+        ),
+      );
+    }
 
-          const SizedBox(height: 24),
+    final resumen = data.resumen;
+    final completionRate = resumen.promedioAvance.round();
 
-          // Lista Proyectos
-          const Text(
-            'RENDIMIENTO POR PROYECTO',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF64748B),
-              letterSpacing: 1,
-              fontFamily: 'Inter',
+    return RefreshIndicator(
+      onRefresh: controller.loadKPIs,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Balance Operativo',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  const Text(
+                    'Estado actual de tus proyectos y tareas',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Header Tarjeta Principal
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF1E293B), Color(0xFF334155)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF1E293B).withValues(alpha: 0.2),
+                          blurRadius: 15,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Efectividad Global',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                color: Colors.white70,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '$completionRate%',
+                              style: const TextStyle(
+                                fontFamily: 'Inter',
+                                color: Colors.white,
+                                fontSize: 44,
+                                fontWeight: FontWeight.w900,
+                                height: 1.1,
+                              ),
+                            ),
+                          ],
+                        ),
+                        // Mini Gauge circular
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            SizedBox(
+                              width: 70,
+                              height: 70,
+                              child: CircularProgressIndicator(
+                                value: completionRate / 100,
+                                strokeWidth: 8,
+                                backgroundColor: Colors.white12,
+                                color: const Color(0xFF38BDF8), // Sky 400
+                              ),
+                            ),
+                            const Icon(Icons.auto_graph_rounded,
+                                color: Colors.white, size: 28),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 12),
-          
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-              boxShadow: [
-                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            sliver: SliverGrid.count(
+              crossAxisCount: 2,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: 1.6,
+              children: [
+                _MetricCard(
+                  label: 'Total Tareas',
+                  value: resumen.total.toString(),
+                  icon: Icons.layers_outlined,
+                  color: const Color(0xFF64748B),
+                  bgColor: Colors.white,
+                ),
+                _MetricCard(
+                  label: 'Completadas',
+                  value: resumen.hechas.toString(),
+                  icon: Icons.check_circle_rounded,
+                  color: const Color(0xFF10B981),
+                  bgColor: const Color(0xFFECFDF5),
+                ),
+                _MetricCard(
+                  label: 'En Proceso',
+                  value: resumen.pendientes.toString(),
+                  icon: Icons.play_circle_outline_rounded,
+                  color: const Color(0xFF3B82F6),
+                  bgColor: const Color(0xFFEFF6FF),
+                ),
+                _MetricCard(
+                  label: 'Bloqueos',
+                  value: resumen.bloqueadas.toString(),
+                  icon: Icons.emergency_rounded,
+                  color: const Color(0xFFF43F5E),
+                  bgColor: const Color(0xFFFFF1F2),
                 ),
               ],
             ),
-            child: Column(
-              children: [
-                if (data.proyectos.isEmpty)
-                   const Padding(
-                     padding: EdgeInsets.all(32),
-                     child: Text('No hay proyectos activos', style: TextStyle(color: Colors.grey)),
-                   ),
-                   
-                for (int i = 0; i < data.proyectos.length; i++)
-                  _ProjectItem(
-                    item: data.proyectos[i],
-                    isLast: i == data.proyectos.length - 1,
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 32)),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            sliver: SliverToBoxAdapter(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'PROGRESO POR PROYECTO',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF94A3B8),
+                      letterSpacing: 1,
+                      fontFamily: 'Inter',
+                    ),
                   ),
-              ],
+                  Text(
+                    '${data.proyectos.length} Proyectos',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF3B82F6),
+                      fontFamily: 'Inter',
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SliverToBoxAdapter(child: SizedBox(height: 12)),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final item = data.proyectos[index];
+                  return _ProjectItem(
+                    item: item,
+                    isLast: index == data.proyectos.length - 1,
+                  );
+                },
+                childCount: data.proyectos.length,
+              ),
+            ),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 48)),
         ],
       ),
     );
@@ -295,7 +358,7 @@ class _ProjectItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final percent = item.avancePercent;
-    
+
     // Determine color based on percent
     Color barColor;
     if (percent >= 80) {
@@ -309,7 +372,9 @@ class _ProjectItem extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        border: isLast ? null : Border(bottom: BorderSide(color: Colors.grey[100]!)),
+        border: isLast
+            ? null
+            : Border(bottom: BorderSide(color: Colors.grey[100]!)),
       ),
       child: Row(
         children: [

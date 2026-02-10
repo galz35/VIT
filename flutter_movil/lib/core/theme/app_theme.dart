@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 /// ============================================
 /// MOMENTUS THEME - Verde Suave (Solo Claro)
@@ -11,25 +10,32 @@ class MomentusTheme {
   MomentusTheme._(); // No instanciable
 
   // =============================================
-  // PALETA DE COLORES
+  // PALETA DE COLORES - CORPORATE RED
   // =============================================
-  
-  /// Verde primario - Color principal de la marca
-  static const Color primary = Color(0xFF22C55E);
-  static const Color primaryLight = Color(0xFF4ADE80);
-  static const Color primaryDark = Color(0xFF16A34A);
-  
-  /// Escala completa del verde
-  static const Color green50 = Color(0xFFF0FDF4);
-  static const Color green100 = Color(0xFFDCFCE7);
-  static const Color green200 = Color(0xFFBBF7D0);
-  static const Color green300 = Color(0xFF86EFAC);
-  static const Color green400 = Color(0xFF4ADE80);
-  static const Color green500 = Color(0xFF22C55E);
-  static const Color green600 = Color(0xFF16A34A);
-  static const Color green700 = Color(0xFF15803D);
 
-  /// Neutrales (Slate)
+  /// Rojo Corporativo - Planner EF
+  static const Color primary = Color(0xFFD32F2F); // Rojo principal
+  static const Color primaryLight = Color(0xFFEF5350);
+  static const Color primaryDark = Color(0xFFB71C1C); // Rojo oscuro empresarial
+
+  /// Escala de Rojos
+  static const Color red50 = Color(0xFFFFEBEE);
+  static const Color red100 = Color(0xFFFFCDD2);
+  static const Color red200 = Color(0xFFEF9A9A);
+  static const Color red300 = Color(0xFFE57373);
+  static const Color red400 = Color(0xFFEF5350);
+  static const Color red500 = Color(0xFFF44336);
+  static const Color red600 = Color(0xFFE53935);
+  static const Color red700 = Color(0xFFD32F2F);
+  static const Color red800 = Color(0xFFC62828);
+  static const Color red900 = Color(0xFFB71C1C);
+
+  /// Mantener verdes para estados de éxito (no usar como primarios)
+  static const Color green50 = Color(0xFFF8FAFC); // Slate 50
+  static const Color green100 = Color(0xFFF1F5F9); // Slate 100
+  static const Color success = Color(0xFF0F172A); // Slate 900 (Negro Intenso)
+
+  /// Neutrales (Slate) - Base del diseño profesional
   static const Color slate50 = Color(0xFFF8FAFC);
   static const Color slate100 = Color(0xFFF1F5F9);
   static const Color slate200 = Color(0xFFE2E8F0);
@@ -39,72 +45,67 @@ class MomentusTheme {
   static const Color slate600 = Color(0xFF475569);
   static const Color slate700 = Color(0xFF334155);
   static const Color slate800 = Color(0xFF1E293B);
-  static const Color slate900 = Color(0xFF0F172A);
+  static const Color slate900 = Color(0xFF0F172A); // Casi negro
 
   /// Semánticos
-  static const Color success = Color(0xFF10B981);
   static const Color warning = Color(0xFFF59E0B);
-  static const Color error = Color(0xFFEF4444);
-  static const Color info = Color(0xFF3B82F6);
+  static const Color error = Color(0xFFB91C1C); // Rojo error más oscuro
+  static const Color info =
+      Color(0xFF64748B); // Gris azulado (evitar azul puro)
 
   // =============================================
   // GRADIENTES
   // =============================================
-  
-  /// Gradiente para botones y headers
+
+  /// Gradiente Corporativo (Rojo a Negro/Gris Oscuro)
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [green400, green600],
+    colors: [primary, Color(0xFFB71C1C)],
   );
 
-  /// Gradiente sutil para fondos
+  /// Fondo limpio
   static const LinearGradient backgroundGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [green50, Colors.white],
+    colors: [Colors.white, slate50],
   );
 
   // =============================================
   // SOMBRAS
   // =============================================
-  
+
   static List<BoxShadow> get cardShadow => [
-    BoxShadow(
-      color: slate900.withValues(alpha: 0.04),
-      blurRadius: 8,
-      offset: const Offset(0, 2),
-    ),
-    BoxShadow(
-      color: slate900.withValues(alpha: 0.02),
-      blurRadius: 24,
-      offset: const Offset(0, 8),
-    ),
-  ];
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.05),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ];
 
   static List<BoxShadow> get buttonShadow => [
-    BoxShadow(
-      color: primary.withValues(alpha: 0.25),
-      blurRadius: 12,
-      offset: const Offset(0, 4),
-    ),
-  ];
+        BoxShadow(
+          color: primary.withValues(alpha: 0.3),
+          blurRadius: 8,
+          offset: const Offset(0, 4),
+        ),
+      ];
 
   // =============================================
-  // BORDES REDONDEADOS
+  // BORDES REDONDEADOS (Mobile First)
   // =============================================
-  
-  static const double radiusXs = 6;
-  static const double radiusSm = 8;
-  static const double radiusMd = 12;
-  static const double radiusLg = 16;
-  static const double radiusXl = 24;
+
+  static const double radiusXs = 8;
+  static const double radiusSm = 12;
+  static const double radiusMd = 16;
+  static const double radiusLg = 24;
+  static const double radiusXl = 32;
   static const double radiusFull = 100;
 
   // =============================================
   // ESPACIADOS
   // =============================================
-  
+
   static const double spaceXxs = 4;
   static const double spaceXs = 8;
   static const double spaceSm = 12;
@@ -114,22 +115,22 @@ class MomentusTheme {
   static const double spaceXxl = 48;
 
   // =============================================
-  // TEMA PRINCIPAL (SOLO CLARO)
+  // TEMA PRINCIPAL
   // =============================================
-  
+
   static ThemeData get theme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
       fontFamily: 'Inter',
-      
-      // Esquema de colores
+
+      // Esquema de colores: Rojo & Negro
       colorScheme: const ColorScheme.light(
         primary: primary,
         onPrimary: Colors.white,
-        primaryContainer: green100,
-        onPrimaryContainer: green700,
-        secondary: slate600,
+        primaryContainer: red100,
+        onPrimaryContainer: red900,
+        secondary: slate800, // Negro/Gris secundario
         onSecondary: Colors.white,
         surface: Colors.white,
         onSurface: slate900,
@@ -137,50 +138,43 @@ class MomentusTheme {
         error: error,
         onError: Colors.white,
       ),
-      
-      // Fondo con tinte verde muy sutil
-      scaffoldBackgroundColor: green50,
-      
-      // AppBar premium
-      appBarTheme: AppBarTheme(
+
+      scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+
+      // AppBar limpia
+      appBarTheme: const AppBarTheme(
         elevation: 0,
-        scrolledUnderElevation: 0.5,
         backgroundColor: Colors.white,
         foregroundColor: slate900,
-        centerTitle: true,
-        titleTextStyle: const TextStyle(
+        centerTitle: false,
+        iconTheme: IconThemeData(color: slate800),
+        titleTextStyle: TextStyle(
           fontFamily: 'Inter',
           fontSize: 18,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
           color: slate900,
-          letterSpacing: -0.3,
-        ),
-        iconTheme: const IconThemeData(color: slate700, size: 22),
-        actionsIconTheme: const IconThemeData(color: slate600, size: 22),
-        systemOverlayStyle: SystemUiOverlayStyle.dark.copyWith(
-          statusBarColor: Colors.transparent,
         ),
       ),
-      
-      // Cards elegantes
+
+      // Cards
       cardTheme: CardThemeData(
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radiusLg),
+          borderRadius: BorderRadius.circular(radiusMd),
+          side: const BorderSide(color: slate200),
         ),
         color: Colors.white,
-        surfaceTintColor: Colors.transparent,
         margin: EdgeInsets.zero,
       ),
-      
-      // Botones elevados (verde con sombra)
+
+      // Botones Primarios (Negros o Rojos, usaremos Rojo para CTA principal)
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primary,
           foregroundColor: Colors.white,
-          elevation: 0,
-          shadowColor: primary.withValues(alpha: 0.3),
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+          elevation: 2,
+          shadowColor: primary.withValues(alpha: 0.4),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusMd),
           ),
@@ -188,45 +182,32 @@ class MomentusTheme {
             fontFamily: 'Inter',
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            letterSpacing: 0.2,
           ),
         ),
       ),
-      
-      // Botones outlined
+
+      // Botones Outlined
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: primary,
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-          side: const BorderSide(color: primary, width: 1.5),
+          foregroundColor: slate800, // Texto oscuro
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          side: const BorderSide(color: slate300),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusMd),
           ),
           textStyle: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 16,
             fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-      
-      // Text buttons
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: primary,
-          textStyle: const TextStyle(
             fontFamily: 'Inter',
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
           ),
         ),
       ),
-      
-      // Inputs elegantes
+
+      // Inputs
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMd),
           borderSide: const BorderSide(color: slate200),
@@ -239,149 +220,69 @@ class MomentusTheme {
           borderRadius: BorderRadius.circular(radiusMd),
           borderSide: const BorderSide(color: primary, width: 2),
         ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radiusMd),
-          borderSide: const BorderSide(color: error),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radiusMd),
-          borderSide: const BorderSide(color: error, width: 2),
-        ),
-        labelStyle: const TextStyle(color: slate500, fontWeight: FontWeight.w500),
-        hintStyle: const TextStyle(color: slate400),
-        prefixIconColor: slate400,
-        suffixIconColor: slate400,
+        labelStyle: const TextStyle(color: slate500),
         floatingLabelBehavior: FloatingLabelBehavior.auto,
       ),
-      
-      // FAB verde con sombra
-      floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: primary,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        highlightElevation: 8,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radiusMd),
-        ),
+
+      // Navigation Bar
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: Colors.white,
+        indicatorColor: red50, // Indicador sutil rojo
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(color: primary);
+          }
+          return const IconThemeData(color: slate400);
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          return TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 12,
+            fontWeight: states.contains(WidgetState.selected)
+                ? FontWeight.w600
+                : FontWeight.w500,
+            color: states.contains(WidgetState.selected) ? primary : slate500,
+          );
+        }),
       ),
-      
-      // Bottom Navigation premium
+
+      // Bottom Nav (Legacy)
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.white,
         selectedItemColor: primary,
         unselectedItemColor: slate400,
         type: BottomNavigationBarType.fixed,
-        elevation: 8,
-        selectedLabelStyle: TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-        unselectedLabelStyle: TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 12,
-          fontWeight: FontWeight.w400,
-        ),
-      ),
-      
-      // Navigation bar (Material 3)
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: Colors.white,
-        indicatorColor: green100,
-        surfaceTintColor: Colors.transparent,
         elevation: 0,
-        height: 70,
-        labelTextStyle: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: primary,
-            );
-          }
-          return const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 12,
-            fontWeight: FontWeight.w400,
-            color: slate500,
-          );
-        }),
-        iconTheme: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: primary, size: 24);
-          }
-          return const IconThemeData(color: slate400, size: 24);
-        }),
       ),
-      
+
+      // FAB
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: slate900, // Negro para contraste máximo
+        foregroundColor: Colors.white,
+      ),
+
       // Chips
       chipTheme: ChipThemeData(
-        backgroundColor: green50,
-        selectedColor: green100,
-        labelStyle: const TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          color: slate700,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radiusFull),
-        ),
+        backgroundColor: slate50,
+        selectedColor: red100,
+        labelStyle: const TextStyle(color: slate700),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
         side: BorderSide.none,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       ),
-      
-      // Divider
-      dividerTheme: const DividerThemeData(
-        color: slate200,
-        thickness: 1,
-        space: 1,
-      ),
-      
-      // Checkbox verde
+
+      // Checkbox & Switch
       checkboxTheme: CheckboxThemeData(
-        fillColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return primary;
-          return Colors.transparent;
-        }),
-        checkColor: WidgetStateProperty.all(Colors.white),
+        fillColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.selected) ? primary : null),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-        side: const BorderSide(color: slate300, width: 1.5),
       ),
-      
-      // Switch verde
       switchTheme: SwitchThemeData(
-        thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return primary;
-          return slate400;
-        }),
-        trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return green200;
-          return slate200;
-        }),
+        thumbColor: WidgetStateProperty.resolveWith((states) =>
+            states.contains(WidgetState.selected) ? primary : slate400),
+        trackColor: WidgetStateProperty.resolveWith((states) =>
+            states.contains(WidgetState.selected) ? red100 : slate200),
       ),
-      
-      // Drawer
-      drawerTheme: const DrawerThemeData(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
-      ),
-      
-      // Snackbar
-      snackBarTheme: SnackBarThemeData(
-        backgroundColor: slate800,
-        contentTextStyle: const TextStyle(
-          fontFamily: 'Inter',
-          fontWeight: FontWeight.w500,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radiusMd),
-        ),
-        behavior: SnackBarBehavior.floating,
-      ),
-      
-      // Typography
+
       textTheme: _textTheme,
     );
   }
@@ -389,7 +290,7 @@ class MomentusTheme {
   // =============================================
   // TIPOGRAFÍA
   // =============================================
-  
+
   static const TextTheme _textTheme = TextTheme(
     // Display
     displayLarge: TextStyle(
@@ -416,7 +317,7 @@ class MomentusTheme {
       color: slate900,
       height: 1.3,
     ),
-    
+
     // Headlines
     headlineLarge: TextStyle(
       fontFamily: 'Inter',
@@ -438,7 +339,7 @@ class MomentusTheme {
       fontWeight: FontWeight.w600,
       color: slate900,
     ),
-    
+
     // Titles
     titleLarge: TextStyle(
       fontFamily: 'Inter',
@@ -459,7 +360,7 @@ class MomentusTheme {
       fontWeight: FontWeight.w500,
       color: slate600,
     ),
-    
+
     // Body
     bodyLarge: TextStyle(
       fontFamily: 'Inter',
@@ -485,7 +386,7 @@ class MomentusTheme {
       color: slate500,
       height: 1.4,
     ),
-    
+
     // Labels
     labelLarge: TextStyle(
       fontFamily: 'Inter',
@@ -519,12 +420,12 @@ extension MomentusContext on BuildContext {
   ThemeData get theme => Theme.of(this);
   TextTheme get textTheme => Theme.of(this).textTheme;
   ColorScheme get colors => Theme.of(this).colorScheme;
-  
+
   // Colores rápidos
   Color get primaryColor => MomentusTheme.primary;
   Color get backgroundColor => MomentusTheme.green50;
   Color get surfaceColor => Colors.white;
-  
+
   // Semánticos
   Color get successColor => MomentusTheme.success;
   Color get warningColor => MomentusTheme.warning;

@@ -367,10 +367,23 @@ export const ProyectosPage: React.FC = () => {
                 ...apiFilters,
             });
 
+            // Helper to filter active only
+            const filterActive = (list: Proyecto[]) => {
+                return list.filter(x => {
+                    const s = (x.estado || '').toLowerCase();
+                    // Allow filtering specifically for these if user ever wants, but default hide
+                    // For now, hard hide as per requirement "desactivar proyecto"
+                    return s !== 'cancelado' && s !== 'eliminado' && s !== 'inactivo';
+                });
+            };
+
             // CASO A: API devuelve { items, total, lastPage } (paginado real)
             if (result && Array.isArray(result.items)) {
-                const items = result.items as Proyecto[];
-                const totalItems = Number(result.total ?? items.length);
+                let items = result.items as Proyecto[];
+                // Filter out deleted/cancelled
+                items = filterActive(items);
+
+                const totalItems = Number(result.total ?? items.length); // Recalc total if needed? Better use items.length if we filtered
                 const lp = Number(result.lastPage ?? 1);
 
                 // Guardar siempre en listaCompleta para permitir filtrado local posterior
@@ -384,7 +397,7 @@ export const ProyectosPage: React.FC = () => {
                 } else {
                     setModoLocalPaging(false);
                     setProjects(items);
-                    setTotal(totalItems);
+                    setTotal(items.length); // Use actual filtered length
                     setLastPage(Math.max(1, lp));
                     if (p) setPage(p);
                 }
@@ -395,7 +408,8 @@ export const ProyectosPage: React.FC = () => {
 
             // CASO B: API devuelve array directo (sin wrapper)
             if (Array.isArray(result)) {
-                aplicarPaginacionLocal(result as Proyecto[], currentPage, limit);
+                const filtered = filterActive(result as Proyecto[]);
+                aplicarPaginacionLocal(filtered, currentPage, limit);
                 setLoading(false);
                 return;
             }
@@ -417,7 +431,8 @@ export const ProyectosPage: React.FC = () => {
                     descripcion: x.descripcion,
                 })) as any;
 
-                aplicarPaginacionLocal(mapped, currentPage, limit);
+                const filtered = filterActive(mapped);
+                aplicarPaginacionLocal(filtered, currentPage, limit);
                 setLoading(false);
                 return;
             }

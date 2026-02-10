@@ -13,6 +13,7 @@ import '../../common/data/offline_resource_service.dart';
 import 'create_project_sheet.dart';
 import '../../tasks/presentation/task_detail_sheet.dart';
 import '../../tasks/presentation/quick_create_task_sheet.dart';
+import 'project_gantt_view.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final Map<String, dynamic> project;
@@ -35,6 +36,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   String _filterStatus = 'Todas';
   List<dynamic> _allTasks = [];
   List<dynamic> _filteredTasks = [];
+  bool _showGantt = false;
 
   Future<OfflineListResult> _fetchTasks() async {
     final id = widget.project['idProyecto'] ?? widget.project['id'];
@@ -43,7 +45,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     final result = await _offlineService.loadList(
       cacheKey: cacheKey,
       remote: () async {
-        final response = await ApiClient.dio.get('/proyectos/$id/tareas');
+        final response = await ApiClient.dio.get('proyectos/$id/tareas');
         return unwrapApiList(response.data);
       },
     );
@@ -213,6 +215,29 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
+                    // Toggle List/Gantt
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: MomentusTheme.slate200),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _viewToggle(Icons.list, !_showGantt,
+                              () => setState(() => _showGantt = false)),
+                          Container(
+                              width: 1,
+                              height: 24,
+                              color: MomentusTheme.slate200),
+                          _viewToggle(Icons.date_range, _showGantt,
+                              () => setState(() => _showGantt = true)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+
                     _filterChip('Todas'),
                     const SizedBox(width: 8),
                     _filterChip('En Curso'),
@@ -227,7 +252,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               const SizedBox(height: 16),
 
               // 3. Lista de Tareas
-              if (_filteredTasks.isEmpty)
+              if (_showGantt)
+                ProjectGanttView(tasks: _filteredTasks)
+              else if (_filteredTasks.isEmpty)
                 _buildEmptyState()
               else
                 ListView.separated(
@@ -258,6 +285,26 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         backgroundColor: MomentusTheme.primary,
         icon: const Icon(CupertinoIcons.add),
         label: const Text('Nueva Tarea'),
+      ),
+    );
+  }
+
+  Widget _viewToggle(IconData icon, bool isSelected, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? MomentusTheme.primary.withValues(alpha: 0.1)
+              : Colors.transparent,
+        ),
+        child: Icon(
+          icon,
+          size: 20,
+          color: isSelected ? MomentusTheme.primary : MomentusTheme.slate400,
+        ),
       ),
     );
   }
@@ -470,7 +517,34 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   Widget _buildTaskCard(Map<String, dynamic> task) {
     final titulo = task['titulo']?.toString() ?? 'Sin título';
     final estado = task['estado']?.toString() ?? 'Pendiente';
-    final asignado = task['asignadoNombre']?.toString() ?? 'Sin asignar';
+    String asignado = 'Sin asignar';
+    if (task['asignadoNombre'] != null &&
+        task['asignadoNombre'].toString().isNotEmpty) {
+      asignado = task['asignadoNombre'].toString();
+    } else if (task['nombreCompleto'] != null &&
+        task['nombreCompleto'].toString().isNotEmpty) {
+      asignado = task['nombreCompleto'].toString();
+    } else if (task['asignado'] != null) {
+      if (task['asignado'] is Map) {
+        asignado = task['asignado']['nombre'] ??
+            task['asignado']['nombreCompleto'] ??
+            'Sin asignar';
+      } else {
+        asignado = task['asignado'].toString();
+      }
+    } else if (task['responsable'] != null) {
+      if (task['responsable'] is Map) {
+        asignado = task['responsable']['nombre'] ??
+            task['responsable']['nombreCompleto'] ??
+            'Sin asignar';
+      } else {
+        asignado = task['responsable'].toString();
+      }
+    } else if (task['usuario'] != null && task['usuario'] is Map) {
+      asignado = task['usuario']['nombre'] ??
+          task['usuario']['nombreCompleto'] ??
+          'Sin asignar';
+    }
     final fecha = _formatDate(task['fechaFin']?.toString());
     final isLate = _isLate(task['fechaFin']?.toString(), estado);
 

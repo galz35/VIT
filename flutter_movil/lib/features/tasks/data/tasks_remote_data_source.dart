@@ -1,4 +1,3 @@
-
 import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
 
@@ -24,7 +23,7 @@ class TasksRemoteDataSource {
         'esfuerzo': 'M',
       };
 
-      await _dio.post('/tasks', data: data);
+      await _dio.post('tasks', data: data);
     } catch (e) {
       if (e is DioException) {
         throw Exception('Error al crear tarea: ${e.message}');
@@ -51,14 +50,14 @@ class TasksRemoteDataSource {
         'tipo': tipo,
         'prioridad': prioridad,
         'esfuerzo': esfuerzo,
-        if (descripcion != null && descripcion.isNotEmpty) 'descripcion': descripcion,
+        if (descripcion != null && descripcion.isNotEmpty)
+          'descripcion': descripcion,
         if (assignedToUserId != null) 'idResponsable': assignedToUserId,
         if (projectId != null) 'idProyecto': projectId,
-        'estado': 'Pendiente',
         'comportamiento': 'SIMPLE', // Valor por defecto
       };
 
-      await _dio.post('/tareas/rapida', data: data);
+      await _dio.post('tareas/rapida', data: data);
     } catch (e) {
       if (e is DioException) {
         throw Exception('Error al crear tarea: ${e.message}');

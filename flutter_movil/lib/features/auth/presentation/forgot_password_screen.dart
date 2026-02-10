@@ -48,7 +48,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     });
 
     try {
-      await ApiClient.dio.post('/auth/forgot-password', data: {
+      await ApiClient.dio.post('auth/forgot-password', data: {
         'correo': _emailController.text.trim(),
       });
 
@@ -61,7 +61,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'No se pudo enviar el correo de recuperación. Verifica que el correo esté registrado.';
+          _error =
+              'No se pudo enviar el correo de recuperación. Verifica que el correo esté registrado.';
           _loading = false;
         });
       }
@@ -207,7 +208,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline, color: MomentusTheme.error, size: 20),
+                  const Icon(Icons.error_outline,
+                      color: MomentusTheme.error, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
