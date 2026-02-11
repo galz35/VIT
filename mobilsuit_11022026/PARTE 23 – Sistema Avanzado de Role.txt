@@ -1,0 +1,67 @@
+PARTE 23 – Sistema Avanzado de Roles y Permisos
+
+Control granular de accesos en todo el ecosistema (móvil, web, API) por módulo, acción, campo y visibilidad.
+
+🏷️ 23.1 – Roles Base
+Rol	Acceso
+admin	Control total: usuarios, zonas, reportes, etc.
+supervisor	Gestión de tareas, formularios y monitoreo general
+tecnico	Acceso a tareas asignadas, check-in, formularios
+auditor	Solo lectura: reportes y actividades
+soporte	Ver logs, auditoría, no modifica nada
+🧱 23.2 – Tabla: permisos
+Campo	Tipo	Descripción
+id	UUID	Clave única
+rol	TEXT	Rol afectado
+modulo	TEXT	Ej. usuarios, tareas, alertas, etc.
+accion	TEXT	ver, crear, editar, eliminar
+permitido	BOOL	true/false
+
+Este sistema permite crear roles personalizados o híbridos si se requiere.
+
+🔐 23.3 – Middleware NestJS (PermissionGuard)
+@UseGuards(JwtAuthGuard, PermissionGuard('usuarios', 'editar'))
+@Put('/usuarios/:id')
+
+
+Se extrae el rol del JWT
+
+Se consulta si ese rol puede ejecutar accion sobre modulo
+
+Si no tiene permiso → 403 Forbidden
+
+⚛️ 23.4 – React Web: UI Adaptativa
+
+Menús, botones y vistas se ocultan o bloquean según permisos:
+
+{hasPermiso('usuarios', 'crear') && <BotonCrearUsuario />}
+
+
+Componente AccessControl:
+
+<AccessControl modulo="reportes" accion="ver">
+  <ReportesPanel />
+</AccessControl>
+
+📱 23.5 – Flutter App: Permisos móviles
+
+Cada respuesta del login trae el rol y lista de permisos en cache:
+
+{
+  "rol": "tecnico",
+  "permisos": [
+    { "modulo": "formularios", "accion": "ver", "permitido": true },
+    ...
+  ]
+}
+
+
+El código Flutter evalúa si mostrar opciones (ej. botón de alerta, firma, repetir visita)
+
+🧪 23.6 – Validaciones cruzadas
+
+Backend nunca confía en el frontend.
+
+Aunque el botón esté oculto, toda acción se vuelve a validar en la API.
+
+Si cambia el rol → la sesión expira y fuerza re-login (o recarga permisos con /api/mis-permisos).

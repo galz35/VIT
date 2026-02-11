@@ -1,0 +1,94 @@
+Perfecto. Vamos con:
+
+⚙️ PARTE 25 – Infraestructura, Despliegue y Mantenimiento Empresarial
+
+Este módulo establece cómo publicar, respaldar, monitorear y escalar la solución React + Flutter + NestJS + SQL Server en producción.
+
+🧱 25.1 – Arquitectura General
+[ Flutter App ]       → API (NestJS) ← [ React Admin Web ]
+                            ↓
+                        SQL Server
+                            ↓
+                       Backups, Logs
+
+☁️ 25.2 – Entorno de Producción
+Componente	Tecnología
+API Backend	NestJS + Fastify
+Web Admin	React (Vite) + Capacitor
+App Móvil	Flutter Android/iOS
+Base de Datos	SQL Server 2019+
+Servidor	Ubuntu 22.04 / Windows Server
+Hosting	VPS dedicado / Docker
+Dominio	api.empresa.com, admin.empresa.com
+🚀 25.3 – Despliegue API + Web
+# Backend
+npm run build
+pm2 restart dist/main.js
+
+# Web
+npm run build
+cp -r dist/ /var/www/admin
+
+# Nginx
+location /api { proxy_pass http://localhost:3000/ }
+location /     { root /var/www/admin; index index.html }
+
+
+Usar HTTPS forzado (certbot)
+
+Web y API deben estar detrás de Nginx o IIS
+
+📱 25.4 – Flutter Build
+flutter build apk --release --no-tree-shake-icons
+# Para iOS: flutter build ipa
+
+
+Firma digital con Keystore
+
+Configurar minSdkVersion 21 y compileSdkVersion 34
+
+🔁 25.5 – Backups programados
+Base de datos
+BACKUP DATABASE miapp TO DISK = 'D:\backups\miapp_2026_02_11.bak'
+
+
+Frecuencia: diaria
+
+Retención: 15 días
+
+Automatizado con script + cron o SQL Agent
+
+Archivos (multimedia, firmas)
+
+Carpeta: /srv/data/archivos/
+
+Zip diario + subida a bucket/cloud
+
+rsync o rclone a AWS S3 / Azure Blob / NAS
+
+🔍 25.6 – Logs y monitoreo
+Herramienta	Función
+winston	Logs API y rotación diaria
+pm2 monit	Monitor de procesos backend
+nginx logs	Accesos, errores frontend
+audit.log	Auditoría del sistema (parte 22)
+uptime-kuma	Monitor de disponibilidad
+♻️ 25.7 – CI/CD opcional
+
+Con GitHub Actions / GitLab CI:
+
+push a rama main → dispara build
+
+Ejecuta tests
+
+Subida automática a producción por SSH/SCP
+
+📦 25.8 – Consideraciones de mantenimiento
+
+Vaciar archivos_temp o archivos_local antiguos
+
+Monitorear crecimiento de base de datos (tracking, logs)
+
+Migrar datos viejos a particiones si es necesario
+
+Notificar a usuarios móviles cuando haya nuevas versiones (firebase messaging opcional)

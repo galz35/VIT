@@ -1,0 +1,96 @@
+PARTE 12 – Web Admin en React: Monitoreo en Tiempo Real con WebSocket
+
+Este módulo permite visualizar en vivo lo que hacen los usuarios móviles: ubicación, alertas, check-ins, formularios, etc. Se construye sobre WebSockets para obtener eventos push en tiempo real sin necesidad de hacer polling.
+
+🔌 12.1 – ¿Qué es WebSocket y cómo se usa?
+
+Es un canal de comunicación permanente entre cliente y servidor.
+
+A diferencia de HTTP, donde el cliente pregunta, aquí el servidor puede emitir eventos automáticamente.
+
+En React, usamos socket.io-client.
+
+En NestJS, usamos @nestjs/websockets + socket.io.
+
+🧠 12.2 – Ejemplo Práctico de Uso
+🔔 Escenario:
+
+Un usuario hace check-in en el campo
+
+Su app móvil envía ubicación + info a /api/checkin
+
+El backend (NestJS) emite evento WebSocket
+
+Todos los supervisores conectados en el panel web lo ven al instante
+
+⚛️ 12.3 – Código React (cliente WebSocket)
+📦 Instalar
+npm install socket.io-client
+
+🧬 Conexión
+import { io } from 'socket.io-client';
+
+const socket = io('https://api.tuservidor.com', {
+  path: '/ws/',
+  auth: { token: 'Bearer ' + accessToken },
+});
+
+🔔 Escuchar eventos
+useEffect(() => {
+  socket.on('nuevo-checkin', (data) => {
+    console.log('Nuevo check-in:', data);
+    // Actualiza mapa o tabla en tiempo real
+    setUbicaciones((prev) => [...prev, data]);
+  });
+
+  return () => {
+    socket.disconnect();
+  };
+}, []);
+
+🪄 12.4 – Backend NestJS (/gateway/checkin.gateway.ts)
+📦 Configuración WebSocket
+@WebSocketGateway({ namespace: 'ws', cors: true })
+export class CheckinGateway {
+  @WebSocketServer()
+  server: Server;
+
+  emitirNuevoCheckin(data: any) {
+    this.server.emit('nuevo-checkin', data);
+  }
+}
+
+🎯 Llamado desde servicio check-in
+await this.checkinGateway.emitirNuevoCheckin({
+  id_usuario,
+  nombre: 'Juan Pérez',
+  lat,
+  lng,
+  hora: new Date().toISOString(),
+});
+
+🗺️ 12.5 – Visualización en mapa React
+<Marker position={[lat, lng]} icon={iconoCheckin}>
+  <Popup>{usuario} - {hora}</Popup>
+</Marker>
+
+
+Usa librerías como react-leaflet, google-maps-react o maplibre.
+
+Cada evento WebSocket recibido actualiza un nuevo marcador.
+
+Se puede mostrar:
+
+Color por estado (verde: checkin, rojo: alerta)
+
+Última ubicación
+
+Trayectoria completa
+
+🛡️ 12.6 – Seguridad
+
+Cada conexión WebSocket exige token JWT
+
+Se puede limitar qué eventos recibe cada rol
+
+Conexiones inválidas son rechazadas en handleConnection del gateway

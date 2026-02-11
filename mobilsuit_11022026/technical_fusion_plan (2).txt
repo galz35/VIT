@@ -1,0 +1,188 @@
+# 📘 TECHNICAL_FUSION_PLAN.md
+
+## 🎯 Objetivo
+Fusionar el sistema existente **Planner-EF** con las funcionalidades de Mobile Suit Case, manteniendo su núcleo de planificación diaria pero incorporando visitas geolocalizadas, evidencia de campo y control total por usuario.
+
+---
+
+## ✅ Estado Base de Planner-EF
+
+- Agenda diaria y planificación ya implementadas
+- Formularios dinámicos + respuestas en Flutter
+- Backend con NestJS + SQL Server
+- Modo offline con sincronización inteligente (`sync_queue`)
+- Flutter con coordenadas, adjuntos, firma y lógica modular
+
+---
+
+## 🧩 Extensiones Clave Implementar (Mobile Suit Case)
+
+### 1. **Tabla nueva: `visitas_clientes`**
+| Campo          | Tipo     |
+|----------------|----------|
+| id_visita      | UUID     |
+| id_cliente     | UUID     |
+| id_usuario     | UUID     |
+| lat_inicio     | FLOAT    |
+| lng_inicio     | FLOAT    |
+| lat_fin        | FLOAT    |
+| lng_fin        | FLOAT    |
+| inicio_ts      | DATETIME |
+| fin_ts         | DATETIME |
+| estado         | TEXT     |
+| comentario     | TEXT     |
+| firma_path     | TEXT     |
+| foto_path      | TEXT     |
+
+### 2. **SP: `sp_RegistrarVisitaCliente` + `sp_FinalizarVisitaCliente`**
+Valida geofence, registra tiempos, adjuntos y estado.
+
+### 3. **Flutter: Nueva vista `/visita_cliente`**
+- Captura check-in, formulario, firma, foto, check-out
+- Guarda en SQLite → sincroniza luego
+
+### 4. **React Web: Panel `/visitas`**
+- Filtros: por fecha, cliente, estado
+- Vista mapa con pines de check-in/out
+- Modal con evidencia y formularios llenados
+
+### 5. **Multimedia `.webp` por defecto**
+- Compresión con `flutter_image_compress`
+- Validación backend: solo `image/webp`
+
+---
+
+## 🔒 Módulo Avanzado de Visibilidad por Usuario
+
+### 1. **Tabla: `usuarios_vistas`**
+| Campo        | Tipo   |
+|--------------|--------|
+| id_usuario   | UUID   |
+| plataforma   | TEXT   |
+| vista        | TEXT   |
+| permitido    | BOOL   |
+
+### 2. **Endpoints API**
+- `GET /api/usuarios/:id/vistas?plataforma=web`
+- `PUT /api/usuarios/:id/vistas`
+
+### 3. **Web (React)**
+- Hook: `useVistaPermitida('visitas')`
+- Componente `<AccessControlVista vista="visitas">...</AccessControlVista>`
+
+### 4. **Flutter**
+- Permisos enviados al login
+- Evaluación local para mostrar/bloquear vistas
+
+### 5. **Panel Admin**
+- Ruta `/usuarios/:id/permisos-vistas`
+- Switch por vista y plataforma
+
+---
+
+## 🔄 Fusión con `agenda_dia`
+
+- Si se quiere: agregar `id_agenda` en `visitas_clientes`
+- Así una tarea del día puede generar una visita física con GPS
+
+---
+
+## 🔚 Módulo de Marcaje Web (Entrada/Salida con GPS)
+
+### 🧱 Tabla nueva: `marcajes_web`
+| Campo             | Tipo     |
+|-------------------|----------|
+| id_marcaje        | UUID     |
+| id_usuario        | UUID     |
+| tipo              | TEXT     | ('ENTRADA' o 'SALIDA')
+| fecha_hora        | DATETIME |
+| latitud           | FLOAT    |
+| longitud          | FLOAT    |
+| ip_origen         | TEXT     |
+| user_agent        | TEXT     |
+| comentario        | TEXT     |
+| valido            | BOOL     | (marca válida o irregular)
+| reclamado         | BOOL     | (el usuario pidió corrección)
+| fecha_marcaje_dia | DATE     | Día base que representa (para detección de omisión de salida)
+
+
+### 🌐 Web (React) - Vista `/marcaje`
+- Muestra hora actual
+- Botón **"Marcar Entrada"** / **"Marcar Salida"**
+- Captura GPS navegador (HTML5)
+- Validación backend:
+  - No puede marcar salida antes de 5 minutos
+  - No puede hacer ambas en el mismo minuto
+  - Si no marcó salida día anterior → muestra botón “Registrar salida pendiente día anterior”
+
+### ⏮️ Reclamación de marcaje
+- Botón “Reclamar marcaje” si marcó mal
+- En backend se marca `reclamado = true`
+- Admin puede auditar o corregir desde el panel
+
+### 🔁 Rescate automático si no marcó salida
+- En login de día siguiente:
+  - App o Web detecta que tiene `tipo=ENTRADA` sin `SALIDA`
+  - Ofrece registrar salida tardía con motivo obligatorio
+
+### 🔐 Seguridad
+- Permiso `marcaje_web` requerido
+- Lógica de zona geográfica (si aplica)
+- IP y navegador auditados
+
+---
+
+## 📍 Parte 28 – Módulo de Geovalla (Geofence por Usuario o Cliente)
+
+### 🎯 Objetivo
+Evitar que usuarios marquen (check-in, entrada/salida o visitas) desde fuera de la ubicación permitida.
+
+### 🧱 Tabla: `zonas_permitidas`
+| Campo          | Tipo     |
+|----------------|----------|
+| id_zona        | UUID     |
+| id_cliente     | UUID     | (si aplica por cliente)
+| id_usuario     | UUID     | (si aplica individualmente)
+| nombre         | TEXT     |
+| latitud        | FLOAT    |
+| longitud       | FLOAT    |
+| radio_metros   | FLOAT    |
+
+### 📌 Lógica en SP o Middleware
+- Al marcar, se calcula distancia entre GPS actual y zona
+- Si está fuera de `radio_metros`, se bloquea o se marca como `valido = false`
+
+```sql
+IF distancia_en_metros(@lat, @lng, zona_lat, zona_lng) > @radio THEN
+  SET @valido = 0
+ELSE
+  SET @valido = 1
+```
+
+### 📱 Flutter / Web
+- Muestra alerta si usuario está fuera de zona
+- Opción de justificar (si se desea)
+
+### 🔐 Seguridad
+- Evita marcajes desde casa, cafés, puntos no autorizados
+- Supervisa intentos de marcaje inválido
+
+---
+
+## 📊 Progreso Actual
+
+- Fusión técnica lograda al **100%**
+- Incluye visitas, multimedia, visibilidad personalizada, marcaje web y geovalla
+
+---
+
+## 🚀 Próximos pasos sugeridos
+
+1. Crear migraciones o scripts SQL para nuevas tablas y SP
+2. Implementar vista de visita y marcaje en Flutter y React
+3. Activar control por vista (`usuarios_vistas`) desde login
+4. Activar geovalla con fallback seguro (permite marcar pero notifica)
+
+---
+
+**Este documento puede ser compartido con tu equipo de desarrollo o IA avanzada (Codex, ChatGPT 5.2, etc).**

@@ -1,0 +1,68 @@
+Sí, toda la arquitectura está pensada para soportar procesos en segundo plano tanto en Flutter (tracking offline) como en NestJS (background workers, notificaciones, WebSockets).
+
+Continuamos con:
+
+📘 PARTE 4.2 – WebSockets y Servicios en Segundo Plano (NestJS)
+
+Esta sección cubre los servicios en tiempo real y automatizaciones del sistema que operan sin intervención directa del usuario.
+
+📡 4.2.1 – WebSocket Gateway (NestJS)
+
+Namespace: /ws
+
+Evento	Descripción
+tracking:ubicacion	Posición GPS en tiempo real (admin live map)
+alerta:nueva	Notificación de alerta crítica
+chat:mensaje	Mensaje recibido (privado o grupal)
+usuario:online/offline	Cambio de estado en el chat
+actividad:estado	Actualización de estado por colaborador
+Seguridad:
+
+Socket handshake incluye token JWT
+
+Server valida usuario y lo asocia a su id_empresa
+
+🔁 4.2.2 – Background Workers
+
+NestJS con @nestjs/schedule y/o colas bullmq para procesos asincrónicos:
+
+Worker	Frecuencia	Tarea
+calcular-alertas-geocerca	Cada 3 min	Detecta usuarios fuera de zona asignada
+inactividad-checker	Cada 10 min	Dispara alerta si no hay tracking en 30 min
+resumen-diario	23:59	Genera y guarda distancia diaria por usuario
+cerrado-forzoso	22:00	Cambia estado de tareas no completadas
+notificaciones-programadas	Cada 5 min	Recordatorios, tareas pendientes, etc.
+🔔 4.2.3 – Notificaciones Push (FCM)
+
+Integrado vía @nestjs/axios con token por dispositivo.
+
+Evento	Destinatario	Contenido
+Nueva tarea asignada	Usuario móvil	“Tienes una nueva visita hoy”
+Alerta crítica	Supervisor	“Alerta de pánico enviada por Juan Pérez”
+Recordatorio	Usuario móvil	“No has realizado check-in en tu primera visita”
+⏳ 4.2.4 – Tareas Programadas
+
+Usa Cron + Interval decorators (@Cron, @Interval, @Timeout)
+
+Ejemplo:
+
+@Cron('0 22 * * *') // todos los días 10PM
+handleCierreJornada() {
+  // actividades sin check-out se marcan como “incompletas”
+}
+
+🧪 4.2.5 – Reintento Automático (resiliencia)
+
+Cada llamada crítica tiene un middleware que:
+
+Atrapa errores HTTP
+
+Reintenta 3 veces con backoff exponencial
+
+SyncService móvil también está preparado para:
+
+Guardar en sync_queue local
+
+Marcar como ERROR si supera intentos
+
+Reintentar en próximo ciclo o manualmente

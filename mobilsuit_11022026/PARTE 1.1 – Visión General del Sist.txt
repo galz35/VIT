@@ -1,0 +1,70 @@
+PARTE 1.1 – Visión General del Sistema
+🎯 Objetivo del Sistema
+
+Desarrollar una solución empresarial de gestión de operaciones móviles tipo Mobile Suitcase, que permita a empresas:
+
+Controlar y medir actividades de campo (visitas, tareas, inspecciones).
+
+Registrar y validar geográficamente las acciones de los colaboradores.
+
+Recolectar datos a través de formularios dinámicos.
+
+Medir cumplimiento de metas y recorridos diarios.
+
+Operar offline con sincronización posterior.
+
+Generar reportes, alertas, estadísticas en tiempo real.
+
+Este sistema será modular, multitenant, con frontend web en React, app móvil en Flutter, backend NestJS Fastify, y base de datos SQL Server.
+
+👥 Tipos de Usuario
+Tipo	Descripción	Plataforma
+Supervisor/Admin	Gestiona usuarios, asigna tareas, crea formularios, visualiza reportes	React Web (PWA)
+Colaborador de campo	Recibe tareas, registra actividad, llena formularios, transmite ubicación	Flutter App
+Auditor/Soporte	Consulta histórico, revisa alertas, exporta KPIs	React Web
+🧱 Módulos Funcionales Clave
+Módulo	Funciones principales
+Usuarios y roles	Registro, autenticación, permisos, multitenencia
+Clientes y ubicaciones	Geolocalización de puntos de visita
+Actividades/tareas	Asignación, control de tiempos, validación de visitas
+Formularios dinámicos	Builder web y render móvil desde JSON
+Tracking GPS y rutas	Puntos periódicos, cálculo de distancia, monitoreo
+Alertas y geocercas	Entrada/salida de zona, botón de pánico
+Chat interno	Comunicación real-time entre campo y oficina
+Reportes/KPIs	Cumplimiento, visitas por día, distancia, ranking
+🌐 Casos de Uso Típicos
+
+Supervisor crea ruta de visitas para equipo → asocia clientes → define orden → asigna tareas
+
+Colaborador inicia su día, sincroniza tareas → app registra ubicación periódica
+
+Colaborador visita cliente, hace check-in (validación GPS), llena formulario dinámico (con firma)
+
+Alerta generada si está fuera de radio o no se presenta en tiempo
+
+Admin ve en mapa en tiempo real al personal → monitorea alertas
+
+Fin del día: se calcula ruta, distancia, tareas cumplidas, exporta KPIs
+
+🧭 Objetivo de Clon Mejorado
+
+Superar a Mobile Suitcase con:
+
+UI/UX moderna, rápida y fluida
+
+Builder de formularios más flexible (condiciones, multimedia)
+
+Reportes más visuales
+
+Tracking más preciso (con background service y fusión de fuentes)
+
+Infraestructura desacoplada y más escalable
+
+⚙️ Tecnología Base Confirmada
+Capa	Stack
+Backend API	NestJS + Fastify + SQL Server
+Frontend Admin	React + Vite + TanStack Query + Tailwind
+Móvil	Flutter + Dio + sqflite + Geolocator
+WS + Sync	WebSocket (NestJS Gateway), Offline-first strategy
+Seguridad	JWT + Roles + auditoría + almacenamiento seguro
+Infra	Docker-ready, CI/CD compatible, documentación Swagger

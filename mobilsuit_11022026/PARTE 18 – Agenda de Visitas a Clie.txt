@@ -1,0 +1,76 @@
+PARTE 18 – Agenda de Visitas a Clientes (Planificación Operativa)
+
+Orientado a gestionar rutas, frecuencia y distribución de visitas de campo, de forma automatizada, repetitiva o manual, sin interferir con otros sistemas internos.
+
+🧠 18.1 – ¿Qué cubre esta agenda?
+Caso de uso	¿Está cubierto?
+Visitas únicas agendadas a mano	✅
+Frecuencia semanal/mensual	✅
+Rutas automáticas por zona	✅
+Asignación a múltiples usuarios	✅
+Clientes con GPS y validación	✅
+Repetición de tareas operativas	✅
+Check-in/check-out asociados	✅
+🧱 18.2 – Tabla: tareas_visita
+Campo	Tipo	Descripción
+id_tarea	UUID	Identificador único
+fecha_visita	DATE	Día planificado
+cliente_id	UUID	Relación con cliente
+usuario_id	UUID	Técnico asignado
+estado	TEXT	pendiente / en curso / finalizada
+frecuencia	TEXT	ninguna, semanal, mensual
+checkin_id	FK	Check-in registrado (si existe)
+zona_id	FK	Para agrupación geográfica
+observaciones	TEXT	Libre (coordinaciones, referencias)
+⚙️ 18.3 – Lógica para Repetición
+
+Ejemplo: cliente A → visita cada lunes y jueves
+
+INSERT INTO tareas_visita (...fecha...) VALUES 
+  ('2026-02-12'), ('2026-02-15'), ('2026-02-19'), ...
+
+
+Se genera desde un servicio tipo:
+
+crearRecurrente(cliente_id, frecuencia, dias, desde, hasta)
+
+
+Esta lógica queda encapsulada para no afectar tu otro planificador.
+
+📍 18.4 – Asignación geográfica inteligente
+
+El supervisor selecciona “Zona Norte”
+
+El sistema sugiere tareas para todos los clientes de esa zona aún no visitados este mes
+
+Puede autocompletar ruta del día con distancia optimizada
+
+🧭 18.5 – Visualización Web
+
+Calendario estilo react-big-calendar
+
+Filtros por usuario / zona / cliente
+
+Estado visible por color
+
+Vista semanal → agenda de cada técnico
+
+🧳 18.6 – Flutter App
+
+Muestra las tareas del día ordenadas por distancia
+
+Usuario hace check-in al llegar
+
+Llenado de formulario
+
+Check-out y firma si aplica
+
+🧾 18.7 – Reportes operativos
+Indicador	Descripción
+% visitas completadas	Por día / semana / técnico
+Tareas fuera de zona	Alertas de desviación
+Tareas reprogramadas	Por cliente o por causa externa
+Formulario incompleto	Validación cruzada
+Distancia recorrida	Por GPS o tracking acumulado
+
+¿Querés que ahora vayamos con la Parte 19 – Cierre de ciclo por visita (check-out, resumen, firma cliente, observaciones, confirmación final)?

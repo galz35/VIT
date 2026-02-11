@@ -1,0 +1,67 @@
+PARTE 22 – Panel de Auditoría y Trazabilidad
+
+Permite seguir cada evento relevante del sistema: sincronizaciones, errores, modificaciones de datos, cambios en tareas o formularios, etc.
+
+📑 22.1 – Tabla: auditoria
+Campo	Tipo	Descripción
+id	UUID	ID único
+usuario_id	UUID	Quién ejecutó el evento
+tipo_evento	TEXT	'modificacion', 'sync_error', etc.
+entidad	TEXT	'tarea', 'usuario', 'formulario'
+entidad_id	UUID	ID del objeto afectado
+detalle	TEXT	Descripción del cambio / error
+ip	TEXT	IP o device id
+timestamp	TEXT	Fecha del evento (ISO 8601)
+🧠 22.2 – Eventos auditables
+Evento	Tipo
+Modificación de usuario	modificacion
+Nueva tarea asignada	creacion
+Respuesta de formulario editada	modificacion
+Sincronización fallida	sync_error
+Cierre de visita fuera de zona	alerta
+Login desde nuevo dispositivo	evento_seguridad
+📥 22.3 – Captura automática
+
+Decorador NestJS: @Auditable('modificacion', 'usuario')
+
+Middleware global registra:
+
+Usuario actual (por token)
+
+Entidad y acción
+
+Fecha y IP
+
+En mobile, si ocurre error crítico o alerta → también se registra
+
+🖥️ 22.4 – Panel Web: Vista /admin/auditoria
+
+Tabla paginada por:
+
+Fecha
+
+Usuario
+
+Tipo de evento
+
+Entidad
+
+Filtros:
+
+Rango de fechas
+
+ID entidad
+
+IP
+
+Modal con detalle completo
+
+🔐 22.5 – Seguridad
+
+Solo accesible para rol admin
+
+Campos sensibles como detalle pueden ocultar datos con *** si son tokens o claves
+
+Se almacena inmutable (sin UPDATE ni DELETE)
+
+¿Avanzamos con la Parte 23 – Sistema avanzado de roles y permisos por módulo/pantalla/endpoints?

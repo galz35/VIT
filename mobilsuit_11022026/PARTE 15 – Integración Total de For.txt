@@ -1,0 +1,65 @@
+PARTE 15 – Integración Total de Formularios con Tareas, Check-ins y Reportes
+
+Este módulo asegura que los formularios dinámicos estén conectados con las visitas reales, usuarios y reportes, tanto en app como en panel.
+
+🧱 15.1 – Relación entre Entidades
+Entidad	Relación	Detalle
+tareas	1:N con formularios_asignados	Una tarea puede tener múltiples formularios
+formularios_local	pertenece a id_actividad	Se llena por cada tarea
+archivos_local	vinculado por id_origen = id_formulario_local	Guarda firma o evidencia visual
+respuestas	Enviadas al backend como json y guardadas por formulario_id y usuario_id	
+🧾 15.2 – Almacenamiento de respuesta (Flutter)
+{
+  "nombre_cliente": "Juan López",
+  "edad": 42,
+  "satisfaccion": "Alta",
+  "firma_cliente": "firma_84535.png"
+}
+
+
+Se guarda como json_respuestas en formularios_local
+
+Si hay archivos, se insertan en archivos_local y se vinculan
+
+📤 15.3 – Envío al Backend
+POST /api/respuestas
+{
+  "id_formulario": "form_001",
+  "id_actividad": "act_8321",
+  "usuario_id": "usr_1005",
+  "json_respuestas": { ... },
+  "archivos": [ ... ]
+}
+
+🧮 15.4 – Reportes Web Relacionados
+🗂️ Por tarea
+
+Tareas completadas con formulario lleno
+
+Campos críticos por formulario
+
+Estado: completo / incompleto / inválido (faltan firma o campo obligatorio)
+
+🧍 Por usuario
+
+% de tareas con formularios completos
+
+Tiempo promedio de llenado
+
+Alertas: campos con anomalías o respuestas sospechosas
+
+📊 Analítica avanzada
+
+Respuestas agregadas por zona
+
+Gráficos de distribución por campo
+
+Exportación Excel/PDF de respuestas por fecha, usuario, cliente
+
+🧪 15.5 – Validación cruzada en backend
+
+Si formulario requiere firma y no viene → rechazar
+
+Si campo requerido = true → backend verifica antes de guardar
+
+Control de duplicados: un mismo id_actividad + id_formulario solo se puede llenar 1 vez (o permite versiones si está habilitado)

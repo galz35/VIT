@@ -1,0 +1,92 @@
+PARTE 11 – Servicios Background en Flutter: Tracking, Reconexión y Auto-Sync
+
+Estos servicios permiten que la app funcione de forma autónoma y persistente, incluso si está minimizada o cerrada.
+
+⚙️ 11.1 – Requisitos Técnicos
+✅ Plugins Necesarios
+dependencies:
+  workmanager: ^0.5.1
+  connectivity_plus: ^5.0.1
+  geolocator: ^10.1.0
+  flutter_background: ^1.2.0
+  permission_handler: ^11.0.1
+
+🗺️ 11.2 – Servicio de Tracking GPS
+🧠 Lógica
+
+Se ejecuta cada N minutos (configurable)
+
+Toma la coordenada actual con precisión
+
+La guarda en tracking_local si no hay conexión
+
+Intenta enviar si está online
+
+🛠️ Registro del Servicio
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+  await Workmanager().registerPeriodicTask(
+    'track-task',
+    'trackingBackground',
+    frequency: const Duration(minutes: 5),
+  );
+  runApp(MyApp());
+}
+
+🔄 callbackDispatcher
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    final position = await Geolocator.getCurrentPosition();
+    final bateria = await Battery().batteryLevel;
+
+    await TrackingDao.insertar(TrackingLocal(
+      lat: position.latitude,
+      lng: position.longitude,
+      precision: position.accuracy.toInt(),
+      velocidad: position.speed,
+      bateria: bateria,
+      timestamp: DateTime.now().toIso8601String(),
+      estado: 'PENDIENTE'
+    ));
+
+    final conectado = await Connectivity().checkConnectivity();
+    if (conectado != ConnectivityResult.none) {
+      await TrackingSync().sync(); // reintento automático
+    }
+
+    return true;
+  });
+}
+
+🔁 11.3 – Auto Sync al reconectarse
+void setupConnectivityListener() {
+  Connectivity().onConnectivityChanged.listen((result) async {
+    if (result != ConnectivityResult.none) {
+      await SyncService().sincronizarTodo();
+    }
+  });
+}
+
+
+Este código se ejecuta al iniciar la app (por ejemplo, en main() o SplashPage).
+
+🧯 11.4 – Permisos Necesarios
+AndroidManifest.xml
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+Solicitud Flutter
+await Permission.locationAlways.request();
+await Permission.ignoreBatteryOptimizations.request();
+
+🔋 11.5 – Soporte para fondo persistente (Android)
+await FlutterBackground.initialize();
+await FlutterBackground.enableBackgroundExecution();
+
+🔒 Seguridad
+
+Si el usuario cierra sesión → se desactiva el worker
+
+El worker no accede a funciones si no hay id_usuario activo en local

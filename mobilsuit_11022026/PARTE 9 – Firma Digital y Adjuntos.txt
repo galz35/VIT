@@ -1,0 +1,94 @@
+PARTE 9 – Firma Digital y Adjuntos: Captura, Validación y Envío Seguro
+
+Este módulo permite firmar formularios, capturar evidencias (fotos, firmas) y enviarlas como archivos junto a los datos estructurados.
+
+🖊️ 9.1 – Firma Digital (Flutter)
+📦 Librería: signature
+dependencies:
+  signature: ^5.2.1
+
+🎯 Uso en Widget
+final SignatureController _controller = SignatureController(
+  penStrokeWidth: 3,
+  penColor: Colors.black,
+  exportBackgroundColor: Colors.white,
+);
+
+Signature(
+  controller: _controller,
+  height: 250,
+  backgroundColor: Colors.grey[200]!,
+),
+
+💾 Guardar como imagen
+final Uint8List? data = await _controller.toPngBytes();
+final file = File('${tempDir.path}/firma_${uuid.v4()}.png');
+await file.writeAsBytes(data!);
+
+
+El archivo queda registrado en archivos_local con tipo = 'firma', id_origen = id_formulario.
+
+📸 9.2 – Captura de Foto (Evidencia Visual)
+📦 Librería: image_picker
+final XFile? foto = await ImagePicker().pickImage(source: ImageSource.camera);
+final path = foto?.path;
+
+
+También se guarda en archivos_local
+
+Puede ser obligatorio si el tipo de formulario lo requiere
+
+🧾 9.3 – Registro en SQLite
+INSERT INTO archivos_local (
+  ruta_local,
+  tipo,
+  entidad_origen,
+  id_origen,
+  timestamp,
+  estado
+) VALUES (?, ?, ?, ?, ?, 'PENDIENTE');
+
+Campo	Valor
+ruta_local	file.path
+tipo	'firma' / 'foto'
+entidad_origen	'formulario' / 'checkin'
+id_origen	ID relacionado
+timestamp	Fecha de captura
+📤 9.4 – Envío al Backend (NestJS)
+📦 Uso de FormData con dio
+final file = await MultipartFile.fromFile(path, filename: basename(path));
+
+final form = FormData.fromMap({
+  'id_origen': id,
+  'entidad_origen': 'formulario',
+  'tipo': 'firma',
+  'archivo': file,
+});
+
+final res = await dio.post('/api/archivos/subir', data: form);
+
+🔒 Seguridad
+
+Tamaño máx. configurado: 5MB
+
+Backend valida:
+
+archivo.mimetype permitido (image/png, image/jpeg)
+
+Tamaño
+
+ID origen válido y usuario propietario
+
+👁️ 9.5 – Vista previa (App y Web)
+Flutter
+Image.file(File(rutaLocal)); // previa de firma o foto
+
+React Web (Panel Admin)
+<img src={`https://api.com/archivos/view/${archivoId}`} width={200} />
+
+📄 9.6 – Backend: Guardado y Acceso
+Carpeta	Uso
+/archivos/formularios/{id}/firma.png	Firmas
+/archivos/formularios/{id}/foto1.jpg	Evidencias
+
+La API de backend (NestJS) sirve las imágenes con headers de seguridad y sin indexación pública.

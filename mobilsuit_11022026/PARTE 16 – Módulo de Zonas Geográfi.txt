@@ -1,0 +1,81 @@
+PARTE 16 – Módulo de Zonas Geográficas, Validación de Radio y Asignación GPS
+
+Este módulo permite validar que los check-ins/formularios se realicen dentro del área esperada, asignar tareas automáticamente por zona y visualizar todo geográficamente.
+
+📍 16.1 – Definición de Zonas
+Tabla: zonas
+Campo	Tipo	Descripción
+id_zona	UUID	Identificador único
+nombre	TEXT	Nombre legible (ej. Zona Norte)
+poligono	JSON	Array de coordenadas [{lat, lng}]
+color	TEXT	Para visualización
+activo	BOOL	Habilitada o no
+Ejemplo de poligono:
+[
+  {"lat": -12.06, "lng": -77.05},
+  {"lat": -12.07, "lng": -77.04},
+  {"lat": -12.08, "lng": -77.06}
+]
+
+🧠 16.2 – Validación GPS en Check-In (Backend)
+function estaEnZona(lat: number, lng: number, zona: Zona): boolean {
+  return pointInPolygon({ lat, lng }, zona.poligono);
+}
+
+
+Si no está dentro del área:
+
+Se registra como alerta
+
+Se marca como “fuera de zona”
+
+Opcional: bloquear envío o permitir con justificación
+
+📦 16.3 – Flutter: Validación local
+
+Antes de permitir check-in, se verifica con zona precargada
+
+Si distancia > radio_max, se muestra advertencia
+
+Si se permite continuar → se guarda como “checkin fuera de zona”
+
+🧠 16.4 – Asignación automática por zona
+Backend
+
+Cada cliente tiene coordenadas
+
+Se recorre cada zona y se evalúa:
+
+if (pointInPolygon(cliente.lat, cliente.lng, zona.poligono)) {
+  cliente.zona = zona.id;
+}
+
+
+Al crear tareas por lote, se filtra por zona
+
+🗺️ 16.5 – Visualización en React Web
+
+Se usa react-leaflet o maplibre
+
+Zonas pintadas como Polygon
+
+Check-ins y usuarios en tiempo real como Marker
+
+Colores por:
+
+Dentro de zona ✅ (verde)
+
+Fuera de zona ⚠️ (rojo)
+
+Hover: cliente → nombre, dirección, zona
+
+🚨 16.6 – Alerta automática si está fuera del rango
+
+Se registra en alertas_local:
+
+Campo	Valor
+tipo	'fuera_zona'
+mensaje	"Check-in fuera del radio"
+lat/lng	Coordenadas reales
+timestamp	ISO 8601
+estado	'PENDIENTE'	

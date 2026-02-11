@@ -1,0 +1,137 @@
+DAOs y Módulos de Sincronización Avanzados
+🗃️ FormularioSync – Sincronización de formularios
+📁 /core/sync/modules/formulario_sync.dart
+class FormularioSync implements ISyncModule {
+  @override
+  Future<SyncResult> sync() async {
+    final formularios = await FormularioDao.obtenerPendientes();
+
+    int enviados = 0;
+    for (final form in formularios) {
+      final formData = FormData.fromMap({
+        'id_formulario': form.idFormulario,
+        'id_actividad': form.idActividad,
+        'respuestas': form.respuestasJson,
+        'firma': form.firmaBase64,
+      });
+
+      final res = await Dio().post('/api/formularios/guardar', data: formData);
+
+      if (res.statusCode == 200) {
+        await FormularioDao.marcarComoEnviado(form.id);
+        enviados++;
+      }
+    }
+
+    return SyncResult(modulo: 'Formularios', exito: true, mensaje: '$enviados enviados');
+  }
+}
+
+📁 /core/db/dao/formulario_dao.dart
+class FormularioDao {
+  static Future<List<FormularioLocal>> obtenerPendientes() async {
+    final db = await DBHelper.instance.database;
+    final maps = await db.query('formularios_local', where: 'estado = ?', whereArgs: ['PENDIENTE']);
+    return maps.map((e) => FormularioLocal.fromMap(e)).toList();
+  }
+
+  static Future<void> marcarComoEnviado(int id) async {
+    final db = await DBHelper.instance.database;
+    await db.update('formularios_local', {'estado': 'ENVIADO'}, where: 'id = ?', whereArgs: [id]);
+  }
+}
+
+📎 ArchivoSync – Envío de archivos pendientes
+📁 /core/sync/modules/archivo_sync.dart
+class ArchivoSync implements ISyncModule {
+  @override
+  Future<SyncResult> sync() async {
+    final archivos = await ArchivoDao.obtenerPendientes();
+    int enviados = 0;
+
+    for (final a in archivos) {
+      final f = await MultipartFile.fromFile(a.rutaLocal, filename: 'adjunto.jpg');
+
+      final form = FormData.fromMap({
+        'tipo': a.tipo,
+        'entidad_origen': a.entidadOrigen,
+        'id_origen': a.idOrigen,
+        'archivo': f,
+      });
+
+      final res = await Dio().post('/api/archivos/subir', data: form);
+      if (res.statusCode == 200) {
+        await ArchivoDao.marcarComoEnviado(a.id);
+        enviados++;
+      }
+    }
+
+    return SyncResult(modulo: 'Archivos', exito: true, mensaje: '$enviados subidos');
+  }
+}
+
+🚨 AlertaSync – Sincronización de alertas offline
+📁 /core/sync/modules/alerta_sync.dart
+class AlertaSync implements ISyncModule {
+  @override
+  Future<SyncResult> sync() async {
+    final alertas = await AlertaDao.obtenerPendientes();
+    int enviadas = 0;
+
+    for (final a in alertas) {
+      final res = await Dio().post('/api/alertas/${a.tipo}', data: {
+        'lat': a.lat,
+        'lng': a.lng,
+        'mensaje': a.mensaje,
+        'timestamp': a.timestamp,
+      });
+
+      if (res.statusCode == 200) {
+        await AlertaDao.marcarComoEnviada(a.id);
+        enviadas++;
+      }
+    }
+
+    return SyncResult(modulo: 'Alertas', exito: true, mensaje: '$enviadas alertas enviadas');
+  }
+}
+
+📁 Ejemplo tabla y DAO: alertas_local
+CREATE TABLE alertas_local (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tipo TEXT, -- panico / geocerca / inactividad
+  mensaje TEXT,
+  lat REAL,
+  lng REAL,
+  timestamp TEXT,
+  estado TEXT DEFAULT 'PENDIENTE'
+);
+
+class AlertaDao {
+  static Future<List<AlertaLocal>> obtenerPendientes() async {
+    final db = await DBHelper.instance.database;
+    final maps = await db.query('alertas_local', where: 'estado = ?', whereArgs: ['PENDIENTE']);
+    return maps.map((e) => AlertaLocal.fromMap(e)).toList();
+  }
+
+  static Future<void> marcarComoEnviada(int id) async {
+    final db = await DBHelper.instance.database;
+    await db.update('alertas_local', {'estado': 'ENVIADO'}, where: 'id = ?', whereArgs: [id]);
+  }
+}
+
+🔄 Integración en UI
+
+Pantalla SincronizarPage:
+
+Muestra progreso por módulo
+
+SyncService().sincronizarTodo() se llama manual o automáticamente
+
+Colores:
+
+✅ Verde si OK
+
+❌ Rojo si falló
+
+⏳ Gris si aún no sincronizado

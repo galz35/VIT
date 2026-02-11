@@ -1,0 +1,91 @@
+1. 🧭 Módulo de Visita Geolocalizada
+A. Tabla nueva: visitas_clientes
+Campo	Tipo	Descripción
+id_visita	UUID	Clave primaria
+id_cliente	UUID	FK a tabla clientes
+id_usuario	UUID	FK a tabla usuarios
+lat_inicio	FLOAT	Coordenada al llegar
+lng_inicio	FLOAT	
+lat_fin	FLOAT	Coordenada al salir (opcional)
+lng_fin	FLOAT	
+inicio_ts	DATETIME	Fecha y hora de check-in
+fin_ts	DATETIME	Check-out (si aplica)
+estado	TEXT	PENDIENTE / EN CURSO / FINALIZADA
+comentario	TEXT	Observaciones generales
+firma_path	TEXT	Ruta a la firma opcional
+foto_path	TEXT	Foto tomada en sitio (WebP)
+
+Si ya usás agenda_dia, puede vincularse vía id_agenda.
+
+B. Stored Procedure: sp_RegistrarVisitaCliente
+CREATE PROCEDURE sp_RegistrarVisitaCliente
+  @id_cliente UNIQUEIDENTIFIER,
+  @id_usuario UNIQUEIDENTIFIER,
+  @lat FLOAT,
+  @lng FLOAT,
+  @comentario NVARCHAR(MAX)
+AS
+BEGIN
+  -- valida proximidad con punto cliente
+  -- inserta en visitas_clientes
+END
+
+2. 📱 Flutter – Pantalla “Visita Cliente”
+Nueva ruta: /visita/:id_cliente
+
+Componentes:
+
+Mapa (Google Maps) con círculo de validación.
+
+Botón "Check-in"
+
+Campo observación + firma + foto
+
+Botón "Finalizar visita"
+
+Se guarda primero local en SQLite (modo offline), luego sincroniza.
+
+3. 🌐 Web (React) – Panel de Visitas
+Ruta nueva: /visitas
+Funciones:
+
+Lista de visitas (filtros por cliente, fecha, estado)
+
+Mapa de ruta recorrida (si hay tracking activo)
+
+Vista de check-in/check-out + firma y foto
+
+Estado de sincronización
+
+4. 📶 Sincronización Flutter
+
+Agregá lógica en tu SyncService:
+
+await VisitasSync().sync();
+
+
+Usa tabla local visitas_local (estructura similar a checkins o formularios) con:
+
+estado = PENDIENTE
+
+Al sincronizar exitosamente → marcar como ENVIADO
+
+5. 🧪 Nuevas Validaciones
+
+No permitir finalizar visita si no se hizo check-in.
+
+Validar distancia máxima (100m) al punto GPS del cliente.
+
+Alertar si coordenadas están vacías.
+
+Adjuntar firma/foto si está marcado como obligatorio en el tipo de visita.
+
+6. 🖼️ Evidencia Multimedia (WebP)
+
+Asegurate de:
+
+Comprimir imagen a .webp en Flutter antes de guardar.
+
+Backend debe validar image/webp y guardar en carpeta /evidencia/visitas/yyyy/mm/.
+
+Con esto ya tendrías la funcionalidad de Mobile Suit Case clonada al 100%, pero fusionada elegantemente con tu sistema Planner-EF.

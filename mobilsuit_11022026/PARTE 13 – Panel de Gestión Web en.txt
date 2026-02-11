@@ -1,0 +1,129 @@
+PARTE 13 – Panel de Gestión Web en React: Administración Completa
+
+Este módulo permite a supervisores y administradores gestionar tareas, usuarios, clientes, zonas, formularios, y revisar reportes operativos.
+
+🧱 13.1 – Estructura Base del Panel (React)
+/src/
+ ├── pages/
+ │    ├── Dashboard.tsx
+ │    ├── Usuarios.tsx
+ │    ├── Tareas.tsx
+ │    ├── Clientes.tsx
+ │    ├── Formularios.tsx
+ │    ├── Reportes.tsx
+ ├── components/
+ │    ├── TablaUsuarios.tsx
+ │    ├── ModalEditarTarea.tsx
+ │    ├── MapaTareas.tsx
+ │    └── GraficoResumen.tsx
+ ├── hooks/
+ │    ├── useTareas.ts
+ │    └── useUsuarios.ts
+ ├── api/
+ │    ├── tareas.ts
+ │    ├── usuarios.ts
+ │    └── reportes.ts
+ └── layout/
+      ├── Sidebar.tsx
+      └── Topbar.tsx
+
+🗂️ 13.2 – Módulos de Administración
+👤 Usuarios
+Campo	Uso
+Carnet	ID único obligatorio
+Nombre	Nombre visible
+Rol	móvil / supervisor / admin
+Estado	activo / bloqueado
+Último login	control de uso
+
+Funciones:
+
+Crear/editar usuario
+
+Reasignar tareas
+
+Ver historial de actividad
+
+📋 Tareas
+Campo	Descripción
+Fecha	Día asignado
+Cliente	Relación con tabla clientes
+Estado	pendiente / en curso / completada
+Responsable	Usuario asignado
+Tipo	Visita / Formulario / Seguimiento
+
+Funciones:
+
+Crear tarea para uno o varios usuarios
+
+Asignación por zona
+
+Reprogramar
+
+📌 Clientes
+Campo	Uso
+Nombre	Nombre del negocio/persona
+Dirección	Completa o referencia
+Lat/Lng	Punto geográfico para validación GPS
+Zona	Segmento geográfico (asignación automática)
+
+Funciones:
+
+Alta masiva por Excel
+
+Edición rápida desde mapa
+
+📑 Formularios
+Campo	Uso
+ID	clave única
+Título	visible en móvil
+JSON estructura	usado por app para render dinámico
+Campos requeridos	reglas de validación por campo
+Caducidad	fecha límite para envío
+
+Funciones:
+
+Constructor visual de formularios (opcional)
+
+Versionado
+
+Ver respuestas por usuario/tarea
+
+📈 Reportes
+
+Panel de resumen con:
+
+Tareas completadas por usuario
+
+Alertas emitidas
+
+% cumplimiento diario/zona
+
+Tiempo promedio por visita
+
+Exportación PDF / Excel mensual
+
+📦 13.3 – Backend NestJS
+Endpoints clave
+Endpoint	Método	Descripción
+/api/usuarios	GET/POST/PUT	gestión total de usuarios
+/api/tareas	GET/POST	asignación y consulta
+/api/clientes	GET/POST	ABM clientes
+/api/formularios	GET/POST	definición y asignación
+/api/reportes/visitas	GET	KPIs operativos
+📁 13.4 – Librerías UI recomendadas
+Funcionalidad	Librería
+Tablas avanzadas	@tanstack/react-table
+Formularios UI	react-hook-form, zod
+Autenticación	react-router + jwt-decode
+Mapas	react-leaflet
+Gráficos	recharts o nivo
+Estado global	TanStack Query
+Estilo	Tailwind CSS
+🔐 13.5 – Control de Acceso
+
+Panel visible solo para roles admin o supervisor
+
+Validación por jwt.rol al montar rutas
+
+Rutas protegidas con PrivateRoute

@@ -1,0 +1,109 @@
+📘 PARTE 5.1 – Arquitectura Flutter: Estructura Modular y Patrón de Código
+
+Esta sección define cómo debe estructurarse la app Flutter para mantener orden, escalabilidad y modularidad.
+
+🧱 5.1.1 – Estructura de Carpetas
+/lib
+ ├── main.dart
+ ├── core/               # Configuración general y utilidades
+ │    ├── theme/
+ │    ├── services/
+ │    ├── network/
+ │    ├── models/
+ │    ├── constants.dart
+ ├── features/           # Cada módulo funcional aislado
+ │    ├── auth/
+ │    ├── tareas/
+ │    ├── formularios/
+ │    ├── tracking/
+ │    ├── sincronizacion/
+ │    ├── alertas/
+ ├── shared/             # Widgets reutilizables
+ │    ├── components/
+ │    ├── dialogs/
+ │    ├── icons/
+ └── routes/             # Definición de rutas con GoRouter
+
+🧩 5.1.2 – Estado y Lógica
+Elemento	Librería
+Estado global y persistente	provider + ChangeNotifier
+Llamadas HTTP	dio con interceptores
+Cache + reintento	flutter_query o lógica manual
+Almacenamiento local seguro	flutter_secure_storage
+Base local offline	sqflite (formularios, tracking, syncQueue)
+Background services	flutter_background_service + isolate compute()
+🔐 5.1.3 – Autenticación Segura
+
+Tokens JWT guardados cifrados
+
+Interceptor que agrega Authorization: Bearer ...
+
+Auto refresh en background si hay 401
+
+Protección de rutas con AuthGuard
+
+🛰️ 5.1.4 – Servicio de Tracking GPS
+
+Clase TrackingService:
+
+class TrackingService {
+  Future<void> iniciar() {
+    // inicia background task
+  }
+
+  Future<void> registrarPunto() async {
+    final pos = await Geolocator.getCurrentPosition();
+    final punto = PuntoGPS(...);
+    await DB.insertar('tracking', punto.toMap());
+  }
+}
+
+📝 5.1.5 – Motor de Formulario Dinámico
+
+Clase FormularioBuilderPage:
+
+Recibe JSON desde backend (formulario_def)
+
+Convierte a widgets (TextFormField, Dropdown, ImagePicker)
+
+Guarda respuestas en respuestas_formulario_local
+
+Permite firma digital (SignatureController)
+
+Adjuntos se suben vía multipart/form-data
+
+⚙️ 5.1.6 – Sincronización (Offline/Online)
+
+Servicio SyncService:
+
+Future<void> sincronizarTodo() async {
+  await enviarFormulariosPendientes();
+  await subirTracking();
+  await subirArchivos();
+}
+
+
+Cola de errores con reintentos
+
+Sincronización manual o programada
+
+Interfaz con progreso visual por módulo
+
+🔔 5.1.7 – Notificaciones y Eventos
+
+Notificaciones push (FCM) → firebase_messaging
+
+AlertDialog para pánico
+
+Navegación reactiva con GoRouter.refreshListenable
+
+📲 5.1.8 – Pantallas Clave
+Ruta	Widget	Descripción
+/login	LoginPage	Autenticación
+/home	HomePage	Dashboard de tareas
+/tarea/:id	TareaDetallePage	Check-in, formulario
+/formulario/:id	FormularioPage	Motor dinámico
+/alertas	AlertasPage	Ver alertas recientes
+/sincronizar	SyncPage	Reintento manual
+
+¿Te paso ahora la Parte 5.2 – Estructura React: componentes, TanStack Query, hooks personalizados, diseño responsive?

@@ -1,0 +1,107 @@
+PARTE 14 – Editor Visual de Formularios Dinámicos (Web) + Renderizado en Flutter
+
+Permite a supervisores crear y administrar formularios personalizados desde el panel web, que luego se renderizan dinámicamente en la app móvil.
+
+⚙️ 14.1 – Flujo General
+
+Admin crea formulario desde web (drag & drop o JSON).
+
+Se guarda en base de datos como estructura JSON.
+
+Flutter interpreta esa estructura y renderiza el formulario.
+
+Las respuestas se almacenan localmente (sqflite) y luego se sincronizan.
+
+🧱 14.2 – Estructura JSON del Formulario
+{
+  "id": "form_001",
+  "titulo": "Encuesta de Cliente",
+  "campos": [
+    {
+      "tipo": "texto",
+      "clave": "nombre_cliente",
+      "label": "Nombre del Cliente",
+      "requerido": true
+    },
+    {
+      "tipo": "numero",
+      "clave": "edad",
+      "label": "Edad",
+      "min": 18,
+      "max": 99
+    },
+    {
+      "tipo": "opciones",
+      "clave": "satisfaccion",
+      "label": "Nivel de Satisfacción",
+      "opciones": ["Alta", "Media", "Baja"],
+      "requerido": true
+    },
+    {
+      "tipo": "firma",
+      "clave": "firma_cliente",
+      "label": "Firma"
+    }
+  ]
+}
+
+⚛️ 14.3 – Editor Web (React)
+🔧 Librerías
+
+react-hook-form + zod
+
+dnd-kit o react-beautiful-dnd (drag & drop)
+
+react-json-view (para validación directa)
+
+✨ Funciones
+
+Agregar campo (texto, número, opciones, firma, fecha, imagen)
+
+Cambiar orden de campos
+
+Previsualizar formulario renderizado
+
+Validar campos requeridos
+
+Guardar JSON en /api/formularios/definir
+
+🔧 14.4 – Backend NestJS: Endpoints
+Endpoint	Método	Descripción
+/api/formularios/definir	POST	Guarda o actualiza JSON
+/api/formularios/asignar	POST	Asocia un formulario a una tarea o usuario
+/api/formularios/:id	GET	Devuelve JSON para render Flutter
+/api/respuestas	POST	Recibe respuestas llenadas
+📱 14.5 – Flutter: Render dinámico del formulario
+📦 Librerías
+dependencies:
+  dynamic_widget: ^1.1.0
+  signature: ^5.2.1
+  flutter_form_builder: ^9.1.1
+
+📌 Lógica
+
+El app recibe JSON desde API o SQLite.
+
+Recorre campos[] y construye widgets:
+
+TextFormField, DropdownButtonFormField, Signature, etc.
+
+Al enviar, crea un Map<String, dynamic> con todas las respuestas.
+
+Guarda el resultado como json_respuestas en formularios_local.
+
+🧪 Validación
+
+Si requerido = true, se valida en el FormBuilder
+
+Campos especiales como firma o foto deben tener captura válida
+
+✅ Ejemplo de campo Flutter generado
+if (campo.tipo == 'texto') {
+  return TextFormField(
+    decoration: InputDecoration(labelText: campo.label),
+    validator: campo.requerido ? Validators.required : null,
+    onSaved: (value) => respuestas[campo.clave] = value,
+  );
+}

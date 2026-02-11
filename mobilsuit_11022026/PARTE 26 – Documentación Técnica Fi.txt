@@ -1,0 +1,87 @@
+PARTE 26 – Documentación Técnica Final: Swagger, ERD, Scripts y Onboarding
+
+Esta sección agrupa todos los recursos que necesitas para que nuevos devs, testers o sistemas externos se integren sin fricciones.
+
+📚 26.1 – Documentación API (Swagger)
+
+NestJS ya incluye:
+
+/api/docs
+
+
+Autogenerada con @nestjs/swagger
+
+Se recomienda agrupar por tags:
+
+auth, usuarios, tareas, formularios, sync, archivos, reportes, etc.
+
+Ejemplo:
+
+@ApiTags('formularios')
+@ApiBearerAuth()
+@Post()
+create(@Body() dto: FormularioDto) { ... }
+
+
+Exportable como JSON o HTML para compartir con terceros.
+
+🧩 26.2 – Diagrama Entidad-Relación (ERD)
+
+Recomendado usar dbdiagram.io
+ o dbml para mantener sincronizado con el modelo real.
+
+Generar visual completo desde SQL Server con herramientas como:
+
+SQL Server Management Studio → "Database Diagrams"
+
+QuickDBD
+
+dbeaver o drawSQL
+
+Entidades clave:
+
+usuarios, tareas_visita, formularios, respuestas, clientes, checkins, checkouts, alertas, archivos, auditoria, permisos
+
+🧪 26.3 – Scripts SQL útiles
+
+Crear base de datos inicial
+
+Scripts de inserción de datos demo
+
+Crear índices por rendimiento
+
+Script de limpieza (DELETE FROM tracking WHERE fecha < NOW()-30)
+
+📦 26.4 – Onboarding Técnico (README)
+
+Incluir:
+
+# Requisitos
+- Node 18+
+- NestJS CLI
+- SQL Server 2019
+- Flutter 3.16+
+
+# Web
+npm install
+npm run dev
+
+# Backend
+npm install
+npm run start:dev
+
+# Flutter
+flutter pub get
+flutter run
+
+🔌 26.5 – Documentación interna avanzada (si aplica)
+
+PDF con flujos UML (casos de uso, estados)
+
+Manual de administración (roles, manejo de zonas)
+
+Guía para soporte técnico (logs, auditoría, base local)
+
+Manual de despliegue
+
+Con esto finalizamos el plan maestro completo para clonar y mejorar Mobile Suit Case al 100% con React (web), Flutter (móvil) y NestJS + SQL Server (backend).

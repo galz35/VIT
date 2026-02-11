@@ -1,0 +1,80 @@
+PARTE 8 – Seguridad e Identidad (Flutter, Backend, React)
+
+Asegura que solo usuarios autorizados accedan, actúen y firmen desde dispositivos legítimos, con trazabilidad y control antifraude.
+
+🧑‍💼 8.1 – Identidad del Usuario
+
+Cada usuario tiene:
+
+Campo	Uso
+id_usuario	Identificador UUID único
+carnet	Identificación empresarial obligatoria
+email	Para login (puede omitirse en app móvil si se usa solo carnet)
+device_id	Código del dispositivo autorizado (hash de Android ID o UUID generado)
+firma_base	Imagen/firma PNG usada para validación manual si se requiere
+📲 8.2 – Seguridad en App Flutter
+🔐 Almacenamiento seguro
+final secure = const FlutterSecureStorage();
+await secure.write(key: 'token', value: token);
+await secure.write(key: 'device_id', value: uuid);
+
+
+Nunca guardar el token en SharedPreferences
+
+Si el token expira, dio interceptor lanza refresh
+
+🛂 Validación por dispositivo
+
+App obtiene device_id al instalar
+
+Login envía carnet, password, device_id
+
+Backend valida:
+
+¿usuario activo?
+
+¿carnet correcto?
+
+¿device_id coincide con el registrado?
+
+Si OK → genera JWT
+
+Si device_id es nuevo, permite solo si es primer login o autorizado manualmente
+
+🔐 8.3 – Token JWT y Roles
+
+El JWT incluye:
+
+sub: ID de usuario
+
+rol: admin, supervisor, movil
+
+exp: tiempo de expiración
+
+Flutter lo envía en cada llamada:
+
+Authorization: Bearer {token}
+
+
+Backend (NestJS):
+
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin')
+
+🕵️ 8.4 – Control antifraude
+Comportamiento sospechoso	Acción
+Login desde otro device	Rechazo + alerta a supervisor
+Check-in fuera del radio	Registro en alertas + bloqueo si supera X metros
+Firma incompleta o vacía	Formulario no se puede enviar
+GPS manipulado (mock location)	Rechazo inmediato si se detecta
+Cambios bruscos de posición	Tracking excluye puntos con velocidad > 120km/h
+🧼 8.5 – Logout forzado (seguridad remota)
+
+Admin desactiva usuario o cambia rol en panel
+
+App recibe error 401 o activo: false
+
+Ejecuta:
+
+await secure.deleteAll();
+Navigator.pushReplacementNamed(context, '/login');

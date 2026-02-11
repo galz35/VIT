@@ -1,0 +1,70 @@
+PARTE 24 – Seguridad Completa: Autenticación, Tokens, Expiración y Control de Accesos
+
+Este módulo implementa un sistema robusto para proteger sesiones, datos sensibles, identidades y accesos desde Flutter, React y APIs NestJS.
+
+🔐 24.1 – Tipos de autenticación
+Plataforma	Método	Detalle
+Web (React)	JWT + Refresh	Token corto + refresh token seguro en cookie httpOnly
+App (Flutter)	JWT persistido	Guardado en flutter_secure_storage con control de expiración
+API	Bearer Token	Protegido con roles, permisos, filtros IP
+🧱 24.2 – Tabla: usuarios
+Campo	Tipo	Descripción
+id_usuario	UUID	ID único
+carnet	TEXT	Identificador único físico
+nombre	TEXT	Nombre visible
+correo	TEXT	Login
+password	TEXT	Hash (bcrypt)
+rol	TEXT	Rol del sistema
+activo	BOOL	true/false
+🧠 24.3 – Autenticación JWT (NestJS)
+Tokens
+
+Access token: expira en 15 minutos
+
+Refresh token: 7 días (usado solo en web)
+
+Firmados con claves privadas (RSA preferible)
+
+Login
+POST /api/auth/login
+
+
+Verifica correo + password (hash bcrypt)
+
+Devuelve access_token + refresh_token (si es web)
+
+📱 24.4 – Flutter: Manejo de sesión
+
+Token guardado en flutter_secure_storage
+
+Interceptor DIO agrega el Authorization: Bearer ...
+
+Si token expira → intento de refresh silencioso
+
+if (response.statusCode == 401 && hayRefreshToken) {
+  await renovarToken();
+  repetirRequestFallido();
+}
+
+🖥️ 24.5 – React: Sesión protegida
+
+Refresh token en cookie httpOnly
+
+access_token en memoria (no en localStorage)
+
+Axios incluye token automáticamente
+
+🛡️ 24.6 – Controles de seguridad adicionales
+Control	Descripción
+🔁 Rotación diaria de tokens	Tokens se invalidan si cambia contraseña o rol
+📵 Bloqueo de IP	Lista blanca en producción (env configurado)
+📅 Expiración por inactividad	Sesión web expira tras 30 min sin interacción
+🧪 Hash de payload crítico	Validación de integridad de formularios enviados
+📍 Validación de ubicación	Login móvil solo dentro de zona (opcional)
+🧪 24.7 – Auditoría de acceso
+
+Cada login/logout queda en auditoria
+
+Si login falla (intentos repetidos) → alerta
+
+Login desde nuevo dispositivo → notificación web/email

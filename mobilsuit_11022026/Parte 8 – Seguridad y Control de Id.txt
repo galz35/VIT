@@ -1,0 +1,59 @@
+Parte 8 – Seguridad y Control de Identidad
+
+Validación avanzada de usuario (carnet, token, firma)
+
+Control de acceso por rol en Flutter y React
+
+Manejo seguro de sesión móvil con flutter_secure_storage
+
+Doble validación si se detecta duplicidad de dispositivo
+
+Protección contra suplantación (auto-check / GPS simulado)
+
+🧾 Parte 9 – Firma Digital Avanzada (Flutter + Backend)
+
+Firma en pantalla (signature controller)
+
+Almacenamiento como imagen o vectores
+
+Envío seguro en multipart/form-data
+
+Vista previa web y mobile (render canvas)
+
+Trazabilidad y anti-reemplazo
+
+📦 Parte 10 – Full Esquema SQLite y Clase DBHelper
+
+Creación dinámica de todas las tablas locales
+
+Control de versiones
+
+Migraciones limpias
+
+Inserciones masivas optimizadas
+
+Auto backup local de la base
+
+🛰️ Parte 11 – Servicios Background Móvil
+
+GPS + batería + conexión
+
+Persistencia después de cerrar la app
+
+Envío diferido de puntos GPS
+
+Detección de desconexión de red y reconexión automática
+
+Integración con sincronización por evento (onConnectivityChange)
+
+📡 Parte 12 – Web Admin: Monitor en Tiempo Real
+
+WebSocket desde React a /ws
+
+Actualización en vivo de mapa y paneles
+
+Reconexión automática si se cae
+
+Visualización del tracking sobre tiempo
+
+Filtro por zona, rol, tiempo inactivo

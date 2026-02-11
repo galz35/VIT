@@ -1,0 +1,145 @@
+PARTE 2.1 – Flujos Funcionales: App Flutter (Campo)
+
+Esta sección cubre los flujos críticos del colaborador en campo, que serán implementados en la app Flutter.
+
+📆 2.1.1 – Inicio de Jornada
+Objetivo:
+
+Sincronizar tareas asignadas y activar tracking.
+
+Flujo:
+
+Login con usuario + contraseña (JWT + refresh)
+
+Validación de dispositivo (opcional: device_id)
+
+Se ejecuta SyncManager:
+
+Descarga tareas asignadas
+
+Descarga formularios asignables
+
+Sincroniza tracking pendiente
+
+App activa TrackingService en background
+
+📍 2.1.2 – Check-in / Check-out
+Objetivo:
+
+Validar que el colaborador está presente en el lugar asignado.
+
+Pantalla: TareaDetallePage
+Elemento	Comportamiento
+Botón “Check-in”	Solo disponible si está dentro del radio del cliente
+Validaciones	GPS activo, precisión < 30m, batería suficiente
+Captura	lat/lng, nivel de batería, timestamp, distancia real
+Adjuntos opcionales	Foto selfie / firma digital
+Lógica:
+if (distancia(punto_actual, cliente) <= cliente.radio) {
+  habilitarBotonCheckIn()
+}
+
+📝 2.1.3 – Formulario Dinámico
+Objetivo:
+
+Permitir que el colaborador complete formularios definidos desde el backend.
+
+Pantalla: FormularioPage
+Característica	Implementación
+UI dinámica	JSON recibido vía API, parseado a FormBuilder
+Tipos de campo	Texto, numérico, selección, fecha, foto, firma, audio
+Validaciones	Requerido, tipo, condiciones dependientes
+Adjuntos	Guardados en carpeta local hasta subirlos
+Firma	Captura de trazo y conversión a PNG base64
+JSON ejemplo:
+{
+  "form_id": "rutinaria_v1",
+  "campos": [
+    {"id": "c1", "tipo": "texto", "etiqueta": "Observación", "requerido": true},
+    {"id": "c2", "tipo": "foto", "etiqueta": "Foto del equipo"},
+    {"id": "c3", "tipo": "firma", "etiqueta": "Firma del cliente"}
+  ]
+}
+
+🛰️ 2.1.4 – Tracking en Segundo Plano
+Objetivo:
+
+Registrar recorrido GPS sin intervención del usuario.
+
+Servicio: TrackingService (ejecuta cada 30 seg – 5 min)
+Campo	Valor
+Recolecta	lat, lng, velocidad, timestamp, precisión, origen
+Guarda en	tracking_points local
+Sincroniza	Cuando hay conexión, en batch
+Control de energía	Se pausa si batería < 15% (modo configurable)
+🔔 2.1.5 – Botón de Pánico
+Objetivo:
+
+Enviar una alerta inmediata con ubicación.
+
+Pantalla: EmergenciaPage
+
+Botón visible desde menú principal o splash flotante
+
+Al presionar:
+
+Captura ubicación
+
+Opción de texto/motivo
+
+Envía a /api/alerta/panico con prioridad
+
+En Web Admin aparece en panel de alertas
+
+☁️ 2.1.6 – Sincronización Manual
+Objetivo:
+
+Permitir al usuario forzar sincronización de tareas, formularios, tracking y adjuntos.
+
+Pantalla: SincronizarPage
+
+Botones:
+
+🔁 Sincronizar tareas
+
+📤 Enviar formularios pendientes
+
+📍 Enviar tracking
+
+🧾 Subir adjuntos
+
+Muestra:
+
+Contador de pendientes
+
+Estado (✅ Enviado, ❌ Falló, ⏳ En cola)
+
+🧾 2.1.7 – Historial y Reportes
+
+Pantalla: HistorialPage
+
+Lista de tareas completadas (local + remoto)
+
+Indicadores:
+
+Tiempo en sitio
+
+Distancia recorrida
+
+Formulario enviado (✅ / ❌)
+
+Filtro por día/semana
+
+📲 2.1.8 – Notificaciones Push
+
+Via FCM:
+
+Nueva tarea asignada
+
+Recordatorio de visita no hecha
+
+Alerta emitida por otro usuario
+
+Mensaje interno / chat
+
+¿Avanzo con la Parte 2.2 (Flujos Funcionales: Panel Web en React – asignación, builder, mapa, reportes)?

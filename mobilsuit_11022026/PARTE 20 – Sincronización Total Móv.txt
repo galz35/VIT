@@ -1,0 +1,93 @@
+PARTE 20 – Sincronización Total Móvil ↔ Backend: Consistencia, Resiliencia y Protección de Datos
+
+Este módulo garantiza que los datos generados offline (tareas, check-ins, formularios, alertas) se sincronicen de forma segura, sin duplicados, con integridad y control.
+
+🔁 20.1 – ¿Qué se sincroniza?
+Tabla local	Entidad servidor
+tracking_local	/api/tracking
+checkins_local	/api/checkins
+formularios_local	/api/respuestas
+archivos_local	/api/archivos/upload
+alertas_local	/api/alertas
+checkouts_local	/api/checkouts
+🧠 20.2 – Lógica del servicio SyncService
+
+Recorre cada tabla con estado = 'PENDIENTE'
+
+Intenta enviar al endpoint correspondiente
+
+Si es exitoso:
+
+Marca como ENVIADO
+
+Registra en sync_log
+
+Si falla:
+
+Reintenta con backoff exponencial
+
+Registra error en sync_log
+
+🔐 20.3 – Protección contra duplicados
+
+Cada entidad enviada incluye uuid único
+
+Backend verifica si ya existe
+
+if (await existeFormulario(id_formulario, id_tarea)) return; // ignora duplicado
+
+
+Clave compuesta o hash (SHA256 del payload) puede ayudar a evitar dobles envíos
+
+🛠️ 20.4 – Control de errores y colisiones
+Campos en sync_log:
+Campo	Detalle
+modulo	checkin, formulario, alerta
+id_objeto	UUID
+resultado	OK / ERROR
+mensaje_error	stack o código HTTP
+fecha_sync	ISO
+
+Si hay error permanente (ej. 401, 404), se marca como INVALIDO
+
+Solo reintenta los errores temporales (500, timeout, network)
+
+📶 20.5 – Flujo de sincronización
+await TrackingSync().sync();
+await CheckinSync().sync();
+await FormularioSync().sync();
+await ArchivoSync().sync();
+await AlertaSync().sync();
+await CheckoutSync().sync();
+
+
+Este ciclo puede correr al reconectarse a internet o en Workmanager cada X minutos.
+
+🧪 20.6 – Validación de integridad
+
+Payload firmado con hash para auditoría
+
+Campos críticos no pueden estar vacíos (lat, id_usuario, etc.)
+
+Rechazo inmediato si falta auth token válido
+
+📤 20.7 – Prioridad de envío
+Tipo	Prioridad
+Alertas	🔴 Alta
+Formularios	🟡 Media
+Tracking	⚪️ Baja
+Archivos	🟡 Media
+
+Las alertas se envían inmediatamente si hay conexión, antes que otros datos.
+
+📊 20.8 – Web: Log de sincronización
+
+Ruta: /admin/sync-log
+
+Tabla por módulo
+
+Filtros por usuario, fecha, estado
+
+Tooltip con mensaje de error
+
+Opción de reintento manual

@@ -1,0 +1,116 @@
+Perfecto. Aquí va la implementación avanzada y modular de SyncService en Flutter, preparada para sincronizar tracking, check-ins, formularios, alertas y archivos con reintentos, control de estado y tolerancia a fallos.
+
+📦 SyncService Flutter – Módulo Avanzado
+📁 Estructura
+/lib/core/sync/
+ ├── sync_service.dart         # Orquestador principal
+ ├── sync_controller.dart      # UI interaction & estado
+ ├── modules/
+ │    ├── tracking_sync.dart
+ │    ├── checkin_sync.dart
+ │    ├── formulario_sync.dart
+ │    ├── archivo_sync.dart
+ │    ├── alerta_sync.dart
+ ├── models/
+ │    └── sync_result.dart     # Resultado de cada módulo
+ └── utils/
+      └── sync_logger.dart     # Registro local de errores
+
+🧠 SyncService principal
+class SyncService {
+  final _modules = [
+    TrackingSync(),
+    CheckinSync(),
+    FormularioSync(),
+    ArchivoSync(),
+    AlertaSync(),
+  ];
+
+  Future<List<SyncResult>> sincronizarTodo() async {
+    List<SyncResult> resultados = [];
+
+    for (final modulo in _modules) {
+      try {
+        final res = await modulo.sync();
+        resultados.add(res);
+      } catch (e, st) {
+        await SyncLogger.log(modulo.runtimeType.toString(), e.toString());
+        resultados.add(SyncResult(modulo: modulo.runtimeType.toString(), exito: false, mensaje: e.toString()));
+      }
+    }
+
+    return resultados;
+  }
+}
+
+🧱 Interfaz común para módulos
+abstract class ISyncModule {
+  Future<SyncResult> sync();
+}
+
+✅ Ejemplo: tracking_sync.dart
+class TrackingSync implements ISyncModule {
+  @override
+  Future<SyncResult> sync() async {
+    final puntos = await TrackingDao.obtenerPendientes();
+
+    int enviados = 0;
+    for (final p in puntos) {
+      final res = await Dio().post('/api/tracking/punto', data: p.toJson());
+
+      if (res.statusCode == 200) {
+        await TrackingDao.marcarComoEnviado(p.id);
+        enviados++;
+      } else {
+        throw Exception('Error ${res.statusCode}');
+      }
+    }
+
+    return SyncResult(modulo: 'Tracking', exito: true, mensaje: 'Enviados $enviados puntos');
+  }
+}
+
+📝 SyncResult y SyncLogger
+class SyncResult {
+  final String modulo;
+  final bool exito;
+  final String mensaje;
+
+  SyncResult({required this.modulo, required this.exito, required this.mensaje});
+}
+
+class SyncLogger {
+  static Future<void> log(String modulo, String error) async {
+    final db = await DBHelper.instance.database;
+    await db.insert('sync_log', {
+      'modulo': modulo,
+      'resultado': 'ERROR',
+      'mensaje_error': error,
+      'fecha_sync': DateTime.now().toIso8601String()
+    });
+  }
+}
+
+🔁 Pantalla UI SyncPage
+
+Muestra:
+
+Estado de cada módulo (Pendiente, Sincronizando, OK, Error)
+
+Detalle de errores (expandible)
+
+Botón global “Sincronizar todo”
+
+Icono de estado: ⏳ ✅ ❌
+
+🧯 Ventajas
+
+Cada módulo es desacoplado y testeable
+
+Reintentos individuales
+
+Log por módulo
+
+Permite ejecución manual o automática (Connectivity().onChanged)
+
+Fácil extensión futura (fotos, fichas, etc)

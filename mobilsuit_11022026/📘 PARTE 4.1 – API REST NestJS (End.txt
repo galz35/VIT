@@ -1,0 +1,95 @@
+📘 PARTE 4.1 – API REST NestJS (Endpoints por módulo)
+
+Estructura RESTful bajo prefijo /api, con validaciones globales, DTOs, y controladores desacoplados.
+
+🔐 4.1.1 – Autenticación y Sesión
+
+Prefix: /api/auth
+
+Método	Ruta	Descripción
+POST	/login	Devuelve token JWT + refresh
+POST	/refresh	Genera nuevo JWT desde refresh token
+GET	/me	Retorna perfil del usuario actual
+POST	/logout	Invalida refresh token (opcional)
+👤 4.1.2 – Usuarios
+
+Prefix: /api/usuarios
+
+Método	Ruta	Descripción
+GET	/	Lista de usuarios (admin/supervisor)
+POST	/	Crear nuevo usuario
+GET	/:id	Obtener un usuario
+PUT	/:id	Editar datos
+DELETE	/:id	Desactivar usuario
+GET	/perfil	Info personal del usuario logueado
+🏢 4.1.3 – Empresas
+
+Prefix: /api/empresas
+
+Método	Ruta	Descripción
+GET	/	Lista de empresas
+POST	/	Crear nueva empresa
+GET	/:id	Ver empresa
+PUT	/:id	Editar empresa
+📍 4.1.4 – Clientes y Geocercas
+
+Prefix: /api/clientes
+
+Método	Ruta	Descripción
+GET	/	Lista de clientes por empresa
+POST	/	Crear cliente con geolocalización
+GET	/:id	Obtener detalle cliente
+PUT	/:id	Editar
+DELETE	/:id	Desactivar cliente
+📅 4.1.5 – Actividades / Visitas
+
+Prefix: /api/actividades
+
+Método	Ruta	Descripción
+GET	/pendientes	Listar próximas tareas por usuario
+POST	/asignar	Asignar actividad a usuario
+GET	/historial/:idUsuario	Historial por usuario
+POST	/checkin	Registrar llegada
+POST	/checkout	Cierre y observación final
+🧾 4.1.6 – Formularios
+
+Prefix: /api/formularios
+
+Método	Ruta	Descripción
+GET	/definiciones	Lista de formularios activos
+POST	/guardar	Enviar respuestas (JSON + archivos)
+GET	/respuestas/:idActividad	Ver respuesta de un formulario enviado
+📡 4.1.7 – Tracking GPS
+
+Prefix: /api/tracking
+
+Método	Ruta	Descripción
+POST	/punto	Registrar punto único
+POST	/batch	Registrar múltiples puntos GPS (sync)
+GET	/usuario/:idUsuario?fecha=yyyy-mm-dd	Ruta diaria para mapa admin
+GET	/distancia/:idUsuario?fecha=	Total de kilómetros por día
+🚨 4.1.8 – Alertas
+
+Prefix: /api/alertas
+
+Método	Ruta	Descripción
+GET	/	Ver alertas activas
+POST	/panico	Registrar botón de pánico
+POST	/geocerca	Registrar alerta por salida de zona
+POST	/inactividad	Alerta automática backend
+PUT	/atender/:id	Marcar alerta como atendida
+💬 4.1.9 – Chat
+
+Prefix: /api/chat
+
+Método	Ruta	Descripción
+GET	/usuarios	Lista conectada para chat
+GET	/historial/:idUsuario	Historial con un usuario
+POST	/enviar	Enviar mensaje (WS + persistencia)
+☁️ 4.1.10 – Archivos
+
+Prefix: /api/archivos
+
+Método	Ruta	Descripción
+POST	/subir	Subida de adjunto (foto, firma)
+GET	/:idArchivo	Descargar o previsualizar

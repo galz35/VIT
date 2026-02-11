@@ -1,0 +1,98 @@
+PARTE 19 – Cierre de Ciclo por Visita: Check-Out, Firma y Confirmación Final
+
+Este módulo asegura que cada visita tenga un cierre completo y validado, registrando ubicación, hora, observaciones y firma del cliente.
+
+🔁 19.1 – Flujo Completo de Visita
+
+Usuario visualiza su tarea del día.
+
+Llega al cliente → hace Check-in (geovalidado).
+
+Llena el formulario dinámico asignado.
+
+Adjunta evidencia (foto, firma, comentarios).
+
+Realiza Check-out para cerrar la visita.
+
+📱 19.2 – Flutter: Componente de Check-out
+Elementos requeridos en pantalla:
+
+Firma del cliente (signature)
+
+Campo de observaciones finales
+
+Foto final (opcional/forzada)
+
+Botón "Finalizar Visita"
+
+TextFormField(
+  decoration: InputDecoration(labelText: 'Observaciones'),
+  maxLines: 3,
+  onSaved: (val) => observaciones = val,
+);
+
+Signature(controller: signatureController, height: 200);
+
+📄 19.3 – Estructura de Check-out (SQLite)
+
+Tabla: checkouts_local
+
+Campo	Tipo
+id	INT PK
+tarea_id	UUID
+lat / lng	REAL
+firma_path	TEXT
+observacion	TEXT
+foto_path	TEXT
+timestamp	TEXT
+estado	'PENDIENTE' / 'ENVIADO'
+🌐 19.4 – Envío al Backend
+
+POST /api/checkouts
+
+{
+  "tarea_id": "TRX0928",
+  "lat": -12.044,
+  "lng": -77.032,
+  "timestamp": "2026-02-11T16:30:00Z",
+  "firma": "firma_00092.png",
+  "foto": "foto_final.png",
+  "observacion": "Cliente satisfecho con entrega"
+}
+
+🖼️ 19.5 – Vista Web: Detalle de Visita
+Panel lateral
+
+📌 Cliente + ubicación
+
+📅 Fecha y hora
+
+✅ Check-in y Check-out con mapa
+
+📝 Formulario completado
+
+✍️ Firma visible
+
+📷 Foto adjunta
+
+👁️ Observaciones
+
+🧮 19.6 – Validaciones al cerrar
+
+No puede hacer check-out sin check-in
+
+Si falta firma y es obligatoria → bloquea
+
+Si está fuera de zona → muestra advertencia o fuerza justificación
+
+Al completar: se marca tarea.estado = finalizada
+
+📊 19.7 – Métricas extraídas
+
+Tiempo total en visita (checkout - checkin)
+
+Firma sí/no
+
+Ubicación inicial y final (trayecto)
+
+Calidad de visita (basado en formulario y alertas)

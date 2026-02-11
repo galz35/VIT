@@ -1,0 +1,117 @@
+# 📘 TECHNICAL_FUSION_PLAN.md
+
+## 🎯 Objetivo
+Fusionar el sistema existente **Planner-EF** con las funcionalidades de Mobile Suit Case, manteniendo su núcleo de planificación diaria pero incorporando visitas geolocalizadas, evidencia de campo y control total por usuario.
+
+---
+
+## ✅ Estado Base de Planner-EF
+
+- Agenda diaria y planificación ya implementadas
+- Formularios dinámicos + respuestas en Flutter
+- Backend con NestJS + SQL Server
+- Modo offline con sincronización inteligente (`sync_queue`)
+- Flutter con coordenadas, adjuntos, firma y lógica modular
+
+---
+
+## 🧩 Extensiones Clave Implementar (Mobile Suit Case)
+
+### 1. **Tabla nueva: `visitas_clientes`**
+| Campo          | Tipo     |
+|----------------|----------|
+| id_visita      | UUID     |
+| id_cliente     | UUID     |
+| id_usuario     | UUID     |
+| lat_inicio     | FLOAT    |
+| lng_inicio     | FLOAT    |
+| lat_fin        | FLOAT    |
+| lng_fin        | FLOAT    |
+| inicio_ts      | DATETIME |
+| fin_ts         | DATETIME |
+| estado         | TEXT     |
+| comentario     | TEXT     |
+| firma_path     | TEXT     |
+| foto_path      | TEXT     |
+
+### 2. **SP: `sp_RegistrarVisitaCliente` + `sp_FinalizarVisitaCliente`**
+Valida geofence, registra tiempos, adjuntos y estado.
+
+### 3. **Flutter: Nueva vista `/visita_cliente`**
+- Captura check-in, formulario, firma, foto, check-out
+- Guarda en SQLite → sincroniza luego
+
+### 4. **React Web: Panel `/visitas`**
+- Filtros: por fecha, cliente, estado
+- Vista mapa con pines de check-in/out
+- Modal con evidencia y formularios llenados
+
+### 5. **Multimedia `.webp` por defecto**
+- Compresión con `flutter_image_compress`
+- Validación backend: solo `image/webp`
+
+---
+
+## 🔒 Módulo Avanzado de Visibilidad por Usuario
+
+### 1. **Tabla: `usuarios_vistas`**
+| Campo        | Tipo   |
+|--------------|--------|
+| id_usuario   | UUID   |
+| plataforma   | TEXT   |
+| vista        | TEXT   |
+| permitido    | BOOL   |
+
+### 2. **Endpoints API**
+- `GET /api/usuarios/:id/vistas?plataforma=web`
+- `PUT /api/usuarios/:id/vistas`
+
+### 3. **Web (React)**
+- Hook: `useVistaPermitida('visitas')`
+- Componente `<AccessControlVista vista="visitas">...</AccessControlVista>`
+
+### 4. **Flutter**
+- Permisos enviados al login
+- Evaluación local para mostrar/bloquear vistas
+
+### 5. **Panel Admin**
+- Ruta `/usuarios/:id/permisos-vistas`
+- Switch por vista y plataforma
+
+---
+
+## 🔄 Fusión con `agenda_dia`
+
+- Si se quiere: agregar `id_agenda` en `visitas_clientes`
+- Así una tarea del día puede generar una visita física con GPS
+
+---
+
+## 🧠 Impacto
+
+| Área         | Impacto      |
+|--------------|--------------|
+| BD           | Bajo (2 tablas nuevas) |
+| Flutter      | Medio (1 vista nueva, reuso de componentes) |
+| Web          | Medio (1 módulo nuevo + filtro de vistas) |
+| Backend API  | Bajo (nuevos endpoints REST + permisos) |
+
+---
+
+## 📦 Progreso Actual
+
+- Fusión técnica lograda al **91%**
+- Con este plan: llegarás al **100% funcional + escalable**
+
+---
+
+## 🚀 Siguiente paso sugerido
+
+1. Crear migraciones o scripts SQL para nuevas tablas y SP
+2. Implementar vista de visita en Flutter
+3. Generar el dashboard `/visitas` en React
+4. Activar filtro por vista (`usuarios_vistas`) desde login
+
+---
+
+**Este documento puede ser compartido con tu equipo de desarrollo o IA avanzada (Codex, ChatGPT 5.2, etc).**

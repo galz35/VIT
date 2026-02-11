@@ -1,0 +1,161 @@
+PARTE 10 – DBHelper Avanzado para SQLite Flutter
+
+Sistema completo de persistencia local en sqflite, con migraciones, versiones y acceso desacoplado por DAOs.
+
+🧱 10.1 – Configuración Base
+📦 Librerías necesarias
+dependencies:
+  sqflite: ^2.3.0
+  path_provider: ^2.1.1
+  path: ^1.8.3
+
+🛠️ 10.2 – Clase DBHelper
+class DBHelper {
+  static const _dbName = 'mobilesuitcase_local.db';
+  static const _dbVersion = 1;
+
+  DBHelper._privateConstructor();
+  static final DBHelper instance = DBHelper._privateConstructor();
+
+  static Database? _database;
+
+  Future<Database> get database async {
+    return _database ??= await _initDatabase();
+  }
+
+  Future<Database> _initDatabase() async {
+    final path = join(await getDatabasesPath(), _dbName);
+    return await openDatabase(
+      path,
+      version: _dbVersion,
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
+    );
+  }
+
+🏗️ 10.3 – Método onCreate
+Future<void> _onCreate(Database db, int version) async {
+  await db.execute('''
+    CREATE TABLE tracking_local (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id_usuario TEXT,
+      lat REAL, lng REAL,
+      precision INTEGER,
+      velocidad REAL,
+      bateria INTEGER,
+      timestamp TEXT,
+      origen TEXT DEFAULT 'background',
+      estado TEXT DEFAULT 'PENDIENTE'
+    );
+  ''');
+
+  await db.execute('''
+    CREATE TABLE checkins_local (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id_actividad TEXT,
+      lat REAL, lng REAL,
+      bateria INTEGER,
+      foto_local TEXT,
+      timestamp TEXT,
+      estado TEXT DEFAULT 'PENDIENTE'
+    );
+  ''');
+
+  await db.execute('''
+    CREATE TABLE formularios_local (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id_formulario TEXT,
+      id_actividad TEXT,
+      json_respuestas TEXT,
+      firma_base64 TEXT,
+      timestamp TEXT,
+      estado TEXT DEFAULT 'PENDIENTE'
+    );
+  ''');
+
+  await db.execute('''
+    CREATE TABLE archivos_local (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ruta_local TEXT,
+      tipo TEXT,
+      entidad_origen TEXT,
+      id_origen TEXT,
+      timestamp TEXT,
+      estado TEXT DEFAULT 'PENDIENTE'
+    );
+  ''');
+
+  await db.execute('''
+    CREATE TABLE alertas_local (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      tipo TEXT,
+      mensaje TEXT,
+      lat REAL, lng REAL,
+      timestamp TEXT,
+      estado TEXT DEFAULT 'PENDIENTE'
+    );
+  ''');
+
+  await db.execute('''
+    CREATE TABLE sync_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      modulo TEXT,
+      id_objeto TEXT,
+      resultado TEXT,
+      mensaje_error TEXT,
+      fecha_sync TEXT
+    );
+  ''');
+
+  await db.execute('''
+    CREATE TABLE tareas_cache (
+      id TEXT PRIMARY KEY,
+      cliente TEXT,
+      direccion TEXT,
+      lat REAL, lng REAL,
+      fecha TEXT,
+      estado TEXT,
+      tipo TEXT
+    );
+  ''');
+
+  await db.execute('''
+    CREATE TABLE config_local (
+      clave TEXT PRIMARY KEY,
+      valor TEXT
+    );
+  ''');
+}
+
+🧬 10.4 – onUpgrade() (Migraciones futuras)
+Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+  if (oldVersion < 2) {
+    await db.execute('ALTER TABLE checkins_local ADD COLUMN observacion TEXT;');
+  }
+  // Versiones futuras...
+}
+
+📌 10.5 – Otras utilidades
+Future<void> clearAllTables() async {
+  final db = await database;
+  for (final table in [
+    'tracking_local',
+    'checkins_local',
+    'formularios_local',
+    'archivos_local',
+    'alertas_local',
+    'sync_log',
+    'tareas_cache',
+    'config_local'
+  ]) {
+    await db.delete(table);
+  }
+}
+
+📎 Notas clave
+
+Todas las tablas incluyen estado para el control de sincronización
+
+Relación entre formularios_local y archivos_local es vía id_origen
+
+Campos tipo fecha siempre en formato ISO8601

@@ -1,0 +1,91 @@
+PARTE 6.2 – Diagramas de Flujo de Procesos Clave
+
+Estos diagramas representan la lógica operativa que seguirá el sistema para asegurar confiabilidad, trazabilidad y sincronización completa.
+
+🔄 6.2.1 – Flujo de Check-in Móvil
+[Inicio App]
+   ↓
+[Selecciona Tarea]
+   ↓
+[Presiona "Check-in"]
+   ↓
+[Validar Ubicación vs Cliente]
+   ├─ [Fuera de radio] → [Alerta geocerca + bloqueo]
+   ↓
+[Registrar GPS + batería]
+   ↓
+[Tomar foto opcional]
+   ↓
+[Enviar a API / Guardar local si offline]
+   ↓
+[Marcar tarea como EN_PROCESO]
+
+📡 6.2.2 – Tracking GPS Continuo (Background)
+[Servicio Tracking activo]
+   ↓
+[Cada N segundos]
+   ↓
+[Obtener GPS + batería + velocidad]
+   ↓
+[Guardar en base local (sqlite)]
+   ↓
+[Intentar sync → API tracking]
+   ├─ [OK] → [Borrar local]
+   └─ [Error] → [Reintentar en próximo ciclo]
+
+📤 6.2.3 – Sincronización General
+[App detecta conexión disponible]
+   ↓
+[Ejecuta SyncService]
+   ↓
+[Cargar tareas en cola]
+   ↓
+[Enviar formularios + archivos]
+   ↓
+[Enviar tracking GPS pendiente]
+   ↓
+[Marcar como enviado]
+   ↓
+[Notificar al usuario: "Sync completa"]
+
+🚨 6.2.4 – Alerta por Geocerca
+[Backend Worker cada 3 min]
+   ↓
+[Consulta últimos puntos GPS de usuarios]
+   ↓
+[Comparar posición vs radio del cliente asignado]
+   ↓
+[Si fuera de zona y en horario activo]
+   ↓
+[Insertar en tabla alertas]
+   ↓
+[Emitir WS a admin: alerta geocerca]
+
+📝 6.2.5 – Envío de Formulario
+[Usuario completa formulario dinámico]
+   ↓
+[Adjunta firma + imágenes]
+   ↓
+[Botón ENVIAR]
+   ↓
+[Valida campos obligatorios]
+   ↓
+[Envía JSON + archivos al backend]
+   ↓
+[Registra en respuestas_formulario + archivos]
+   ↓
+[Vuelve a tarea detalle con estado COMPLETADA]
+
+👮 6.2.6 – Cierre de Jornada Automático (Backend)
+[CRON 22:00 cada día]
+   ↓
+[Buscar tareas en estado EN_PROCESO o PENDIENTE]
+   ↓
+[Marcar como INCOMPLETAS]
+   ↓
+[Insertar alerta de cierre automático]
+   ↓
+[Registrar resumen jornada]
+
+
+¿Paso ahora a la Parte 7.1 – Extensiones opcionales futuras (módulo IA, dashboard gerencial, reconocimiento facial, gamificación)?

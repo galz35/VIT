@@ -1,0 +1,129 @@
+Perfecto. Continuamos con:
+
+📘 PARTE 3.2 – Stored Procedures Clave (SQL Server)
+
+Esta sección cubre los SPs críticos para registrar tracking, validar check-ins, generar alertas y producir reportes.
+
+✅ 3.2.1 – SP: Registrar Check-in Seguro
+CREATE PROCEDURE sp_registrar_checkin
+  @id_actividad UNIQUEIDENTIFIER,
+  @lat DECIMAL(9,6),
+  @lng DECIMAL(9,6),
+  @bateria INT,
+  @foto_url NVARCHAR(300) = NULL,
+  @resultado VARCHAR(100) OUTPUT
+AS
+BEGIN
+  BEGIN TRY
+    BEGIN TRANSACTION;
+
+    UPDATE actividades
+    SET checkin_lat = @lat,
+        checkin_lng = @lng,
+        checkin_ts = GETDATE(),
+        estado = 'en_proceso'
+    WHERE id_actividad = @id_actividad;
+
+    INSERT INTO archivos (id_usuario, entidad_origen, id_origen, tipo, ruta, timestamp)
+    SELECT id_usuario, 'actividad', @id_actividad, 'jpg', @foto_url, GETDATE()
+    FROM actividades WHERE id_actividad = @id_actividad AND @foto_url IS NOT NULL;
+
+    SET @resultado = 'OK';
+    COMMIT;
+  END TRY
+  BEGIN CATCH
+    ROLLBACK;
+    SET @resultado = ERROR_MESSAGE();
+  END CATCH
+END
+
+📍 3.2.2 – SP: Registrar Punto de Tracking
+CREATE PROCEDURE sp_tracking_insert
+  @id_usuario UNIQUEIDENTIFIER,
+  @lat DECIMAL(9,6),
+  @lng DECIMAL(9,6),
+  @velocidad FLOAT,
+  @precision_metros INT,
+  @bateria INT,
+  @origen VARCHAR(20)
+AS
+BEGIN
+  INSERT INTO tracking_gps (
+    id_usuario, lat, lng, velocidad, precision_metros, bateria, timestamp, origen
+  )
+  VALUES (
+    @id_usuario, @lat, @lng, @velocidad, @precision_metros, @bateria, GETDATE(), @origen
+  );
+END
+
+🧠 3.2.3 – SP: Calcular Distancia Recorrida del Día
+CREATE PROCEDURE sp_distancia_diaria
+  @id_usuario UNIQUEIDENTIFIER,
+  @fecha DATE,
+  @total_km FLOAT OUTPUT
+AS
+BEGIN
+  DECLARE @p1_lat DECIMAL(9,6), @p1_lng DECIMAL(9,6),
+          @p2_lat DECIMAL(9,6), @p2_lng DECIMAL(9,6),
+          @km_total FLOAT = 0;
+
+  DECLARE cur CURSOR FOR
+    SELECT lat, lng FROM tracking_gps
+    WHERE id_usuario = @id_usuario AND CONVERT(DATE, timestamp) = @fecha
+    ORDER BY timestamp;
+
+  OPEN cur
+  FETCH NEXT FROM cur INTO @p1_lat, @p1_lng
+
+  WHILE @@FETCH_STATUS = 0
+  BEGIN
+    FETCH NEXT FROM cur INTO @p2_lat, @p2_lng
+    IF @@FETCH_STATUS = 0
+    BEGIN
+      SET @km_total += dbo.fn_haversine(@p1_lat, @p1_lng, @p2_lat, @p2_lng)
+      SET @p1_lat = @p2_lat
+      SET @p1_lng = @p2_lng
+    END
+  END
+
+  CLOSE cur
+  DEALLOCATE cur
+  SET @total_km = @km_total
+END
+
+
+Requiere una función escalar fn_haversine(lat1, lng1, lat2, lng2) que calcule distancia entre coordenadas.
+
+🚨 3.2.4 – SP: Registrar Alerta (Pánico o Geocerca)
+CREATE PROCEDURE sp_alerta_insert
+  @id_usuario UNIQUEIDENTIFIER,
+  @tipo VARCHAR(30), -- panico, fuera_geocerca, inactividad
+  @mensaje NVARCHAR(300),
+  @lat DECIMAL(9,6),
+  @lng DECIMAL(9,6)
+AS
+BEGIN
+  INSERT INTO alertas (
+    id_usuario, tipo, mensaje, lat, lng, timestamp
+  )
+  VALUES (
+    @id_usuario, @tipo, @mensaje, @lat, @lng, GETDATE()
+  );
+END
+
+📊 3.2.5 – SP: Generar Reporte de Cumplimiento
+CREATE PROCEDURE sp_reporte_cumplimiento
+  @id_empresa UNIQUEIDENTIFIER,
+  @fecha_inicio DATE,
+  @fecha_fin DATE
+AS
+BEGIN
+  SELECT u.nombre, u.carnet,
+         COUNT(a.id_actividad) AS total_asignadas,
+         SUM(CASE WHEN a.estado = 'completada' THEN 1 ELSE 0 END) AS completadas,
+         SUM(DATEDIFF(MINUTE, a.checkin_ts, a.checkout_ts)) AS minutos_en_sitio
+  FROM usuarios u
+  JOIN actividades a ON a.id_usuario = u.id_usuario
+  WHERE u.id_empresa = @id_empresa AND a.fecha_asignada BETWEEN @fecha_inicio AND @fecha_fin
+  GROUP BY u.nombre, u.carnet
+END

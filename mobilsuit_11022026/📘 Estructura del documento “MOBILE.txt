@@ -1,0 +1,139 @@
+📘 Estructura del documento: “MOBILE OPS CORE SUITE”
+
+El documento completo será dividido en 7 partes para mantener claridad, escalabilidad y profundidad. Podrás solicitarlas individualmente.
+
+✅ PARTE 1: VISIÓN GENERAL Y ARQUITECTURA GLOBAL
+
+Objetivo funcional del sistema
+
+Escenarios de uso reales (visita clientes, rutas, check-in, metas, alertas)
+
+Arquitectura general (NestJS Fastify + SQL Server + Flutter + React)
+
+Diagrama de componentes físicos y lógicos
+
+Flujo de interacción entre apps (API/Web/Móvil)
+
+Patrón de sincronización offline móvil
+
+✅ PARTE 2: FLUJOS FUNCIONALES DETALLADOS
+
+App móvil:
+
+Flujo completo de check-in/out
+
+Flujo de formulario dinámico
+
+Flujo de tracking background
+
+Flujo de alertas por geocerca y pánico
+
+Flujo de sincronización incremental
+
+Panel web:
+
+Flujo de asignación de tareas
+
+Flujo de creación de formularios
+
+Flujo de monitoreo en tiempo real
+
+Flujo de revisión de cumplimiento y reportes
+
+✅ PARTE 3: BASE DE DATOS Y PROCEDURES
+
+Modelo entidad-relación completo
+
+Tablas con estructura detallada (campos, tipos, claves foráneas)
+
+Tablas auxiliares, logs, auditoría
+
+Procedures clave:
+
+Registro de tracking
+
+Validación de entrada geográfica
+
+Cálculo de distancia diaria recorrida
+
+Generación de alertas automáticas
+
+Reportes por usuario/cliente
+
+✅ PARTE 4: API REST Y WEBSOCKET
+
+Definición de todos los endpoints /api
+
+Auth
+
+Usuarios / Roles / Clientes
+
+Actividades / Asignaciones
+
+Formularios dinámicos
+
+Tracking y rutas
+
+Alertas y chat
+
+Reportes
+
+Swagger (JSON / YAML listo para Codex)
+
+WS de tracking y chat
+
+Intercambios ejemplo con JSON (payloads reales)
+
+✅ PARTE 5: FRONTEND WEB (REACT + TANSTACK)
+
+Estructura del proyecto
+
+Componentes clave
+
+Diseño de dashboard, formularios, mapas
+
+Builder de formularios con drag&drop
+
+Ejemplo completo de páginas
+
+Diseño responsive (PWA-ready)
+
+Control de acceso y permisos
+
+✅ PARTE 6: APP FLUTTER
+
+Estructura modular
+
+Páginas clave: login, agenda, mapa, formularios, sync
+
+Widgets comunes y diseño adaptativo
+
+Implementación de tracking con Geolocator
+
+Offline-first con sqflite + cola de sync
+
+Subida de adjuntos (imágenes, audio, firma)
+
+Push notifications
+
+✅ PARTE 7: DOCUMENTACIÓN DE DESARROLLO Y DEVOPS
+
+Requisitos técnicos (Java, SDK, SQL Server config)
+
+Script de inicialización (infra + DB)
+
+.env y config recomendada para NestJS + Fastify
+
+Deploy backend (PM2 / Docker / Azure)
+
+CI/CD básico (Vercel, GitHub Actions)
+
+Recomendaciones de logging y seguridad
+
+Librerías recomendadas (por capa)
+
+⚙️ Librerías núcleo propuestas
+Capa	Librerías
+NestJS	@nestjs/config, @nestjs/swagger, @nestjs/jwt, @nestjs/websockets, mssql, rxjs, winston, fastify-multipart
+React	react-router, tanstack/react-query, tailwindcss, vite, zustand o redux, framer-motion, lucide-react, mapbox-gl o google-maps-react
+Flutter	dio, sqflite, geolocator, flutter_secure_storage, provider o riverpod, signature, image_picker, flutter_background_service, flutter_map o google_maps_flutter

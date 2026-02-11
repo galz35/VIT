@@ -1,0 +1,140 @@
+Tablas sqflite Flutter – Almacenamiento Offline
+📍 tracking_local
+
+Registra puntos GPS mientras no hay conexión.
+
+CREATE TABLE tracking_local (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id_usuario TEXT,
+  lat REAL,
+  lng REAL,
+  precision INTEGER,
+  velocidad REAL,
+  bateria INTEGER,
+  timestamp TEXT,
+  origen TEXT DEFAULT 'background', -- o 'manual'
+  estado TEXT DEFAULT 'PENDIENTE' -- PENDIENTE / ENVIADO / ERROR
+);
+
+✅ checkins_local
+
+Check-ins realizados sin conexión.
+
+CREATE TABLE checkins_local (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id_actividad TEXT,
+  lat REAL,
+  lng REAL,
+  bateria INTEGER,
+  foto_local TEXT,
+  timestamp TEXT,
+  estado TEXT DEFAULT 'PENDIENTE'
+);
+
+📝 formularios_local
+
+Respuestas completas de formularios.
+
+CREATE TABLE formularios_local (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id_formulario TEXT,
+  id_actividad TEXT,
+  json_respuestas TEXT,
+  firma_base64 TEXT,
+  timestamp TEXT,
+  estado TEXT DEFAULT 'PENDIENTE'
+);
+
+📎 archivos_local
+
+Archivos (fotos, firmas) pendientes de subida.
+
+CREATE TABLE archivos_local (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ruta_local TEXT,
+  tipo TEXT, -- 'foto', 'firma'
+  entidad_origen TEXT, -- 'formulario', 'checkin'
+  id_origen TEXT,
+  timestamp TEXT,
+  estado TEXT DEFAULT 'PENDIENTE'
+);
+
+🔄 sync_log
+
+Registro de intentos de sincronización.
+
+CREATE TABLE sync_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  modulo TEXT, -- 'tracking', 'checkin', etc.
+  id_objeto TEXT,
+  resultado TEXT,
+  mensaje_error TEXT,
+  fecha_sync TEXT
+);
+
+🛠️ Extras recomendadas
+Tabla: config_local
+
+Guarda preferencias del dispositivo.
+
+CREATE TABLE config_local (
+  clave TEXT PRIMARY KEY,
+  valor TEXT
+);
+
+
+Ejemplo:
+
+intervalo_tracking = 60
+
+ultimo_sync = "2026-02-11T19:34"
+
+Gestión de estado y sincronización
+
+Cada tabla tiene estado que puede ser:
+
+"PENDIENTE"
+
+"ENVIADO"
+
+"ERROR"
+
+El servicio SyncService recorre solo las filas con "PENDIENTE" o "ERROR".
+
+¿Querés que te entregue el código Flutter para inicializar estas tablas con sqflite y métodos DAO para insert/update/sync?
+
+pero eso solo coordenada pero solo eso hace ese sistema para que solo tenga eso el sqlite?
+
+Correcto. Si solo guardáramos coordenadas, sería insuficiente.
+
+🧠 El sistema no solo guarda coordenadas. La arquitectura offline en sqflite cubre TODO lo necesario para que la app móvil funcione completamente sin conexión.
+
+Aquí va un resumen por módulo:
+
+🗂️ ¿Qué guarda sqflite offline?
+Módulo	¿Qué se guarda?	Tabla local
+📍 Tracking GPS	Coordenadas + batería + velocidad	tracking_local
+✅ Check-in	Coordenadas, foto, ID de tarea	checkins_local
+📤 Check-out	Observaciones, coordenadas	checkouts_local (puede agregarse si lo usás separado)
+📝 Formularios	JSON de respuestas + firma	formularios_local
+📎 Archivos	Ruta local de imágenes/firma	archivos_local
+🚨 Alertas	Tipo + mensaje + coordenadas	alertas_local
+📅 Tareas asignadas	Lista de visitas del día (sincronizadas desde backend)	tareas_cache
+👤 Usuario actual	Info login actual (token, nombre, rol)	usuario_actual o config_local
+🔁 ¿Qué hace el SyncService?
+
+Cada X minutos o al reconectarse:
+
+Lee las tablas locales con estado = 'PENDIENTE'
+
+Envía a la API los datos pendientes
+
+Si recibe 200 OK, borra o marca como ENVIADO
+
+Si hay error (timeout, 500), marca como ERROR para reintentar
+
+✅ Resultado: Offline total
+
+Puede hacer check-in, formularios, alertas, tracking, adjuntos sin conexión.
+
+El usuario solo necesita conectarse al final del día para sincronizar.

@@ -1,0 +1,84 @@
+Módulos sugeridos (opcionales pero recomendables)
+1. 🛡️ Auditoría de Cambios por Campo
+
+Tabla auditoria_cambios:
+
+Guarda: tabla afectada, campo cambiado, valor anterior, nuevo valor, usuario, fecha.
+
+Ideal para: correcciones de formulario, reclamos, edición de visitas
+
+NestJS interceptor global con @OnEvent('entity.updated')
+
+2. 📍 Zonas de Cliente (Geofence)
+
+Tabla zonas_cliente con polígono o radio GPS
+
+Validación al check-in: si está dentro/fuera de zona
+
+Marca visita_clientes.valido = false si el GPS no coincide
+
+Muy útil para evitar marcajes falsos
+
+3. 📅 Calendario Web Global
+
+Vista tipo fullcalendar donde se ve:
+
+Agenda diaria
+
+Visitas planeadas
+
+Estado de ejecución
+
+Para supervisores y planificación de fuerza de campo
+
+4. 🔔 Notificaciones y Alertas (Push + Web)
+
+Flutter:
+
+Push por firebase_messaging
+
+Ejemplo: “Faltan 10 minutos para visita a Cliente X”
+
+Web:
+
+Toast en React con WebSocket + API de notificación nativa
+
+5. 🔁 Reporte de inconsistencias
+
+Vista /inconsistencias:
+
+Usuarios sin marcar salida
+
+Visitas con GPS inválido
+
+Formulario incompleto
+
+Admins reciben alertas o reportes diarios
+
+6. 📊 KPIs y Dashboard Analítico
+
+Promedio visitas/día por usuario
+
+Tiempo promedio en cliente
+
+Distancia recorrida (si tracking activado)
+
+Exportable a Excel o Power BI
+
+7. 🔒 Registro de Dispositivos
+
+Cada login guarda modelo, sistema y fingerprint
+
+Admin puede ver si marcó desde PC desconocido
+
+Útil para seguridad y auditoría
+
+8. 🧠 IA futura (si activás modelo interno)
+
+Recomendación automática de ruta
+
+Análisis de formularios anómalos
+
+Priorizar visitas futuras según historial
+
+¿Te gustaría que agregue alguno de estos al documento técnico o armamos un documento nuevo tipo “Módulos Extendidos Empresariales”?

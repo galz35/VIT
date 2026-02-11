@@ -1,0 +1,99 @@
+📘 PARTE 5.2 – Estructura React Web (Panel Admin)
+
+Diseño modular y desacoplado para un panel administrativo moderno, rápido y escalable.
+
+🧱 5.2.1 – Estructura de Carpetas (React + Vite + TanStack)
+/src
+ ├── main.tsx
+ ├── App.tsx
+ ├── api/                # Clientes API por módulo
+ ├── hooks/              # Custom hooks reutilizables
+ ├── features/           # Secciones funcionales
+ │    ├── auth/
+ │    ├── usuarios/
+ │    ├── tareas/
+ │    ├── formularios/
+ │    ├── tracking/
+ │    ├── alertas/
+ │    ├── clientes/
+ │    ├── reportes/
+ ├── components/         # UI general (Botones, Tabs, etc)
+ ├── pages/              # Páginas de alto nivel
+ ├── lib/                # Utils, auth, axios, roles
+ ├── router/             # Configuración de rutas con roles
+ └── styles/             # Tailwind + temas
+
+⚙️ 5.2.2 – Gestión de Datos con TanStack Query
+Elemento	Implementación
+Fetching	useQuery por entidad
+Mutaciones	useMutation con invalidación de queries
+Reintentos	Configurado por error: red → 3, auth → 0
+Caching	5–10 min por entidad (customizable)
+Global loading	Interceptor + loading overlay global
+📐 5.2.3 – UI Base con Tailwind + ShadCN
+
+Componentes base: Button, Card, DataTable, Dialog, Tabs
+
+Tema corporativo:
+
+Tipografía Inter
+
+Colores: Slate 900, Corporate Red, Green Pastel
+
+Modo claro/oscuro
+
+Layout principal:
+
+Sidebar collapsible + header superior
+
+Notificaciones push en top-right
+
+🔄 5.2.4 – Gestión de Formularios
+Caso	Librería
+Form builder	Editor visual personalizado con estado local
+Formularios normales (crear usuario, cliente, etc)	react-hook-form + zod
+📡 5.2.5 – Mapa en Vivo
+
+Integración con Google Maps o Mapbox via react-map-gl:
+
+Renderizado de markers por usuario
+
+Rutas de tracking con líneas de color
+
+Geocercas visibles (círculo o polígono)
+
+Popups con datos de check-in
+
+Actualización por WebSocket en tiempo real
+
+📤 5.2.6 – Subida y Vista de Archivos
+
+Adjuntos en formularios renderizados como thumbnails
+
+Modal para ver firma o imagen adjunta
+
+Upload vía axios con FormData
+
+Validaciones: tamaño, tipo, límite por formulario
+
+🧠 5.2.7 – Roles y Seguridad
+
+Rutas protegidas por AuthProvider y useRoleGuard
+
+Menú dinámico según permisos
+
+Botones y acciones ocultas por rol
+
+🧪 5.2.8 – Utilidades y Experiencia
+
+useDebounce, useOnline, useTrackingFilter
+
+Toasts y alerts centralizados con react-hot-toast
+
+Animaciones sutiles con framer-motion
+
+Excel export con xlsx
+
+PDF viewer (para formularios firmados)
+
+¿Avanzo ahora con la Parte 6.1 – Diseño UI/UX y wireframes sugeridos por pantalla clave?

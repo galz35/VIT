@@ -1,0 +1,129 @@
+PARTE 21 – Archivos y Multimedia: Compresión, Seguridad y Envío desde Móvil
+
+Este módulo permite capturar imágenes, firmas, documentos o audio desde Flutter, comprimirlos y enviarlos de forma segura al backend, respetando integridad y espacio.
+
+📸 21.1 – Tipos de archivo permitidos
+Tipo	Usado en...	Extensión	Origen
+Imagen	Formularios, evidencia	.jpg/.png	Cámara o galería
+Firma	Check-out, formularios	.png	Widget de firma
+Documento	Adjuntos opcionales	.pdf/.docx	Picker
+Audio	Pruebas de voz (opcional)	.mp3	Grabadora
+🧱 21.2 – SQLite: archivos_local
+Campo	Tipo	Descripción
+id	INT PK	ID local
+id_origen	UUID	ID del formulario/tarea
+tipo	TEXT	foto, firma, doc, audio
+path_local	TEXT	Ruta interna
+estado	TEXT	PENDIENTE / ENVIADO
+timestamp	TEXT	ISO 8601
+🧠 21.3 – Captura y compresión Flutter
+Imagen
+final image = await ImagePicker().pickImage(source: ImageSource.camera);
+final compressed = await FlutterImageCompress.compressAndGetFile(
+  image.path, '${dir}/img_comprimida.jpg',
+  quality: 70,
+);
+
+Firma
+final signature = await controller.toPngBytes();
+await File('firma_${uuid}.png').writeAsBytes(signature);
+
+🔐 21.4 – Envío seguro al backend
+
+POST /api/archivos/upload (multipart)
+
+Content-Type: multipart/form-data
+Authorization: Bearer {token}
+
+
+Cuerpo:
+
+file: archivo binario
+
+tipo: foto / firma / audio
+
+id_origen: ID de la tarea/formulario asociada
+
+nombre_original: opcional
+
+🧊 21.5 – Almacenamiento en el backend
+
+Se almacena en carpeta segmentada por tipo y fecha:
+
+/evidencia/foto/2026/02/
+
+/firmas/
+
+Nombre hash único: form_09284_foto_01.jpg
+
+Registro en tabla archivos:
+
+Campo	Detalle
+uuid	ID único
+url	Path accesible
+tipo	firma, foto
+usuario_id	Responsable
+tarea_id	Asignada
+🖥️ 21.6 – Vista web en reportes
+
+Firma: preview directa
+
+Foto: miniatura ampliable (modal)
+
+Documento: descarga con nombre original
+
+Audio: botón “escuchar”
+
+🧪 21.7 – Validaciones
+
+Tamaño máximo configurable (ej. 5 MB)
+
+Tipo de archivo validado (Content-Type)
+
+Archivos obligatorios (ej. firma requerida para cierre)
+
+Se puede bloquear tareas incompletas sin archivo obligatorio
+Perfecto. Se priorizará el uso de imágenes en formato .webp para todo tipo de evidencias visuales, dado que:
+
+✅ Ventajas clave de .webp:
+
+25–35% más ligero que .jpg con calidad visual similar.
+
+Soporte total en navegadores modernos y Flutter.
+
+Ideal para dispositivos con almacenamiento limitado o conexiones lentas.
+
+🔧 Ajustes para la implementación:
+📱 En Flutter:
+final image = await ImagePicker().pickImage(source: ImageSource.camera);
+final webpFile = await FlutterImageCompress.compressAndGetFile(
+  image.path,
+  '${dir}/foto_${uuid}.webp',
+  format: CompressFormat.webp,
+  quality: 75,
+);
+
+
+Se generará y almacenará localmente como .webp
+
+La ruta path_local en archivos_local termina en .webp
+
+🌐 En backend (NestJS + Fastify):
+
+Validar image/webp en Content-Type
+
+Guardar con extensión .webp
+
+En carpeta /evidencia/webp/yyyy/mm/
+
+Optimización de payload en frontend: menor uso de datos
+
+🖥️ En el panel web (React):
+
+Renderizado directo con <img src="..." /> (los browsers ya soportan .webp)
+
+Modal preview como imagen expandida
+
+Opción de descarga en original .webp
+
+El sistema sigue permitiendo .jpg y .png si alguna cámara antigua no soporta .webp, pero el flujo por defecto ahora será .webp.

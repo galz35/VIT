@@ -1,0 +1,69 @@
+PARTE 7.1 – Extensiones Futuras y Módulos Avanzados
+
+Opcionales para versiones empresariales avanzadas o evolución del sistema.
+
+🧠 7.1.1 – IA y Detección de Comportamientos Anómalos
+
+Objetivo: detectar posibles fraudes o patrones inusuales.
+
+Lógica	Fuente	Acción
+Tareas con check-in desde misma ubicación (GPS duplicado)	tracking_gps	Alerta por posible "auto-check"
+Ruta irreal (distancia demasiado corta)	Distancia diaria < 500m	Marcar visita como sospechosa
+Check-in sin acercarse al cliente	checkin_lat/lng vs cliente.lat/lng	Flag en reporte
+Cambios de ubicación bruscos (GPS saltado)	Algoritmo Haversine + velocidad	Excluir puntos outlier
+📈 7.1.2 – Dashboard Gerencial
+
+Resumen visual para dirección o gerencia.
+
+Paneles por:
+
+Tareas completadas por día/semana
+
+% de cumplimiento por zona
+
+Top 5 usuarios más activos
+
+Alertas más frecuentes
+
+Gráficos con echarts o recharts
+
+Exportación mensual automática PDF + Excel
+
+🎮 7.1.3 – Gamificación Interna
+
+Ranking de visitas completadas por día
+
+Insignias desbloqueables:
+
+“Visitador Relámpago”: 5 check-in antes de 10am
+
+“Semana Perfecta”: 100% cumplimiento
+
+Mensajes tipo motivacionales al iniciar jornada
+
+Puntos por acción → tienda interna (opcional)
+
+🧑‍💻 7.1.4 – Reconocimiento Facial (en Check-in)
+
+Módulo opcional de selfie + validación
+
+Librería recomendada:
+
+Backend: face-api.js o AWS Rekognition
+
+Flutter: camera + integración API
+
+Comparación de rostro capturado vs imagen base
+
+En caso de diferencia > 90% → alerta “suplantación”
+
+🔗 7.1.5 – Integraciones Empresariales
+Sistema	Integración
+ERP (SAP, Odoo)	Export JSON/CSV o Webhook automático
+Active Directory / LDAP	Login corporativo
+SSO JWT / OAuth	Integración con Microsoft/Google
+Power BI	Endpoint con resumen de métricas
+
+Con esto concluye el blueprint detallado para clonar y extender Mobile Suitcase, superando su funcionalidad original con tu stack técnico.
+
+¿Querés que empaquete todo este contenido como documento descargable (PDF o Markdown)? También puedo generar un índice navegable si lo vas a usar con Codex.g

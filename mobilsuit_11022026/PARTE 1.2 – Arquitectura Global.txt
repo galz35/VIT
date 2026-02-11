@@ -1,0 +1,96 @@
+PARTE 1.2 – Arquitectura Global
+🧩 1.2.1 – Arquitectura Física y Lógica del Sistema
+🌐 Componentes Globales
+Componente	Tecnología	Función Principal
+App Móvil	Flutter	Captura datos, tracking, formularios, alertas
+Web Admin	React (Vite)	Gestión, builder, panel de control
+API Backend	NestJS + Fastify	Lógica de negocio, autenticación, control
+BD Empresarial	SQL Server	Persistencia relacional, procedimientos
+Almacenamiento Archivos	Azure Blob / S3 / MinIO	Adjuntos (fotos, firmas, audio)
+Push Notifications	FCM	Notificaciones a dispositivos móviles
+WebSocket Server	NestJS Gateway	Chat, tracking en vivo, alertas
+Background Workers	NestJS + cron/queues	Cálculos, alertas programadas
+Logs y Auditoría	Winston + SQL	Seguridad, rastreabilidad
+🧠 Arquitectura Lógica
+┌────────────┐          ┌─────────────┐          ┌────────────┐
+│ Flutter App│◄───────►│ NestJS API  │◄───────►│  SQL Server │
+│ (Offline)  │          │  Fastify    │          │ Relacional │
+└─────┬──────┘          └─────┬───────┘          └──────┬─────┘
+      │                       │                          │
+      ▼                       ▼                          ▼
+┌────────────┐         ┌────────────┐           ┌──────────────┐
+│ SQLite     │         │ WebSocket  │           │ Blob Storage │
+│ + Sync     │         │ Gateway    │           │ (Adjuntos)   │
+└────────────┘         └────────────┘           └──────────────┘
+
+           ▲
+           │
+    ┌────────────┐
+    │ React Admin│
+    │ TanStack   │
+    └────────────┘
+
+🔄 1.2.2 – Comunicación entre Capas
+Origen	Destino	Protocolo	Propósito
+Flutter → API	HTTPS (REST)	Login, tareas, formularios, sync	
+Flutter → API	WebSocket	Tracking en vivo, chat	
+React → API	HTTPS (REST)	CRUD, builder, panel, reportes	
+API → SQL Server	TDS (Driver mssql)	Queries, SPs, auditoría	
+API → Blob Storage	HTTPS	Upload de adjuntos	
+API ↔ WS Gateway	WS/Socket.IO	Emitir/recibir mensajes/chat	
+API → Flutter FCM	HTTPS + Token	Push notifications	
+🔐 1.2.3 – Seguridad y Control
+
+JWT + Refresh tokens
+
+Interceptors para validar identidad en todos los endpoints
+
+Auditoría global (tabla de eventos: módulo, entidad, acción, IP, antes/después)
+
+Control de dispositivos registrados (Flutter)
+
+RBAC multitenant por rol y empresa
+
+Procedimientos SQL validados con TRY/CATCH + TRANSACTION
+
+🗺️ 1.2.4 – Diagrama General
+                ┌────────────────────────────────────────────────┐
+                │                 Web Admin (React)              │
+                │  - Gestión de usuarios                         │
+                │  - Asignación de tareas                        │
+                │  - Builder de formularios                     │
+                │  - Mapa en vivo / Reportes                    │
+                └────────────────┬───────────────────────────────┘
+                                 │
+                                 ▼
+                          ┌────────────┐
+                          │   API REST │◄─────────────┐
+                          │ NestJS     │              │
+                          └────┬───────┘              │
+                               │                      │
+         ┌─────────────────────┼────────────┐         │
+         ▼                     ▼            ▼         │
+ ┌────────────┐         ┌────────────┐  ┌────────────┐│
+ │ SQL Server │         │ WebSockets │  │ Blob Store ││
+ └────┬───────┘         │ Tracking   │  │ Fotos/Firma││
+      │                 └────────────┘  └────────────┘│
+      ▼                                      ▲        │
+ ┌────────────┐                              │        │
+ │ Procedures │                              │        │
+ └────────────┘                              │        │
+      ▲                                      │        │
+      │                                      │        │
+      └──────────────┐             ┌─────────┘        │
+                     ▼             ▼                  │
+               ┌────────────┐  ┌────────────┐         │
+               │Flutter App │  │FCM Push    │◄────────┘
+               └────────────┘  └────────────┘
+
+🧰 1.2.5 – Recomendaciones de Infraestructura
+Elemento	Recomendación
+API	Contenedor Docker + PM2
+SQL Server	Azure SQL Managed o VPS Linux/Windows
+Blob Storage	Azure Blob o MinIO local
+Notificaciones	Firebase Cloud Messaging
+Logs	Winston rotado + backup en tabla
+CI/CD	GitHub Actions + Vercel (web) + Deploy remoto backend

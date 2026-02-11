@@ -1,0 +1,101 @@
+📘 PARTE 1.3 – Sincronización Offline y Gestión de Rutas GPS
+🧳 1.3.1 – Estrategia Offline (Flutter App)
+
+La app móvil debe operar en modo offline-first, sincronizando datos en background cuando haya conexión.
+
+🔄 Mecanismo de Sincronización
+Elemento	Tipo	Descripción
+SQLite (local)	Base de datos persistente	Tareas, formularios, usuarios, logs, tracking
+SyncTable	Auxiliar	Marca entidades locales con status: PENDING / SYNCED / ERROR
+SyncManager	Servicio Flutter	Envía lotes a la API y actualiza estado
+RetryQueue	FIFO local	Cola para reintentos de fallos de red
+🧪 Estrategia Recomendada
+
+Cualquier acción offline crea un registro con pending = 1
+
+El SyncManager corre cada 1 min (conectividad) o manualmente
+
+La API NestJS recibe paquetes por lotes (/api/sync)
+
+Cada entidad tiene campo external_id para reconciliación
+
+📦 1.3.2 – Estructura de Tablas Locales
+Tabla	Campos claves
+actividades	id_local, id_remoto, cliente_id, estado, fecha
+formularios_local	id_local, form_id, respuestas, adjuntos
+tracking_points	lat, lng, velocidad, precision, ts_local
+sync_table	entidad, id_local, intento, estado, payload
+📡 1.3.3 – Tracking GPS con Precisión
+📍 Registro de puntos
+
+Se usa geolocator o flutter_background_service
+
+Se toma posición cada X metros o cada N segundos (según config)
+
+Se graba lat, lng, velocidad, accuracy, batteryLevel, timestamp
+
+⚙️ Parámetros configurables
+Parámetro	Descripción
+minDistanceMeters	Evita puntos redundantes en zonas estáticas
+intervalMs	Cada cuántos milisegundos captar posición
+accuracy	best, balanced, lowPower, etc.
+geofenceRadius	Radio mínimo para marcar “llegada a cliente”
+📈 1.3.4 – Cálculo de Distancia Diaria
+🧠 Lógica recomendada (server-side)
+
+Recibe puntos GPS con timestamp, lat, lng
+
+Elimina ruido (saltos de precisión > 50m en 1s)
+
+Ordena por tiempo
+
+Calcula la distancia total con Haversine entre cada punto válido
+
+Suma solo si:
+
+Diferencia entre puntos > 5m y < 1km
+
+Tiempo entre puntos < 5 min
+
+function distanciaTotal(puntos[]) {
+  total = 0
+  for (i = 1; i < puntos.length; i++) {
+    if (valid(puntos[i-1], puntos[i])) {
+      total += haversine(puntos[i-1], puntos[i])
+    }
+  }
+  return total
+}
+
+🧲 1.3.5 – Detección de Llegada/Salida (Geofencing)
+
+Cada cliente tiene lat, lng, radio
+
+Cada vez que se sincroniza una posición:
+
+Se calcula si está dentro del radio (geocerca)
+
+Si antes estaba fuera y ahora dentro → evento ENTRADA
+
+Si antes estaba dentro y ahora fuera → evento SALIDA
+
+isInsideGeofence(lat, lng, cliente) {
+  return haversine(lat, lng, cliente.lat, cliente.lng) <= cliente.radio
+}
+
+⚠️ 1.3.6 – Alertas Automáticas
+Tipo de alerta	Disparador
+No llegó al cliente	No hay check-in en las primeras 2 horas
+Se salió de la zona	SALIDA sin completar formulario
+Inactividad	No hay tracking > 30 min
+Distancia insuficiente	Distancia del día < X km esperados
+
+Las alertas se calculan en el worker backend, no en la app móvil.
+
+🚦 1.3.7 – Eventos de Usuario con Metadata
+Acción	Metadata capturada
+Check-in	lat, lng, battery, signal, device_id, photo?
+Envío formulario	form_id, respuestas, adjuntos, ubicación
+Botón de pánico	ubicación, hora, mensaje, nivel
+
+Todo se centraliza en tabla evento_usuario para auditoría.

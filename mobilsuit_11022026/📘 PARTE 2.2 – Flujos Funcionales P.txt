@@ -1,0 +1,121 @@
+📘 PARTE 2.2 – Flujos Funcionales: Panel Web React (Admin)
+
+Esta sección detalla los flujos del administrador/supervisor en la plataforma React para gestión operativa.
+
+📋 2.2.1 – Asignación de Actividades / Visitas
+Objetivo:
+
+Permitir que supervisores asignen tareas/visitas a colaboradores.
+
+Pantalla: AsignadorPage
+Funcionalidad	Descripción
+Selección múltiple de clientes	Mapa + lista
+Asignación masiva	Arrastrar múltiples clientes a colaborador
+Configuración	Fecha, hora sugerida, duración estimada, prioridad
+Previsualización ruta	Ruta sugerida entre visitas (Google Maps API opcional)
+Guardado	Crea registros en tabla actividades con estado pendiente
+🧱 2.2.2 – Builder de Formularios Dinámicos
+Objetivo:
+
+Diseñar formularios visualmente que luego se rendericen en la app móvil.
+
+Pantalla: FormBuilderPage
+Funcionalidad	Descripción
+Drag & Drop	Campos: texto, número, selección, fecha, imagen, firma, sección
+Validaciones	Requerido, condiciones, expresiones (visibleIf, requiredIf)
+Versionado	Cada formulario tiene versión (form_id, version)
+Previsualización	Simula cómo se verá en Flutter
+Guardado	Guarda JSON estructurado en formularios_def (tabla)
+🗺️ 2.2.3 – Mapa en Vivo / Tracking
+Objetivo:
+
+Visualizar la ubicación actual (o última conocida) de cada colaborador.
+
+Pantalla: MapaLivePage
+Componente	Función
+Mapa base	Google Maps / Mapbox
+Markers dinámicos	Posición actual por usuario
+Línea de ruta diaria	Puntos conectados por orden horario
+Color por estado	Visitando / Idle / Inactivo
+Filtros	Por usuario, por zona, por alerta activa
+🚨 2.2.4 – Panel de Alertas
+Objetivo:
+
+Visualizar y atender alertas del sistema (geofence, pánico, inactividad).
+
+Pantalla: AlertaPage
+Elemento	Detalle
+Tabla de alertas	Tipo, usuario, zona, hora
+Acciones	“Marcar como atendida”, “Reasignar visita”, “Ver en mapa”
+Prioridad	Color/ícono según nivel
+Notificaciones sonoras	(opcional) para alertas críticas
+📈 2.2.5 – Reportes y KPIs
+Objetivo:
+
+Monitorear productividad, cumplimiento y trazabilidad.
+
+Pantalla: ReportePage
+Reporte	Métricas
+Diario por colaborador	Total tareas, tareas cumplidas, distancia recorrida, tiempo efectivo, tiempo ocioso
+Visitas por cliente	Última visita, frecuencia promedio, visitas exitosas
+Alertas	Totales por tipo, atendidas vs pendientes
+Ranking	Top usuarios por cumplimiento, velocidad, cobertura
+
+Opciones:
+
+Exportar a Excel/PDF
+
+Filtros por fecha, región, usuario
+
+🛠️ 2.2.6 – Gestión de Usuarios y Roles
+Pantalla: UsuariosPage
+
+Crear / editar / suspender usuarios
+
+Asignar roles (admin, supervisor, movil)
+
+Asociar usuarios a empresa (multitenant)
+
+Ver historial de actividad
+
+📍 2.2.7 – Gestión de Clientes y Geocercas
+Pantalla: ClientesPage
+
+CRUD de clientes con ubicación geográfica
+
+Crear geocerca (radio o polígono)
+
+Ver visitas históricas por cliente
+
+Definir reglas especiales (requiere foto, requiere firma, etc.)
+
+💬 2.2.8 – Chat y Mensajes Internos
+Pantalla: ChatPage
+
+Lista de usuarios conectados
+
+Canales por empresa o grupo
+
+Mensajes privados o grupales
+
+Historial almacenado en SQL
+
+Notificación en tiempo real via WS
+
+⚙️ 2.2.9 – Configuración General
+
+Pantalla: ConfiguracionPage
+
+Parámetros globales:
+
+frecuencia de tracking
+
+radios por defecto
+
+tiempos máximos inactivos
+
+reglas de alerta
+
+Tokens y claves (API Maps, FCM)
+
+Cierre de jornada automatizado

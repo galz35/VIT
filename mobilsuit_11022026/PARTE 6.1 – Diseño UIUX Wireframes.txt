@@ -1,0 +1,122 @@
+PARTE 6.1 – Diseño UI/UX: Wireframes y Principios Visuales
+
+Diseño basado en claridad operativa, velocidad de uso y jerarquía de información para equipos de campo y supervisión.
+
+🎨 6.1.1 – Paleta Corporativa
+Elemento	Color
+Fondo claro	#f8fafc (Slate-50)
+Texto principal	#1e293b (Slate-800)
+Primario activo	#e11d48 (Corporate Red)
+Acento secundario	#22c55e (Pastel Green)
+Fondo oscuro	#0f172a (Slate-900)
+📱 6.1.2 – Pantallas App Flutter (Campo)
+🏠 Home
+
+Saludo dinámico (“Hola, Juan”)
+
+Mosaico de tareas con:
+
+Estado (color: rojo, naranja, verde)
+
+Hora, cliente, dirección
+
+Botón flotante: Emergencia
+
+📍 Tarea Detalle
+
+Cliente + dirección + distancia actual
+
+Estado: pendiente / check-in / completada
+
+Botones:
+
+Check-in (con GPS)
+
+Iniciar formulario
+
+Adjuntar imagen/firma
+
+Check-out
+
+📝 Formulario Dinámico
+
+Renderizado limpio tipo steps
+
+Elementos visuales: íconos + bordes suaves
+
+Campo de firma estilo Apple
+
+Validaciones en vivo (rojo si falta, verde si válido)
+
+🔁 Sincronizar
+
+Lista por módulo: tareas, formularios, tracking
+
+Estado: ⏳ En cola, ✅ Enviado, ❌ Error
+
+Botón global “Sincronizar todo”
+
+🔔 Alerta Emergencia
+
+Modo oscuro
+
+Botón central “Enviar alerta”
+
+Confirmación rápida + comentario opcional
+
+🖥️ 6.1.3 – Pantallas Web Admin (React)
+🗺️ Mapa en Vivo
+
+Split: Mapa + Panel lateral
+
+Lado derecho:
+
+Lista de usuarios con color por estado
+
+Posición actual (tiempo relativo: “hace 2 min”)
+
+Botón “Ver ruta de hoy”
+
+Geocercas dibujadas en mapa
+
+🧾 Reportes
+
+Cards estadísticas por colaborador
+
+Tabla por visitas:
+
+Nombre
+
+Check-in/out
+
+Distancia total
+
+Adjuntos enviados
+
+Filtro por fechas y usuario
+
+Botones Exportar Excel / PDF
+
+🛠️ Builder de Formularios
+
+Canvas tipo Notion/Typeform
+
+Drag & Drop de:
+
+Texto, Numérico, Selección, Firma, Foto
+
+Simulación en columna derecha
+
+Guardar → genera JSON
+
+🧑‍💼 Asignación de Visitas
+
+Calendario tipo Google Calendar
+
+Drag clientes sobre día/hora
+
+Visualización por zona (colores)
+
+Auto-sugerencia de ruta (algoritmo opcional)
+
+¿Paso ahora a la Parte 6.2 – Diagramas de flujo de procesos clave (check-in, sync, alertas, tracking, formularios)?
