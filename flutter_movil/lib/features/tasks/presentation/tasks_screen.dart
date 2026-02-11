@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
@@ -314,35 +315,76 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-class _TaskItem extends StatelessWidget {
+class _TaskItem extends StatefulWidget {
   final dynamic task; // TaskItem
-  final VoidCallback onToggle;
+  final Future<void> Function() onToggle;
 
   const _TaskItem({required this.task, required this.onToggle});
 
   @override
+  State<_TaskItem> createState() => _TaskItemState();
+}
+
+class _TaskItemState extends State<_TaskItem> {
+  bool _isLoading = false;
+
+  Future<void> _handleToggle() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+
+    try {
+      // Feedback táctil
+      HapticFeedback.lightImpact();
+      await widget.onToggle();
+      // Si éxito, el padre reconstruirá este widget (desaparece o cambia estado)
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al actualizar: $e'),
+            backgroundColor: MomentusTheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Verificamos si la tarea está completada revisando su estado
+    final task = widget.task;
     final bool isDone = task.estado == 'completada' || task.estado == 'Hecha';
     final bool isSynced = task.synced;
+    final bool isHighPriority =
+        (task.prioridad as String).toLowerCase() == 'alta';
 
     String? fechaFmt;
     if (task.fechaObjetivo != null) {
       fechaFmt = DateFormat('d MMM', 'es_ES').format(task.fechaObjetivo!);
     }
 
+    // Colores según prioridad / estado
+    final borderColor = isDone
+        ? const Color(0xFFE2E8F0)
+        : (isHighPriority ? const Color(0xFFFECACA) : const Color(0xFFE2E8F0));
+    final bgColor = isDone
+        ? const Color(0xFFF8FAFC)
+        : (isHighPriority ? const Color(0xFFFEF2F2) : Colors.white);
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: bgColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: isDone
+            ? []
+            : [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+        border: Border.all(color: borderColor),
       ),
       child: Material(
         color: Colors.transparent,
@@ -361,48 +403,81 @@ class _TaskItem extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Checkbox custom
+                // ── CHECKBOX CON LOADING ──
                 InkWell(
-                  onTap: isDone ? null : onToggle,
+                  onTap: isDone ? null : _handleToggle,
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
                     width: 24,
                     height: 24,
-                    decoration: BoxDecoration(
-                      color:
-                          isDone ? const Color(0xFF10B981) : Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isDone
-                            ? const Color(0xFF10B981)
-                            : const Color(0xFFCBD5E1),
-                        width: 2,
-                      ),
-                    ),
-                    child: isDone
-                        ? const Icon(Icons.check, size: 16, color: Colors.white)
-                        : null,
+                    child: _isLoading
+                        ? const Padding(
+                            padding: EdgeInsets.all(2.0),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: MomentusTheme.primary,
+                            ),
+                          )
+                        : Container(
+                            decoration: BoxDecoration(
+                              color: isDone
+                                  ? const Color(0xFF10B981)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: isDone
+                                    ? const Color(0xFF10B981)
+                                    : (isHighPriority
+                                        ? const Color(0xFFEF4444)
+                                        : const Color(0xFFCBD5E1)),
+                                width: 2,
+                              ),
+                            ),
+                            child: isDone
+                                ? const Icon(Icons.check,
+                                    size: 16, color: Colors.white)
+                                : null,
+                          ),
                   ),
                 ),
                 const SizedBox(width: 16),
 
-                // Content
+                // ── CONTENT ──
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        task.titulo,
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: isDone
-                              ? const Color(0xFF94A3B8)
-                              : const Color(0xFF1E293B),
-                          decoration:
-                              isDone ? TextDecoration.lineThrough : null,
-                        ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              task.titulo,
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 15,
+                                fontWeight: isHighPriority && !isDone
+                                    ? FontWeight.w700
+                                    : FontWeight.w600,
+                                color: isDone
+                                    ? const Color(0xFF94A3B8)
+                                    : const Color(0xFF1E293B),
+                                decoration:
+                                    isDone ? TextDecoration.lineThrough : null,
+                              ),
+                            ),
+                          ),
+                          // Alerta visual de prioridad alta
+                          if (isHighPriority && !isDone)
+                            const Padding(
+                              padding: EdgeInsets.only(left: 8),
+                              child: Icon(
+                                CupertinoIcons.exclamationmark_circle_fill,
+                                size: 16,
+                                color: Color(0xFFEF4444),
+                              ),
+                            )
+                        ],
                       ),
                       if (task.descripcion.isNotEmpty) ...[
                         const SizedBox(height: 4),

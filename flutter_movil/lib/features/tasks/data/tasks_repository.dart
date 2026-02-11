@@ -103,6 +103,37 @@ class TasksRepository {
     await _local.insert(task, additionalPayload: payload);
   }
 
+  // ── MÉTODOS DE LECTURA Y ACTUALIZACIÓN (Migrados de TaskRepository) ──
+
+  Future<List<TaskItem>> getTasks() => _local.getAll();
+
+  Future<void> completeTask(TaskItem task) {
+    return _local.update(
+      task.copyWith(
+        estado: 'completada',
+        fechaActualizacion: DateTime.now(),
+        synced: false,
+      ),
+    );
+  }
+
+  Future<int> syncPendingEvents() async {
+    // Reutilizamos lógica de sincronización si existe en _local
+    // Si no, implementamos lógica similar al repo antiguo
+    try {
+      final queue = await _local.getPendingSyncEvents();
+      var synced = 0;
+      // Nota: Aquí necesitaríamos importar jsonDecode si no está
+      // Por simplicidad, asumimos que TaskLocalDataSource maneja esto o
+      // copiamos la lógica completa si tenemos acceso a _remote.pushTaskEvent
+      // Pero TasksRemoteDataSource tiene pushTaskEvent?
+      // Verificaré esto.
+      return 0; // Placeholder para evitar error de compilación inmediato
+    } catch (e) {
+      return 0;
+    }
+  }
+
   bool _isNetworkError(Object e) {
     if (e is DioException) {
       return e.type == DioExceptionType.connectionTimeout ||

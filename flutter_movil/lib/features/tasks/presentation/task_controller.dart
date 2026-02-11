@@ -1,14 +1,15 @@
 import 'package:flutter/foundation.dart';
 
-import '../data/repositories/task_repository.dart';
+import '../data/tasks_repository.dart';
 import '../domain/task_item.dart';
 
 enum TaskFilter { all, pending, completed, unsynced }
 
 class TaskController extends ChangeNotifier {
-  TaskController({TaskRepository? repository}) : _repository = repository ?? TaskRepository();
+  TaskController({TasksRepository? repository})
+      : _repository = repository ?? TasksRepository();
 
-  final TaskRepository _repository;
+  final TasksRepository _repository;
 
   List<TaskItem> tasks = [];
   bool loading = false;
@@ -42,7 +43,8 @@ class TaskController extends ChangeNotifier {
     final q = query.trim().toLowerCase();
     if (q.isNotEmpty) {
       data = data.where((t) =>
-          t.titulo.toLowerCase().contains(q) || t.descripcion.toLowerCase().contains(q));
+          t.titulo.toLowerCase().contains(q) ||
+          t.descripcion.toLowerCase().contains(q));
     }
 
     return data.toList();
@@ -74,7 +76,33 @@ class TaskController extends ChangeNotifier {
   }
 
   Future<void> addTask(String titulo, String descripcion) async {
-    await _repository.createTask(titulo: titulo, descripcion: descripcion);
+    await _repository.createTask(
+      title: titulo,
+      description: descripcion,
+    );
+    await loadTasks();
+  }
+
+  Future<void> createTaskFull({
+    required String title,
+    DateTime? date,
+    String? tipo,
+    String? prioridad,
+    String? esfuerzo,
+    String? descripcion,
+    int? assignedToUserId,
+    int? projectId,
+  }) async {
+    await _repository.createTaskFull(
+      title: title,
+      date: date ?? DateTime.now(), // Repo requiere fecha
+      tipo: tipo ?? 'Tarea',
+      prioridad: prioridad ?? 'Media',
+      esfuerzo: esfuerzo ?? 'Medio',
+      descripcion: descripcion,
+      assignedToUserId: assignedToUserId,
+      projectId: projectId,
+    );
     await loadTasks();
   }
 

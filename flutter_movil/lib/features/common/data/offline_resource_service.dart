@@ -22,6 +22,13 @@ class OfflineResourceService {
       log('⚠️ [OfflineService] Falló carga remota para $cacheKey. Usando cache.',
           name: 'OfflineResourceService', error: e, stackTrace: stack);
       final cached = await CacheStore.instance.getList(cacheKey);
+
+      // Si no tenemos nada en caché, es mejor mostrar el error real al usuario
+      // para que sepa que "No funciona" en vez de pensar "No hay datos".
+      if (cached.isEmpty) {
+        rethrow;
+      }
+
       return OfflineListResult(items: cached, fromCache: true);
     }
   }
@@ -38,8 +45,12 @@ class OfflineResourceService {
       log('⚠️ [OfflineService] Falló carga remota para $cacheKey. Usando cache.',
           name: 'OfflineResourceService', error: e, stackTrace: stack);
       final cached = await CacheStore.instance.getMap(cacheKey);
-      return OfflineMapResult(
-          data: cached ?? <String, dynamic>{}, fromCache: true);
+
+      // Igual que en lista: si no hay caché, mostrar error
+      if (cached == null || cached.isEmpty) {
+        rethrow;
+      }
+      return OfflineMapResult(data: cached, fromCache: true);
     }
   }
 }

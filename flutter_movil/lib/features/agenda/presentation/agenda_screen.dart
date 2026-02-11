@@ -1721,10 +1721,10 @@ class _ExecutionSection extends StatelessWidget {
 // EXECUTION TASK ROW (Post-Checkin, toggleable)
 // ============================================================
 
-class _ExecutionTaskRow extends StatelessWidget {
+class _ExecutionTaskRow extends StatefulWidget {
   final Tarea task;
   final bool isMain;
-  final VoidCallback onToggle;
+  final Future<void> Function() onToggle;
 
   const _ExecutionTaskRow({
     required this.task,
@@ -1733,104 +1733,224 @@ class _ExecutionTaskRow extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final isDone = task.estado == 'Hecha';
+  State<_ExecutionTaskRow> createState() => _ExecutionTaskRowState();
+}
 
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.mediumImpact();
-        onToggle();
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.only(bottom: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        decoration: BoxDecoration(
-          color: isDone ? const Color(0xFFF8FAFC) : Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isDone
-                ? const Color(0xFFE2E8F0)
-                : (isMain ? const Color(0xFFFFE4E6) : const Color(0xFFF1F5F9)),
+class _ExecutionTaskRowState extends State<_ExecutionTaskRow> {
+  bool _isLoading = false;
+
+  Future<void> _handleComplete() async {
+    if (_isLoading) return;
+
+    setState(() => _isLoading = true);
+    HapticFeedback.mediumImpact();
+
+    // Feedback inmediato
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Completando tarea...'),
+        duration: Duration(milliseconds: 1500),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+
+    try {
+      await widget.onToggle();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: No se pudo completar. Verifique conexión.'),
+            backgroundColor: MomentusTheme.error,
+            behavior: SnackBarBehavior.floating,
           ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDone = widget.task.estado == 'Hecha';
+    final isBlocked = widget.task.estado == 'Bloqueada';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: isDone ? const Color(0xFFF8FAFC) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDone
+              ? const Color(0xFFE2E8F0)
+              : (widget.isMain
+                  ? const Color(0xFFFFE4E6)
+                  : const Color(0xFFF1F5F9)),
         ),
-        child: Row(
-          children: [
-            // Check circle
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                color: isDone ? const Color(0xFF10B981) : Colors.transparent,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isDone
-                      ? const Color(0xFF10B981)
-                      : const Color(0xFFCBD5E1),
-                  width: 2,
-                ),
-              ),
-              child: isDone
-                  ? const Icon(Icons.check_rounded,
-                      size: 14, color: Colors.white)
-                  : null,
-            ),
-            const SizedBox(width: 10),
-
-            // Task info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    task.titulo,
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 13,
-                      fontWeight: isMain ? FontWeight.w600 : FontWeight.w500,
-                      color: isDone
-                          ? const Color(0xFF94A3B8)
-                          : const Color(0xFF1E293B),
-                      decoration: isDone ? TextDecoration.lineThrough : null,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (task.proyectoNombre != null)
-                    Text(
-                      task.proyectoNombre!,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: isDone
-                            ? const Color(0xFFCBD5E1)
-                            : const Color(0xFF94A3B8),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                ],
-              ),
-            ),
-
-            // Status indicator
-            if (task.estado == 'Bloqueada')
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF2F2),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Text(
-                  'Bloqueada',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFFDC2626),
+        boxShadow: widget.isMain && !isDone
+            ? [
+                BoxShadow(
+                  color: const Color(0xFFF43F5E).withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                )
+              ]
+            : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            // Aquí podríamos abrir detalles en el futuro
+            // Por ahora solo feedback táctil suave
+            HapticFeedback.lightImpact();
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            child: Row(
+              children: [
+                // ── CHECKBOX AREA (Area táctil aumentada) ──
+                InkWell(
+                  onTap: isBlocked ? null : _handleComplete,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: MomentusTheme.primary,
+                            ),
+                          )
+                        : AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            width: 24,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              color: isDone
+                                  ? const Color(0xFF10B981)
+                                  : (widget.isMain
+                                      ? const Color(0xFFFFF1F2)
+                                      : Colors.transparent),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isDone
+                                    ? const Color(0xFF10B981)
+                                    : (widget.isMain
+                                        ? const Color(0xFFFDA4AF)
+                                        : const Color(0xFFCBD5E1)),
+                                width: 2,
+                              ),
+                            ),
+                            child: isDone
+                                ? const Icon(Icons.check_rounded,
+                                    size: 16, color: Colors.white)
+                                : null,
+                          ),
                   ),
                 ),
-              ),
-          ],
+                const SizedBox(width: 12),
+
+                // ── TASK CONTENT ──
+                Expanded(
+                  child: Opacity(
+                    opacity: isDone ? 0.6 : 1.0,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.task.titulo,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 14,
+                            fontWeight: widget.isMain
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                            color: isDone
+                                ? const Color(0xFF94A3B8)
+                                : const Color(0xFF1E293B),
+                            decoration:
+                                isDone ? TextDecoration.lineThrough : null,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (widget.task.proyectoNombre != null) ...[
+                          const SizedBox(height: 2),
+                          Row(
+                            children: [
+                              Icon(
+                                widget.isMain
+                                    ? Icons.adjust
+                                    : Icons.work_outline_rounded,
+                                size: 10,
+                                color: isDone
+                                    ? const Color(0xFFCBD5E1)
+                                    : (widget.isMain
+                                        ? const Color(0xFFFDA4AF)
+                                        : const Color(0xFF94A3B8)),
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  widget.task.proyectoNombre!,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDone
+                                        ? const Color(0xFFCBD5E1)
+                                        : const Color(0xFF64748B),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+
+                // ── BLOQUEADO INDICATOR ──
+                if (isBlocked)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF2F2),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFFFECACA)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.lock_outline_rounded,
+                            size: 12, color: Color(0xFFDC2626)),
+                        SizedBox(width: 4),
+                        Text(
+                          'Bloqueada',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFFDC2626),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
     );

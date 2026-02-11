@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
+import 'package:flutter/services.dart';
+
 import '../../auth/presentation/auth_controller.dart';
 import '../../home/presentation/home_shell.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/services/push_notification_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -182,8 +185,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
 
-          const SizedBox(height: 32),
-
           const _SectionTitle(title: 'INFORMACIÓN'),
           const _SettingsGroup(
             children: [
@@ -191,7 +192,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 icon: CupertinoIcons.info_circle_fill,
                 iconColor: Color(0xFF64748B),
                 title: 'Versión de la App',
-                subtitle: 'v1.2.5 build 2024.1',
+                subtitle: 'v1.2.6 build 2024.02',
               ),
               _InfoTile(
                 icon: CupertinoIcons.doc_text_fill,
@@ -199,6 +200,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: 'Términos y Privacidad',
                 subtitle: 'Políticas de uso de datos',
                 isLast: true,
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 32),
+
+          const _SectionTitle(title: 'DIAGNÓSTICO'),
+          _SettingsGroup(
+            children: [
+              _DebugTokenTile(
+                token:
+                    PushNotificationService.instance.token ?? 'No disponible',
               ),
             ],
           ),
@@ -455,6 +468,86 @@ class _InfoTile extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _DebugTokenTile extends StatelessWidget {
+  final String token;
+
+  const _DebugTokenTile({required this.token});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(CupertinoIcons.device_phone_portrait,
+                  size: 18, color: Color(0xFF64748B)),
+              SizedBox(width: 8),
+              Text(
+                'FCM Token',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    token,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 10,
+                      color: Color(0xFF475569),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(CupertinoIcons.doc_on_doc, size: 18),
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: token));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Token copiado al portapapeles'),
+                        behavior: SnackBarBehavior.floating,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Este código es necesario para lanzar notificaciones de prueba desde la consola de Firebase.',
+            style: TextStyle(
+              fontSize: 11,
+              color: Color(0xFF94A3B8),
+            ),
+          ),
+        ],
       ),
     );
   }
