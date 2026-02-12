@@ -381,7 +381,7 @@ const BoardView: React.FC<{ tasks: Tarea[], team: TeamMember[], onAssign: (tid: 
     );
 };
 
-const GanttView: React.FC<{ tasks: Tarea[] }> = ({ tasks }) => {
+const GanttView: React.FC<{ tasks: Tarea[], onTaskClick: (t: Tarea) => void }> = ({ tasks, onTaskClick }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
 
     const COL_WIDTH = 56; // px por día
@@ -491,7 +491,7 @@ const GanttView: React.FC<{ tasks: Tarea[] }> = ({ tasks }) => {
                                 {days.map(day => (
                                     <div
                                         key={day.toString()}
-                                        className={`shrink-0 flex items-center justify-center border-r border-slate-100 text-[11px] font-black ${isWeekend(day) ? 'bg-slate-50/50 text-slate-300' : 'text-slate-500'}`}
+                                        className={`shrink-0 flex items-center justify-center border-r border-slate-200 text-xs font-black ${isWeekend(day) ? 'bg-slate-100/50 text-slate-400' : 'text-slate-900'}`}
                                         style={{ width: COL_WIDTH }}
                                     >
                                         {format(day, 'd')}
@@ -512,17 +512,17 @@ const GanttView: React.FC<{ tasks: Tarea[] }> = ({ tasks }) => {
                         </div>
 
                         {/* Grid & Bars */}
-                        <div className="relative">
+                        <div className="relative min-h-[500px]">
                             <div className="absolute inset-0 flex pointer-events-none">
                                 {days.map(day => (
                                     <div
                                         key={day.toString()}
-                                        className={`shrink-0 border-r border-slate-100/60 h-full relative ${isWeekend(day) ? 'bg-slate-50/30' : ''} ${isToday(day) ? 'bg-indigo-50/20' : ''}`}
+                                        className={`shrink-0 border-r border-slate-200/50 h-full relative ${isWeekend(day) ? 'bg-slate-100/20' : ''} ${isToday(day) ? 'bg-indigo-50/30' : ''}`}
                                         style={{ width: COL_WIDTH }}
                                     >
                                         {isToday(day) && (
-                                            <div className="absolute inset-y-0 left-1/2 w-0.5 bg-indigo-500/30 z-10">
-                                                <div className="w-2 h-2 bg-indigo-500 rounded-full absolute -top-1 -left-[3px] shadow-sm ring-4 ring-indigo-50" />
+                                            <div className="absolute inset-y-0 left-1/2 w-[3px] bg-indigo-500/40 z-10">
+                                                <div className="w-3 h-3 bg-indigo-600 rounded-full absolute -top-1.5 -left-[5px] shadow-lg ring-4 ring-indigo-100" />
                                             </div>
                                         )}
                                     </div>
@@ -1613,7 +1613,7 @@ export const PlanTrabajoPage: React.FC = () => {
 
                             {selectedProject ? (
                                 <>
-                                    {viewMode === 'gantt' && <GanttView tasks={tasks} onTaskClick={openTaskDetails} />}
+                                    {viewMode === 'gantt' && <GanttView tasks={finalFilteredTasks} onTaskClick={openTaskDetails} />}
 
                                     {viewMode === 'board' && (
                                         <BoardView
