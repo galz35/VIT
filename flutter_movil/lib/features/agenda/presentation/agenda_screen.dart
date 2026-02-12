@@ -1370,7 +1370,11 @@ class _ExecutionView extends StatelessWidget {
       });
 
     final focusTasks = sortedTasks.where((t) => t.tipo == 'Entrego').toList();
-    final otherTasks = sortedTasks.where((t) => t.tipo != 'Entrego').toList();
+    // ── OTHER TASKS (OCULTO POR SIMPLIFICACIÓN) ──
+    /* 
+            // final otherTasks = sortedTasks.where((t) => t.tipo != 'Entrego').toList();
+            if (otherTasks.isNotEmpty) ...
+            */
 
     // Progress calc
     final allValid = sortedTasks.where((t) => t.tarea != null).toList();
@@ -1407,7 +1411,8 @@ class _ExecutionView extends StatelessWidget {
               const SizedBox(height: 16),
             ],
 
-            // ── OTHER TASKS ──
+            // ── OTHER TASKS (OCULTO POR SIMPLIFICACIÓN) ──
+            /* 
             if (otherTasks.isNotEmpty)
               _ExecutionSection(
                 title: '📋 OTRAS TAREAS',
@@ -1418,6 +1423,7 @@ class _ExecutionView extends StatelessWidget {
                 controller: controller,
                 isMain: false,
               ),
+            */
 
             if (tareas.isEmpty)
               const _EmptySection('Día libre o sin tareas planificadas.'),

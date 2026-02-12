@@ -86,12 +86,16 @@ export const ActivePlanView: React.FC<Props> = ({ checkin, onEdit, toggleTarea, 
     });
 
     // ✅ Data derivada con memo
-    const { focusTasks, advanceTasks, extraTasks, allTasks } = useMemo(() => {
+    const { focusTasks, allTasks } = useMemo(() => {
         const tareas = checkin.tareas || [];
         const focus = tareas.filter(t => t.tipo === 'Entrego').map(t => t.tarea!).filter(Boolean);
+        // const adv = ... (unused)
+        // const ext = ... (unused)
+        // Keep calculation for allTasks if needed for progress, but wait, allTasks logic used adv/ext.
+        // Let's keep logic inside but only return what is used.
         const adv = tareas.filter(t => t.tipo === 'Avanzo').map(t => t.tarea!).filter(Boolean);
         const ext = tareas.filter(t => t.tipo === 'Extra').map(t => t.tarea!).filter(Boolean);
-        return { focusTasks: focus, advanceTasks: adv, extraTasks: ext, allTasks: [...focus, ...adv, ...ext] };
+        return { focusTasks: focus, allTasks: [...focus, ...adv, ...ext] };
     }, [checkin.tareas]);
 
     const { total, done, progressPercent } = useMemo(() => {
@@ -302,7 +306,7 @@ export const ActivePlanView: React.FC<Props> = ({ checkin, onEdit, toggleTarea, 
                 </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
+            <div className="flex flex-col gap-6 animate-fade-in">
                 {/* Focus */}
                 <div className="bg-white rounded-xl border border-rose-100 shadow-sm overflow-hidden flex flex-col">
                     <div className="px-4 py-3 bg-rose-50 border-b border-rose-100 flex justify-between items-center">
@@ -318,7 +322,8 @@ export const ActivePlanView: React.FC<Props> = ({ checkin, onEdit, toggleTarea, 
                     </div>
                 </div>
 
-                {/* Others (Avanzo + Extra) */}
+                {/* Others (Avanzo + Extra) - OCULTO POR SIMPLIFICACIÓN */}
+                {/* 
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
                     <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
                         <h4 className="font-bold text-slate-700 text-xs uppercase tracking-widest flex items-center gap-2">📋 Otras Tareas (Gestión)</h4>
@@ -341,6 +346,7 @@ export const ActivePlanView: React.FC<Props> = ({ checkin, onEdit, toggleTarea, 
                         )}
                     </div>
                 </div>
+                */}
             </div>
             {evidenceTask && (
                 <EvidenceModal
