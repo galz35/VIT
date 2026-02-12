@@ -487,11 +487,11 @@ const GanttView: React.FC<{ tasks: Tarea[] }> = ({ tasks }) => {
 
                         {/* Headers */}
                         <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl shadow-sm border-b border-white">
-                            <div className="flex h-12">
+                            <div className="flex border-b border-slate-200 h-12 bg-white">
                                 {days.map(day => (
                                     <div
                                         key={day.toString()}
-                                        className={`shrink-0 flex items-center justify-center border-r border-white/60 text-[11px] font-black ${isWeekend(day) ? 'bg-slate-100/50 text-slate-300' : 'text-slate-400'} `}
+                                        className={`shrink-0 flex items-center justify-center border-r border-slate-100 text-[11px] font-black ${isWeekend(day) ? 'bg-slate-50/50 text-slate-300' : 'text-slate-500'}`}
                                         style={{ width: COL_WIDTH }}
                                     >
                                         {format(day, 'd')}
@@ -517,19 +517,26 @@ const GanttView: React.FC<{ tasks: Tarea[] }> = ({ tasks }) => {
                                 {days.map(day => (
                                     <div
                                         key={day.toString()}
-                                        className={`shrink-0 border-r border-white/40 h-full relative ${isWeekend(day) ? 'bg-slate-100/20' : ''} ${isToday(day) ? 'bg-indigo-50/20' : ''}`}
+                                        className={`shrink-0 border-r border-slate-100/60 h-full relative ${isWeekend(day) ? 'bg-slate-50/30' : ''} ${isToday(day) ? 'bg-indigo-50/20' : ''}`}
                                         style={{ width: COL_WIDTH }}
-                                    />
+                                    >
+                                        {isToday(day) && (
+                                            <div className="absolute inset-y-0 left-1/2 w-0.5 bg-indigo-500/30 z-10">
+                                                <div className="w-2 h-2 bg-indigo-500 rounded-full absolute -top-1 -left-[3px] shadow-sm ring-4 ring-indigo-50" />
+                                            </div>
+                                        )}
+                                    </div>
                                 ))}
                             </div>
 
                             {tasks.map((task, i) => {
                                 const style = getTaskStyle(task);
                                 return (
-                                    <div key={task.idTarea} className={`relative border-b border-white/40 hover:bg-white/40 transition-colors ${i % 2 === 0 ? 'bg-white/10' : ''}`} style={{ height: ROW_HEIGHT }}>
+                                    <div key={task.idTarea} className={`relative border-b border-slate-50 hover:bg-white/60 transition-colors ${i % 2 === 0 ? 'bg-white/5' : ''}`} style={{ height: ROW_HEIGHT }}>
                                         {style && (
                                             <div
-                                                className={`absolute top-1/2 -translate-y-1/2 h-10 rounded-2xl bg-gradient-to-r border-y border-white/30 backdrop-blur-sm group cursor-pointer overflow-hidden flex items-center px-4 transition-all hover:scale-[1.02] hover:z-30 hover:shadow-2xl active:scale-100 ${getBarColor(task.estado)}`}
+                                                onClick={() => onTaskClick(task)}
+                                                className={`absolute top-1/2 -translate-y-1/2 h-10 rounded-2xl bg-gradient-to-r border-y border-white/30 backdrop-blur-sm group cursor-pointer overflow-hidden flex items-center px-4 transition-all hover:scale-[1.03] hover:z-30 hover:shadow-2xl active:scale-100 ${getBarColor(task.estado)} shadow-lg`}
                                                 style={{ left: style.left, width: style.width }}
                                             >
                                                 {task.estado === 'En Curso' && (
@@ -583,14 +590,14 @@ export const PlanTrabajoPage: React.FC = () => {
     const [team, setTeam] = useState<TeamMember[]>([]);
 
     // Security / Permissions Mock
-    // Permisos automÃ¡ticos basados en el usuario
+    // Permisos automáticos basados en el usuario
     const canManageProject = useMemo(() => {
         if (!user) return false;
 
         // 1. Admin Global siempre tiene permiso
         if (user.rolGlobal === 'Admin' || user.rolGlobal === 'Administrador') return true;
 
-        // 2. JerarquÃ­a: Si es Jefe y el proyecto pertenece a su nodo organizacional
+        // 2. Jerarquía: Si es Jefe y el proyecto pertenece a su nodo organizacional
         // Nota: user.idOrg debe coincidir con project.idNodoDuenio
         if (user.rolGlobal === 'Jefe' && selectedProject?.idNodoDuenio) {
             // Si el usuario tiene idOrg, verificamos coincidencia
@@ -1261,8 +1268,8 @@ export const PlanTrabajoPage: React.FC = () => {
                                     )}
                                     {selectedProject && (
                                         <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium">
-                                            <span className={`flex items - center gap - 1 ${selectedProject.estado === 'Activo' ? 'text-emerald-600' : 'text-slate-500'} `}>
-                                                <span className={`w - 1.5 h - 1.5 rounded - full ${selectedProject.estado === 'Activo' ? 'bg-emerald-500' : 'bg-slate-300'} `}></span>
+                                            <span className={`flex items-center gap-1 ${selectedProject.estado === 'Activo' ? 'text-emerald-600' : 'text-slate-500'}`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${selectedProject.estado === 'Activo' ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
                                                 {selectedProject.estado}
                                             </span>
                                             {selectedProject.fechaInicio && (
@@ -1274,7 +1281,7 @@ export const PlanTrabajoPage: React.FC = () => {
                                         </div>
                                     )}
                                 </div>
-                                <ChevronDown size={14} className={`text - slate - 400 shrink - 0 transition - transform duration - 300 ${isProjectSelectorOpen ? 'rotate-180' : ''} `} />
+                                <ChevronDown size={14} className={`text-slate-400 shrink-0 transition-transform duration-300 ${isProjectSelectorOpen ? 'rotate-180' : ''}`} />
                             </button>
 
                             {isProjectSelectorOpen && (
@@ -1337,7 +1344,7 @@ export const PlanTrabajoPage: React.FC = () => {
                                                                 setIsProjectSelectorOpen(false);
                                                                 setProjectSearch('');
                                                             }}
-                                                            className={`flex - 1 text - left px - 3 py - 2 rounded - xl text - sm font - bold transition - all flex items - center justify - between ${selectedProject?.idProyecto === p.idProyecto ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600'} `}
+                                                            className={`flex-1 text-left px-3 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-between ${selectedProject?.idProyecto === p.idProyecto ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600'}`}
                                                         >
                                                             <div className="flex items-center gap-2">
                                                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
@@ -1381,7 +1388,7 @@ export const PlanTrabajoPage: React.FC = () => {
                                                                 setIsProjectSelectorOpen(false);
                                                                 setProjectSearch('');
                                                             }}
-                                                            className={`w - full text - left px - 3 py - 2 rounded - xl text - sm font - medium transition - all flex items - center justify - between opacity - 90 hover: opacity - 100 ${selectedProject?.idProyecto === p.idProyecto ? 'bg-amber-50 text-amber-900 border border-amber-100' : 'text-slate-600 hover:bg-slate-50'} `}
+                                                            className={`w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center justify-between opacity-90 hover:opacity-100 ${selectedProject?.idProyecto === p.idProyecto ? 'bg-amber-50 text-amber-900 border border-amber-100' : 'text-slate-600 hover:bg-slate-50'}`}
                                                         >
                                                             <div className="flex items-center gap-2">
                                                                 <Lock size={10} className="text-amber-500" />
@@ -1405,7 +1412,7 @@ export const PlanTrabajoPage: React.FC = () => {
                                                                 setIsProjectSelectorOpen(false);
                                                                 setProjectSearch('');
                                                             }}
-                                                            className={`w - full text - left px - 3 py - 2 rounded - xl text - sm font - medium transition - all flex items - center justify - between opacity - 70 hover: opacity - 100 ${selectedProject?.idProyecto === p.idProyecto ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:bg-slate-50'} `}
+                                                            className={`w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center justify-between opacity-70 hover:opacity-100 ${selectedProject?.idProyecto === p.idProyecto ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:bg-slate-50'}`}
                                                         >
                                                             {p.nombre}
                                                         </button>
@@ -1417,7 +1424,7 @@ export const PlanTrabajoPage: React.FC = () => {
                                         <div className="border-t border-slate-100 mt-2 pt-2">
                                             <button
                                                 onClick={() => { setIsProjectSelectorOpen(false); setIsNewProjectModalOpen(true); }}
-                                                className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white py-2 rounded-xl text-xs font-black hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100"
+                                                className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white py-2 rounded-xl text-xs font-black hover:bg-indigo-700 shadow-lg shadow-indigo-100"
                                             >
                                                 CREAR NUEVO PROYECTO
                                             </button>
@@ -1486,7 +1493,7 @@ export const PlanTrabajoPage: React.FC = () => {
                         <span className="hidden md:inline">{(selectedProject as any).enllavado ? 'Desbloquear' : 'Enllavar Plan'}</span>
                     </button>
                 )}
-            </header >
+            </header>
 
             {/* CONTENT */}
             <div className="flex-1 overflow-hidden bg-slate-50/50 relative">
@@ -1606,7 +1613,7 @@ export const PlanTrabajoPage: React.FC = () => {
 
                             {selectedProject ? (
                                 <>
-                                    {viewMode === 'gantt' && <GanttView tasks={tasks} />}
+                                    {viewMode === 'gantt' && <GanttView tasks={tasks} onTaskClick={openTaskDetails} />}
 
                                     {viewMode === 'board' && (
                                         <BoardView
