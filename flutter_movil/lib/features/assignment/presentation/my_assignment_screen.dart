@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../common/data/offline_resource_service.dart';
@@ -492,7 +491,9 @@ class _MyAssignmentScreenState extends State<MyAssignmentScreen> {
     if (fechaObjetivo != null) {
       try {
         final date = DateTime.parse(fechaObjetivo);
-        dateStr = DateFormat('d MMM yyyy', 'es_ES').format(date);
+        // FIX CRASH: Manual format
+        dateStr =
+            "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
       } catch (_) {}
     }
 
