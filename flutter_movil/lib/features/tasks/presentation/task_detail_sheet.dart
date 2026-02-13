@@ -183,7 +183,8 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
               _estado = data['estado'].toString();
             }
             if (data['progreso'] != null || data['porcentaje'] != null) {
-              _progreso = (data['progreso'] ?? data['porcentaje'] ?? 0) as int;
+              final raw = data['progreso'] ?? data['porcentaje'] ?? 0;
+              _progreso = (raw is num) ? raw.toInt() : 0;
             }
           }
         });
@@ -444,6 +445,7 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
                   child: Column(
                     children: [
                       if (_taskData['comentarios'] != null &&
+                          _taskData['comentarios'] is List &&
                           (_taskData['comentarios'] as List).isNotEmpty)
                         ...(_taskData['comentarios'] as List)
                             .map((c) => _buildCommentItem(c)),

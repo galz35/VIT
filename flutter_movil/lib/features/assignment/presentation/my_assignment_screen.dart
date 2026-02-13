@@ -291,10 +291,11 @@ class _MyAssignmentScreenState extends State<MyAssignmentScreen> {
     final int id = _parseInt(proyecto['idProyecto']) ?? 0;
     final String nombre = proyecto['nombre'] ?? 'Sin Nombre';
     final List tareas = (proyecto['misTareas'] as List?) ?? [];
-    final double progreso = _parseDouble(proyecto['progresoProyecto']);
+    final double progreso =
+        _parseDouble(proyecto['progresoProyecto']).clamp(0.0, 100.0);
     final bool isExpanded = _expandedProjects[id] ?? false;
-    final bool hasAtraso =
-        tareas.any((t) => (t['esAtrasada'] ?? false) == true);
+    // esAtrasada viene como int (0/1) del SQL, no como bool
+    final bool hasAtraso = tareas.any((t) => _isTruthy(t['esAtrasada']));
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -481,10 +482,11 @@ class _MyAssignmentScreenState extends State<MyAssignmentScreen> {
     final String titulo = task['titulo'] ?? 'Sin Título';
     final String estado = task['estado'] ?? 'Pendiente';
     final String prioridad = task['prioridad'] ?? 'Media';
-    final String? fechaObjetivo = task['fechaObjetivo']; // String ISO?
-    final bool esAtrasada = task['esAtrasada'] ?? false;
+    final String? fechaObjetivo = task['fechaObjetivo']?.toString();
+    // esAtrasada viene como int (0/1) del SQL, no como bool
+    final bool esAtrasada = _isTruthy(task['esAtrasada']);
     final int diasAtraso = _parseInt(task['diasAtraso']) ?? 0;
-    final double progreso = _parseDouble(task['progreso']);
+    final double progreso = _parseDouble(task['progreso']).clamp(0.0, 100.0);
     final bool isDone =
         estado == 'Hecha' || estado == 'Terminada' || estado == 'Completada';
 
@@ -729,6 +731,16 @@ class _MyAssignmentScreenState extends State<MyAssignmentScreen> {
     if (value is num) return value.toInt();
     if (value is String) return int.tryParse(value);
     return null;
+  }
+
+  /// Convierte valores truthy del backend (1, true, '1', 'true') a bool.
+  /// SQL devuelve 0/1 para campos CASE, no true/false.
+  bool _isTruthy(dynamic value) {
+    if (value == null) return false;
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    if (value is String) return value == '1' || value.toLowerCase() == 'true';
+    return false;
   }
 }
 
