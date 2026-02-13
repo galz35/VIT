@@ -41,12 +41,12 @@ export class ClarityController {
         return { success: true };
     }
 
-    @Get('mi-dia')
-    @ApiOperation({ summary: 'Obtener snapshot del día para el empleado' })
-    async getMiDia(@Request() req, @Query() query: FechaQueryDto) {
-        const carnet = req.user.carnet || await this.tasksService.resolveCarnet(req.user.userId);
-        return this.tasksService.miDiaGet(carnet, query.fecha, query.startDate, query.endDate);
-    }
+    // @Get('mi-dia')
+    // @ApiOperation({ summary: 'Obtener snapshot del día para el empleado' })
+    // async getMiDia(@Request() req, @Query() query: FechaQueryDto) {
+    //     const carnet = req.user.carnet || await this.tasksService.resolveCarnet(req.user.userId);
+    //     return this.tasksService.miDiaGet(carnet, query.fecha, query.startDate, query.endDate);
+    // }
 
     @Post('checkins')
     @ApiOperation({ summary: 'Registrar o actualizar check-in diario' })
