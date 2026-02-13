@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_utils.dart';
@@ -564,13 +563,9 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
   Widget _buildDateInput(String label, DateTime? value, VoidCallback onTap) {
     String text = 'Seleccionar';
     if (value != null) {
-      try {
-        // Usar 'es_ES' que es lo que inicializamos en main.dart
-        text = DateFormat('d MMM yyyy', 'es_ES').format(value);
-      } catch (e) {
-        // Fallback si falla locale
-        text = "${value.day}/${value.month}/${value.year}";
-      }
+      // FIX CRASH: Formato manual para evitar LocaleDataException
+      text =
+          "${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}";
     }
     return InkWell(
       onTap: onTap,
@@ -781,7 +776,7 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
             overlayColor: const Color(0xFF3B82F6).withValues(alpha: 0.2),
           ),
           child: Slider(
-            value: _progreso.toDouble(),
+            value: _progreso.toDouble().clamp(0.0, 100.0),
             min: 0,
             max: 100,
             divisions: 100,
@@ -807,8 +802,9 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
     String date = '';
     if (c['fecha'] != null) {
       try {
-        date = DateFormat('d MMM HH:mm', 'es_ES')
-            .format(DateTime.parse(c['fecha'].toString()));
+        final dt = DateTime.parse(c['fecha'].toString());
+        date =
+            "${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
       } catch (_) {
         date = c['fecha'].toString();
       }

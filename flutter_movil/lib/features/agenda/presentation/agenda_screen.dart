@@ -77,6 +77,7 @@ class _AgendaTabContent extends StatelessWidget {
       return _ExecutionView(
         checkin: controller.data!.checkinHoy!,
         controller: controller,
+        backlog: controller.data!.backlog,
       );
     }
 
@@ -1362,15 +1363,125 @@ class _TaskSelectorSheetState extends State<_TaskSelectorSheet> {
 // Inspirado en ActivePlanView.tsx de React
 // ============================================================
 
-class _ExecutionView extends StatelessWidget {
+// ============================================================
+// EXECUTION VIEW - Plan Activo (Post-Checkin)
+// Inspirado en ActivePlanView.tsx de React
+// ============================================================
+
+class _ExecutionView extends StatefulWidget {
   final Checkin checkin;
+  final List<Tarea> backlog;
   final AgendaController controller;
 
-  const _ExecutionView({required this.checkin, required this.controller});
+  const _ExecutionView({
+    required this.checkin,
+    required this.backlog,
+    required this.controller,
+  });
+
+  @override
+  State<_ExecutionView> createState() => _ExecutionViewState();
+}
+
+class _ExecutionViewState extends State<_ExecutionView>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabCtrl = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final tareas = checkin.tareas;
+    return Column(
+      children: [
+        // ── TAB BAR ──
+        Container(
+          margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: TabBar(
+            controller: _tabCtrl,
+            indicator: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            indicatorSize: TabBarIndicatorSize.tab,
+            indicatorPadding: const EdgeInsets.all(3),
+            dividerHeight: 0,
+            labelColor: MomentusTheme.slate900,
+            unselectedLabelColor: const Color(0xFF94A3B8),
+            labelStyle: const TextStyle(
+              fontFamily: 'Inter',
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
+            unselectedLabelStyle: const TextStyle(
+              fontFamily: 'Inter',
+              fontWeight: FontWeight.w500,
+              fontSize: 12,
+            ),
+            tabs: const [
+              Tab(
+                height: 40,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.check_circle_outlined, size: 18),
+                    SizedBox(width: 4),
+                    Text('Mi Día'),
+                  ],
+                ),
+              ),
+              Tab(
+                height: 40,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.inbox_outlined, size: 18),
+                    SizedBox(width: 4),
+                    Text('Pendientes'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        // ── CONTENT ──
+        Expanded(
+          child: TabBarView(
+            controller: _tabCtrl,
+            children: [
+              _buildMyDayTab(),
+              _buildBacklogTab(),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMyDayTab() {
+    final tareas = widget.checkin.tareas;
     final sortedTasks = List<CheckinTarea>.from(tareas)
       ..sort((a, b) {
         if (a.tipo == 'Entrego') return -1;
@@ -1379,11 +1490,6 @@ class _ExecutionView extends StatelessWidget {
       });
 
     final focusTasks = sortedTasks.where((t) => t.tipo == 'Entrego').toList();
-    // ── OTHER TASKS (OCULTO POR SIMPLIFICACIÓN) ──
-    /* 
-            // final otherTasks = sortedTasks.where((t) => t.tipo != 'Entrego').toList();
-            if (otherTasks.isNotEmpty) ...
-            */
 
     // Progress calc
     final allValid = sortedTasks.where((t) => t.tarea != null).toList();
@@ -1393,54 +1499,97 @@ class _ExecutionView extends StatelessWidget {
         totalCount > 0 ? (doneCount / totalCount * 100).round() : 0;
 
     return RefreshIndicator(
-      onRefresh: () async => await controller.loadAgenda(),
+      onRefresh: () async => await widget.controller.loadAgenda(),
       color: MomentusTheme.primary,
-      child: SingleChildScrollView(
+      child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.fromLTRB(
-            16, 16, 16, 16 + MediaQuery.of(context).padding.bottom),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── PROGRESS HEADER ──
-            _ProgressHeader(
-                done: doneCount, total: totalCount, percent: progressPct),
-            const SizedBox(height: 20),
+            16, 12, 16, 16 + MediaQuery.of(context).padding.bottom),
+        children: [
+          // ── PROGRESS HEADER ──
+          _ProgressHeader(
+              done: doneCount, total: totalCount, percent: progressPct),
+          const SizedBox(height: 20),
 
-            // ── FOCUS SECTION ──
-            if (focusTasks.isNotEmpty) ...[
-              _ExecutionSection(
-                title: '🎯 TAREA PRINCIPAL',
-                accentColor: MomentusTheme.primary,
-                headerBg: const Color(0xFFFFF5F5),
-                borderColor: const Color(0xFFFFE4E6),
-                tasks: focusTasks,
-                controller: controller,
-                isMain: true,
-              ),
-              const SizedBox(height: 16),
-            ],
-
-            // ── OTHER TASKS (OCULTO POR SIMPLIFICACIÓN) ──
-            /* 
-            if (otherTasks.isNotEmpty)
-              _ExecutionSection(
-                title: '📋 OTRAS TAREAS',
-                accentColor: MomentusTheme.slate600,
-                headerBg: const Color(0xFFF8FAFC),
-                borderColor: const Color(0xFFE2E8F0),
-                tasks: otherTasks,
-                controller: controller,
-                isMain: false,
-              ),
-            */
-
-            if (tareas.isEmpty)
-              const _EmptySection('Día libre o sin tareas planificadas.'),
-
-            const SizedBox(height: 40),
+          // ── FOCUS SECTION ──
+          if (focusTasks.isNotEmpty) ...[
+            _ExecutionSection(
+              title: '🎯 TAREA PRINCIPAL',
+              accentColor: MomentusTheme.primary,
+              headerBg: const Color(0xFFFFF5F5),
+              borderColor: const Color(0xFFFFE4E6),
+              tasks: focusTasks,
+              controller: widget.controller,
+              isMain: true,
+            ),
+            const SizedBox(height: 16),
           ],
-        ),
+
+          if (tareas.isEmpty)
+            const _EmptySection('Día libre o sin tareas planificadas.'),
+
+          const SizedBox(height: 40),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBacklogTab() {
+    final backlogList = widget.backlog;
+
+    if (backlogList.isEmpty) {
+      return const Center(child: _EmptySection('No tienes tareas pendientes.'));
+    }
+
+    return RefreshIndicator(
+      onRefresh: () async => await widget.controller.loadAgenda(),
+      color: MomentusTheme.primary,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 88),
+        itemCount: backlogList.length,
+        itemBuilder: (context, index) {
+          final t = backlogList[index];
+          // Reusar SlotCard o similar, pero simplificado para backlog
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.circle_outlined,
+                    size: 18, color: const Color(0xFFCBD5E1)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        t.titulo,
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w500,
+                          fontSize: 13,
+                          color: Color(0xFF334155),
+                        ),
+                      ),
+                      if (t.proyectoNombre != null)
+                        Text(
+                          t.proyectoNombre!,
+                          style: const TextStyle(
+                              fontSize: 11, color: Color(0xFF94A3B8)),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
