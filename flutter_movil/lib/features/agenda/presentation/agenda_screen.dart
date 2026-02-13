@@ -418,7 +418,7 @@ class _PlanningViewState extends State<_PlanningView>
           bottom: 16,
           right: 16,
           child: FloatingActionButton.extended(
-            onPressed: widget.controller.startDayLoading
+            onPressed: widget.controller.startDayLoading || selectedCount == 0
                 ? null
                 : () => widget.controller.saveCheckin(widget.userId),
             label: widget.controller.startDayLoading

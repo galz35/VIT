@@ -37,11 +37,15 @@ class _MyAssignmentScreenState extends State<MyAssignmentScreen> {
       cacheKey: _cacheKey,
       remote: () async {
         // Matches React endpoint: clarityService.getMiAsignacion('pendientes')
-        // Assuming 'planning/mi-asignacion' takes a query param or body for filter
-        // React: clarityService.get('planning/mi-asignacion', { params: { filtro } })
         final response = await ApiClient.dio.get('planning/mi-asignacion',
             queryParameters: {'estado': 'pendientes'});
-        return response.data as Map<String, dynamic>;
+        final rawData = response.data as Map<String, dynamic>;
+        // La API envuelve en { success: true, data: { proyectos, resumen } }
+        if (rawData.containsKey('data') &&
+            rawData['data'] is Map<String, dynamic>) {
+          return rawData['data'] as Map<String, dynamic>;
+        }
+        return rawData;
       },
     );
   }

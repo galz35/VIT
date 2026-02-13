@@ -331,7 +331,7 @@ export async function actualizarTarea(idTarea: number, updates: Partial<TareaDb>
     }
 
     // [FIX] Inline Update para campos nuevos que el SP podría no tener mapeados aún en DB
-    if (updates.linkEvidencia !== undefined || (updates as any).tipo !== undefined) {
+    if (updates.linkEvidencia !== undefined || (updates as any).tipo !== undefined || updates.fechaInicioReal !== undefined) {
         const sets: string[] = [];
         const params: any = { id: { valor: idTarea, tipo: Int } };
 
@@ -342,6 +342,10 @@ export async function actualizarTarea(idTarea: number, updates: Partial<TareaDb>
         if ((updates as any).tipo !== undefined) {
             sets.push("tipo = @tipoUpdate");
             params.tipoUpdate = { valor: (updates as any).tipo, tipo: NVarChar };
+        }
+        if (updates.fechaInicioReal !== undefined) {
+            sets.push("fechaInicioReal = @fir");
+            params.fir = { valor: updates.fechaInicioReal, tipo: DateTime };
         }
 
         if (sets.length > 0) {

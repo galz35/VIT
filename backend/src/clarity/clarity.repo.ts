@@ -422,6 +422,8 @@ export async function obtenerBacklog(carnet: string) {
         LEFT JOIN p_Proyectos p ON t.idProyecto = p.idProyecto
         WHERE t.activo = 1
           AND t.estado NOT IN ('Hecha', 'Descartada', 'Eliminada')
+          -- FIX 2026-02-13: No mostrar tareas de proyectos inactivos
+          AND (t.idProyecto IS NULL OR p.estado = 'Activo')
           AND (
             -- Criterio 1: Fecha Objetivo Vencida
             t.fechaObjetivo < CAST(GETDATE() as DATE) 

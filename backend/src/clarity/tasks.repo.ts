@@ -39,6 +39,7 @@ export interface UpdateTaskParams {
     requiereEvidencia?: boolean;
     idTareaPadre?: number;
     idResponsable?: number;
+    fechaInicioReal?: Date;
 }
 
 /**
@@ -112,6 +113,7 @@ export async function actualizarTarea(idTarea: number, updates: UpdateTaskParams
         porcentaje: updates.progreso,
         fechaObjetivo: updates.fechaObjetivo,
         fechaInicioPlanificada: updates.fechaInicioPlanificada,
+        fechaInicioReal: updates.fechaInicioReal,
         linkEvidencia: updates.linkEvidencia,
         idTareaPadre: updates.idTareaPadre
     };

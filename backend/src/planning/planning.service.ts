@@ -685,4 +685,92 @@ export class PlanningService {
     async getMiAsignacion(carnet: string, filtros?: { estado?: string }) {
         return await planningRepo.obtenerMiAsignacion(carnet, filtros);
     }
+
+    // ==========================================
+    // AGENDA / MI DÍA (Mobile App Support)
+    // ==========================================
+    async getMiDia(idUsuario: number, fecha: string) {
+        const carnet = await this.visibilidadService.obtenerCarnetPorId(idUsuario);
+        if (!carnet) return { bloqueosActivos: [], tareasSugeridas: [], backlog: [] };
+
+        const result = await planningRepo.obtenerMiAsignacion(carnet);
+        const tareas: any[] = (result as any).proyectos ? [] : (result as any).tareas || [];
+        // Si result es lista de proyectos, aplanar tareas
+        if ((result as any).proyectos) {
+            (result as any).proyectos.forEach((p: any) => {
+                if (p.tareas) tareas.push(...p.tareas);
+                if (p.misTareas) tareas.push(...p.misTareas);
+            });
+        }
+
+        const hoy = fecha ? new Date(fecha).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+
+        // Mapear para asegurar campos que Flutter espera
+        const allTasks = tareas.map((t: any) => ({
+            ...t,
+            idTarea: t.idTarea || t.ID,
+            titulo: t.titulo || t.Nombre || t.nombre,
+            estado: t.estado || t.Estado,
+            prioridad: t.prioridad || t.Prioridad || 'Media',
+            proyectoNombre: t.proyectoNombre || t.Proyecto,
+            fechaObjetivo: t.fechaObjetivo || t.FechaFin
+        }));
+
+        const bloqueosActivos = allTasks.filter((t: any) => t.estado === 'Bloqueada');
+
+        const tareasSugeridas = allTasks.filter((t: any) => {
+            if (t.estado === 'Bloqueada' || t.estado === 'Hecha' || t.estado === 'Completada') return false;
+            if (t.estado === 'En Curso' || t.estado === 'En Proceso') return true;
+            const fObj = t.fechaObjetivo ? new Date(t.fechaObjetivo).toISOString().split('T')[0] : null;
+            if (fObj && fObj <= hoy) return true;
+            return false;
+        });
+
+        const backlog = allTasks.filter((t: any) => {
+            if (t.estado === 'Bloqueada' || t.estado === 'Hecha' || t.estado === 'Completada') return false;
+            if (tareasSugeridas.some((s: any) => s.idTarea === t.idTarea)) return false;
+            return true;
+        });
+
+        return {
+            bloqueosActivos,
+            bloqueosMeCulpan: [],
+            tareasSugeridas,
+            backlog
+        };
+    }
+
+    async saveCheckin(idUsuario: number, data: any) {
+        const ids = [...(data.entrego || []), ...(data.avanzo || [])];
+        const fecha = new Date().toISOString().split('T')[0];
+
+        // LOG
+        await this.auditService.log({
+            accion: 'CHECKIN_DIARIO',
+            recurso: 'Agenda',
+            recursoId: fecha,
+            idUsuario,
+            detalles: { ...data },
+        });
+
+        // 1. Auto-Start
+        for (const idRaw of ids) {
+            try {
+                const id = Number(idRaw);
+                const t = await planningRepo.obtenerTareaPorId(id);
+                // Si está Pendiente/Nueva -> En Curso
+                if (t && (t.estado === 'Pendiente' || t.estado === 'Nueva' || t.estado === 'Por Hacer')) {
+                    // Update directo a DB
+                    await tasksRepo.actualizarTarea(id, {
+                        'estado': 'En Curso',
+                        'fechaInicioReal': new Date()
+                    });
+                }
+            } catch (e) {
+                console.warn('[Agenda] Ignore task start error', idRaw);
+            }
+        }
+
+        return { success: true, message: 'Checkin guardado' };
+    }
 }

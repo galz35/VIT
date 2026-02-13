@@ -15,16 +15,23 @@ class AgendaRemoteDataSource {
           await _dio.get('mi-dia', queryParameters: {'fecha': fecha});
 
       // Asumimos estructura ApiResponse donde data está en 'data' o en raíz si no está envuelto
-      final data = response.data;
+      final rawData = response.data;
 
       // Validación defensiva
-      if (data == null) {
+      if (rawData == null) {
         throw Exception('Respuesta vacía del servidor');
       }
 
-      // Si viene envuelto en { data: ... }
-      if (data is Map<String, dynamic> && data.containsKey('data')) {
-        return AgendaResponse.fromJson(data['data']);
+      // Desempaquetar envelope { success: true, data: {...} }
+      Map<String, dynamic> data;
+      if (rawData is Map<String, dynamic> &&
+          rawData.containsKey('data') &&
+          rawData['data'] is Map<String, dynamic>) {
+        data = rawData['data'] as Map<String, dynamic>;
+      } else if (rawData is Map<String, dynamic>) {
+        data = rawData;
+      } else {
+        throw Exception('Formato de respuesta inesperado');
       }
 
       return AgendaResponse.fromJson(data);
@@ -39,8 +46,7 @@ class AgendaRemoteDataSource {
         }
         throw Exception('Error al obtener agenda: ${e.message}');
       }
-      // Para cualquier otro error en desarrollo, retornar mock también
-      return _getMockData();
+      rethrow;
     }
   }
 
