@@ -1,12 +1,47 @@
+# Configuración unificada para Codemagic (Planer Mobile)
+# Este archivo en la raíz permite compilar tanto Android como iOS
+
 workflows:
-  android-release:
-    name: Android Release Build
+  ios-release:
+    name: iOS Release Build
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
       flutter: stable
       xcode: latest
       cocoapods: default
+    scripts:
+      - name: Get dependencies
+        script: |
+          cd flutter_movil
+          flutter pub get
+      - name: Install CocoaPods
+        script: |
+          cd flutter_movil/ios
+          pod install
+      - name: Build iOS (Release)
+        script: |
+          cd flutter_movil
+          # Nota: Se usa --no-codesign para validar la compilación sin certificados.
+          # Para generar un .ipa instalable, configura los certificados en el panel de Codemagic.
+          flutter build ios --release --no-codesign
+    artifacts:
+      - flutter_movil/build/ios/iphoneos/*.app
+      - flutter_movil/build/ios/ipa/*.ipa
+    publishing:
+      email:
+        recipients:
+          - gustavo.lira@tucorreo.com
+        notify:
+          success: true
+          failure: true
+
+  android-release:
+    name: Android Release Build
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      flutter: stable
     scripts:
       - name: Get dependencies
         script: |
@@ -21,7 +56,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - gustavo.lira@tucorreo.com # Reemplazar si tienes uno específico configurado
+          - gustavo.lira@tucorreo.com
         notify:
           success: true
           failure: true
