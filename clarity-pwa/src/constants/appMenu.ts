@@ -10,10 +10,10 @@ export const APP_MENU = [
         group: 'Mi Espacio',
         items: [
             { path: '/app/hoy', label: 'Mi Agenda', icon: 'Sun' },
+            { path: '/app/mi-asignacion', label: 'Mi Asignación', icon: 'Briefcase' },
             { path: '/app/pendientes', label: 'Mis Tareas', icon: 'CheckSquare' },
             { path: '/app/planning/proyectos', label: 'Gestión Proyectos', icon: 'FileCheck' },
             { path: '/app/notas', label: 'Mis Notas', icon: 'FileText' },
-            { path: '/app/mi-asignacion', label: 'Mi Asignación', icon: 'Briefcase' },
         ]
     },
     {

@@ -150,6 +150,17 @@ class _HomeShellState extends State<HomeShell> {
                   },
                 ),
                 _drawerItem(
+                  icon: CupertinoIcons.person_crop_circle_badge_checkmark,
+                  label: 'Mi Asignación',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const MyAssignmentScreen()));
+                  },
+                ),
+                _drawerItem(
                   icon: CupertinoIcons.check_mark_circled,
                   label: 'Tareas Pendientes',
                   selected: _currentIndex == 1,
@@ -197,17 +208,6 @@ class _HomeShellState extends State<HomeShell> {
                     Navigator.pop(context);
                     Navigator.push(context,
                         MaterialPageRoute(builder: (_) => const NotesScreen()));
-                  },
-                ),
-                _drawerItem(
-                  icon: CupertinoIcons.person_crop_circle_badge_checkmark,
-                  label: 'Mi Asignación',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const MyAssignmentScreen()));
                   },
                 ),
                 _drawerItem(

@@ -12,6 +12,7 @@ import * as grupoRepo from './grupo.repo';
 import { AuditService } from '../common/audit.service';
 import { VisibilidadService } from '../acceso/visibilidad.service';
 import * as tasksRepo from '../clarity/tasks.repo';
+import * as clarityRepo from '../clarity/clarity.repo';
 
 @Injectable()
 export class PlanningService {
@@ -741,8 +742,34 @@ export class PlanningService {
     }
 
     async saveCheckin(idUsuario: number, data: any) {
-        const ids = [...(data.entrego || []), ...(data.avanzo || [])];
-        const fecha = new Date().toISOString().split('T')[0];
+        const carnet = await this.visibilidadService.obtenerCarnetPorId(idUsuario);
+        if (!carnet) throw new BadRequestException('Usuario sin carnet asociado para Check-in.');
+
+        // 1. Construir lista de tareas para TVP
+        const tareasParaCheckin: { idTarea: number, tipo: string }[] = [];
+
+        // Manejar arrays de IDs (Móvil manda listas de IDs)
+        if (data.entrego && Array.isArray(data.entrego)) {
+            data.entrego.forEach((id: number) => tareasParaCheckin.push({ idTarea: id, tipo: 'Entrego' }));
+        }
+        if (data.avanzo && Array.isArray(data.avanzo)) {
+            data.avanzo.forEach((id: number) => tareasParaCheckin.push({ idTarea: id, tipo: 'Avanzo' }));
+        }
+        if (data.extras && Array.isArray(data.extras)) {
+            data.extras.forEach((id: number) => tareasParaCheckin.push({ idTarea: id, tipo: 'Extra' }));
+        }
+
+        // 2. Persistir Checkin Real (BD)
+        await clarityRepo.checkinUpsert({
+            usuarioCarnet: carnet,
+            fecha: data.fecha ? new Date(data.fecha) : new Date(),
+            entregableTexto: data.entregableTexto || 'Objetivo del día',
+            estadoAnimo: data.estadoAnimo || 'Neutral',
+            nota: data.nota || '',
+            tareas: tareasParaCheckin
+        });
+
+        const fecha = data.fecha || new Date().toISOString().split('T')[0];
 
         // LOG
         await this.auditService.log({
@@ -750,11 +777,13 @@ export class PlanningService {
             recurso: 'Agenda',
             recursoId: fecha,
             idUsuario,
-            detalles: { ...data },
+            detalles: { totalTareas: tareasParaCheckin.length },
         });
 
-        // 1. Auto-Start
-        for (const idRaw of ids) {
+        // 3. Auto-Start (Lógica original de conveniencia)
+        // Pone en curso las tareas que se prometen entregar
+        const idsEntrego = data.entrego || [];
+        for (const idRaw of idsEntrego) {
             try {
                 const id = Number(idRaw);
                 const t = await planningRepo.obtenerTareaPorId(id);
@@ -771,6 +800,6 @@ export class PlanningService {
             }
         }
 
-        return { success: true, message: 'Checkin guardado' };
+        return { success: true, message: 'Checkin guardado correctamente' };
     }
 }
