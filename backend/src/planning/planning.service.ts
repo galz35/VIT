@@ -692,7 +692,10 @@ export class PlanningService {
     // ==========================================
     async getMiDia(idUsuario: number, fecha: string) {
         const carnet = await this.visibilidadService.obtenerCarnetPorId(idUsuario);
-        if (!carnet) return { bloqueosActivos: [], tareasSugeridas: [], backlog: [] };
+        if (!carnet) return { bloqueosActivos: [], tareasSugeridas: [], backlog: [], checkinHoy: null };
+
+        const targetDate = fecha ? new Date(fecha) : new Date();
+        const checkinHoy = await clarityRepo.obtenerCheckinPorFecha(carnet, targetDate);
 
         const result = await planningRepo.obtenerMiAsignacion(carnet);
         const tareas: any[] = (result as any).proyectos ? [] : (result as any).tareas || [];
@@ -737,7 +740,8 @@ export class PlanningService {
             bloqueosActivos,
             bloqueosMeCulpan: [],
             tareasSugeridas,
-            backlog
+            backlog,
+            checkinHoy
         };
     }
 
@@ -766,7 +770,9 @@ export class PlanningService {
             entregableTexto: data.entregableTexto || 'Objetivo del día',
             estadoAnimo: data.estadoAnimo || 'Neutral',
             nota: data.nota || '',
-            tareas: tareasParaCheckin
+            entrego: data.entrego || [],
+            avanzo: data.avanzo || [],
+            extras: data.extras || []
         });
 
         const fecha = data.fecha || new Date().toISOString().split('T')[0];
@@ -777,7 +783,7 @@ export class PlanningService {
             recurso: 'Agenda',
             recursoId: fecha,
             idUsuario,
-            detalles: { totalTareas: tareasParaCheckin.length },
+            detalles: { totalTareas: (data.entrego?.length || 0) + (data.avanzo?.length || 0) },
         });
 
         // 3. Auto-Start (Lógica original de conveniencia)
