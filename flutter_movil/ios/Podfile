@@ -1,33 +1,34 @@
+# Podfile con parche para Firebase y paridad con Flutter Moderno
 platform :ios, '13.0'
 
-# CocoaPods analytics sends network stats synchronous priority.
-# Disable this for faster pod installs.
+# Evitar que Flutter intente "actualizar/sobrescribir" este archivo
+# con el comando 'Upgrading Podfile'
 install! 'cocoapods', :deterministic_uuids => false
 
 target 'Runner' do
-  # FIJAR EL USO DE FRAMEWORKS ESTÁTICOS
-  # Esto soluciona los errores de "non-modular header" con Firebase
+  # Firebase Messaging requiere static linkage en muchos casos
   use_frameworks! :linkage => :static
   use_modular_headers!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
-
-  target 'RunnerTests' do
-    inherit! :search_paths
-  end
 end
 
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
     
+    # Parche crítico para cada target de pod (incluyendo Firebase)
     target.build_configurations.each do |config|
-      # FORZAR PERMISO DE HEADERS NO MODULARES
-      # Esta es la cura específica para el error de firebase_messaging
+      # Esta es la cura para: 'Include of non-modular header inside framework module'
       config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
       
-      # Asegurar compatible con iOS 13+
+      # Asegurar compatibilidad
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
     end
+  end
+
+  # También aplicarlo al proyecto base de los Pods por si acaso
+  installer.pods_project.build_configurations.each do |config|
+    config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
   end
 end
