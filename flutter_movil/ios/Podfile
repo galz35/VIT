@@ -1,8 +1,22 @@
 # Podfile con parche para Firebase y paridad con Flutter Moderno
 platform :ios, '13.0'
 
-# Marcas necesarias para que Flutter no intente "Upgrading Podfile"
-# [!] NO ELIMINAR ESTA LINEA: flutter_install_all_ios_pods
+# [!] DO NOT DELETE THIS LINE: flutter_install_all_ios_pods
+
+def flutter_root
+  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
+  unless File.exist?(generated_xcode_build_settings_path)
+    raise "#{generated_xcode_build_settings_path} must exist. If you're running pod install manually, make sure flutter pub get has been executed."
+  end
+
+  File.foreach(generated_xcode_build_settings_path) do |line|
+    matches = line.match(/\AFLUTTER_ROOT=(.*)\z/)
+    return matches[1].strip if matches
+  end
+  raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig, then run flutter pub get"
+end
+
+require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
 
 install! 'cocoapods', :deterministic_uuids => false
 
