@@ -3,7 +3,7 @@ import '../services/admin_service.dart';
 import 'package:intl/intl.dart';
 
 class InactivityReportScreen extends StatefulWidget {
-  const InactivityReportScreen({Key? key}) : super(key: key);
+  const InactivityReportScreen({super.key});
 
   @override
   State<InactivityReportScreen> createState() => _InactivityReportScreenState();

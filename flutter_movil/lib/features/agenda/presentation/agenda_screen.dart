@@ -6,7 +6,7 @@ import '../../agenda/domain/agenda_models.dart';
 import 'agenda_controller.dart';
 import '../../home/presentation/home_shell.dart';
 import '../../auth/presentation/auth_controller.dart';
-import '../../tasks/presentation/quick_create_task_sheet.dart';
+
 import '../../../core/theme/app_theme.dart';
 
 // ============================================================
@@ -304,12 +304,7 @@ class _PlanningViewState extends State<_PlanningView>
           Navigator.pop(ctx);
           widget.controller.toggleTask(tarea.idTarea);
         },
-        onQuickCreate: () {
-          Navigator.pop(ctx);
-          QuickCreateTaskSheet.show(context, onCreated: () {
-            widget.controller.loadAgenda();
-          });
-        },
+        onQuickCreate: null, // Deshabilitado: Tarea Rápida oculta por config
       ),
     );
   }
@@ -1080,12 +1075,12 @@ class _SuggestionChip extends StatelessWidget {
 class _TaskSelectorSheet extends StatefulWidget {
   final List<Tarea> available;
   final Function(Tarea) onSelect;
-  final VoidCallback onQuickCreate;
+  final VoidCallback? onQuickCreate;
 
   const _TaskSelectorSheet({
     required this.available,
     required this.onSelect,
-    required this.onQuickCreate,
+    this.onQuickCreate,
   });
 
   @override
@@ -1181,33 +1176,34 @@ class _TaskSelectorSheetState extends State<_TaskSelectorSheet> {
                     ),
                   ),
                   // Crear nueva
-                  GestureDetector(
-                    onTap: widget.onQuickCreate,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: MomentusTheme.slate900,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.add_rounded,
-                              size: 14, color: Colors.white),
-                          SizedBox(width: 4),
-                          Text(
-                            'Crear',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                  if (widget.onQuickCreate != null)
+                    GestureDetector(
+                      onTap: widget.onQuickCreate,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: MomentusTheme.slate900,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.add_rounded,
+                                size: 14, color: Colors.white),
+                            SizedBox(width: 4),
+                            Text(
+                              'Crear',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
