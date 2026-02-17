@@ -52,6 +52,7 @@ export const APP_MENU = [
             { path: '/app/admin/import', label: 'Importar Datos', icon: 'Database' },
             { path: '/app/admin/logs', label: 'Monitor Sistema', icon: 'Terminal' },
             { path: '/app/admin/supervision', label: 'Supervisión', icon: 'Eye' },
+            { path: '/app/admin/reporte-inactividad', label: 'Inactividad Usuarios', icon: 'Eye' },
             { path: '/app/admin/papelera', label: 'Papelera', icon: 'Trash2' },
         ]
     },
