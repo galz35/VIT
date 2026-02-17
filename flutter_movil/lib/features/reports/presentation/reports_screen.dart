@@ -36,8 +36,29 @@ class _DashboardContent extends StatelessWidget {
     final controller = context.watch<DashboardController>();
 
     if (controller.loading && controller.data == null) {
-      return const Center(
-          child: CircularProgressIndicator(color: MomentusTheme.primary));
+      return ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          const ShimmerBox(width: double.infinity, height: 48, radius: 16),
+          const SizedBox(height: 24),
+          const ShimmerBox(width: double.infinity, height: 200, radius: 24),
+          const SizedBox(height: 24),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 1.3,
+            children: List.generate(
+                4,
+                (index) => const ShimmerBox(
+                    width: double.infinity, height: 100, radius: 20)),
+          ),
+          const SizedBox(height: 24),
+          const ShimmerBox(width: double.infinity, height: 250, radius: 24),
+        ],
+      );
     }
 
     if (controller.error != null && controller.data == null) {

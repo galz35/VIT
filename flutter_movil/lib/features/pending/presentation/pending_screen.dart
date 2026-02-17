@@ -258,16 +258,32 @@ class _PendingScreenState extends State<PendingScreen> {
   Widget _buildTaskItem(Map<String, dynamic> item) {
     final titulo = (item['titulo'] ?? 'Sin título').toString();
     final proyecto = item['proyecto']?['nombre'] ?? item['nombreProyecto'];
+    final prioridad = (item['prioridad'] ?? '').toString().toLowerCase();
     final fechaRaw =
         (item['fechaVencimiento'] ?? item['fecha_vencimiento'] ?? '')
             .toString();
     String? fechaFmt;
+    bool isOverdue = false;
 
     if (fechaRaw.isNotEmpty) {
       final date = DateTime.tryParse(fechaRaw);
       if (date != null) {
         fechaFmt = '${date.day}/${date.month}';
+        final today = DateTime.now();
+        isOverdue = date.isBefore(DateTime(today.year, today.month, today.day));
       }
+    }
+
+    // Color accent based on priority/overdue
+    Color accentColor;
+    if (isOverdue) {
+      accentColor = const Color(0xFFEF4444); // Red for overdue
+    } else if (prioridad == 'alta') {
+      accentColor = const Color(0xFFF59E0B); // Amber for high priority
+    } else if (prioridad == 'media') {
+      accentColor = const Color(0xFF3B82F6); // Blue for medium
+    } else {
+      accentColor = const Color(0xFF10B981); // Emerald for normal/low
     }
 
     return Container(
@@ -277,86 +293,138 @@ class _PendingScreenState extends State<PendingScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A)
-                .withValues(alpha: 0.04), // Consistent custom shadow
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
-      child: InkWell(
-        onTap: () => _openTaskDetail(item),
+      child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
+        child: IntrinsicHeight(
           child: Row(
             children: [
-              SizedBox(
-                width: 24,
-                height: 24,
-                child: Checkbox(
-                  value: false,
-                  onChanged: (_) => _markDone(item),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6)),
-                  fillColor: WidgetStateProperty.resolveWith((states) {
-                    if (states.contains(WidgetState.selected)) {
-                      return MomentusTheme.primary;
-                    }
-                    return Colors.transparent;
-                  }),
-                  side: const BorderSide(color: Color(0xFFCBD5E1), width: 2),
+              // Colored accent strip
+              Container(
+                width: 4,
+                decoration: BoxDecoration(
+                  color: accentColor,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    bottomLeft: Radius.circular(16),
+                  ),
                 ),
               ),
-              const SizedBox(width: 16),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      titulo,
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1E293B),
-                      ),
-                    ),
-                    if (proyecto != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        proyecto.toString(),
-                        style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 12,
-                          color: Color(0xFF64748B),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                    if (fechaFmt != null) ...[
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          const Icon(CupertinoIcons.calendar,
-                              size: 12, color: Color(0xFF94A3B8)),
-                          const SizedBox(width: 4),
-                          Text(
-                            fechaFmt,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFF94A3B8),
-                            ),
+                child: InkWell(
+                  onTap: () => _openTaskDetail(item),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: Checkbox(
+                            value: false,
+                            onChanged: (_) => _markDone(item),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6)),
+                            fillColor:
+                                WidgetStateProperty.resolveWith((states) {
+                              if (states.contains(WidgetState.selected)) {
+                                return MomentusTheme.primary;
+                              }
+                              return Colors.transparent;
+                            }),
+                            side: BorderSide(
+                                color: accentColor.withValues(alpha: 0.5),
+                                width: 2),
                           ),
-                        ],
-                      ),
-                    ],
-                  ],
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                titulo,
+                                style: const TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF1E293B),
+                                ),
+                              ),
+                              if (proyecto != null) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  proyecto.toString(),
+                                  style: const TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 12,
+                                    color: Color(0xFF64748B),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                              if (fechaFmt != null) ...[
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    Icon(CupertinoIcons.calendar,
+                                        size: 12,
+                                        color: isOverdue
+                                            ? const Color(0xFFEF4444)
+                                            : const Color(0xFF94A3B8)),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      fechaFmt,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: isOverdue
+                                            ? const Color(0xFFEF4444)
+                                            : const Color(0xFF94A3B8),
+                                        fontWeight: isOverdue
+                                            ? FontWeight.w700
+                                            : FontWeight.w400,
+                                      ),
+                                    ),
+                                    if (isOverdue) ...[
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 6, vertical: 1),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFEF2F2),
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                        ),
+                                        child: const Text(
+                                          'ATRASADA',
+                                          style: TextStyle(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w800,
+                                            color: Color(0xFFDC2626),
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const Icon(CupertinoIcons.chevron_right,
+                            size: 16, color: Color(0xFFCBD5E1)),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-              const Icon(CupertinoIcons.chevron_right,
-                  size: 16, color: Color(0xFFCBD5E1)),
             ],
           ),
         ),
@@ -365,22 +433,18 @@ class _PendingScreenState extends State<PendingScreen> {
   }
 
   Widget _buildSkeleton() {
-    Widget box(double w, double h) => Container(
-          width: w,
-          height: h,
-          decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(8)),
-        );
-
     return ListView(
       padding: const EdgeInsets.all(16),
-      children: [
-        box(double.infinity, 50),
-        const SizedBox(height: 16),
-        box(double.infinity, 40),
-        const SizedBox(height: 24),
-        for (int i = 0; i < 5; i++) const _SkeletonItem()
+      children: const [
+        ShimmerBox(width: double.infinity, height: 50, radius: 12),
+        SizedBox(height: 16),
+        ShimmerBox(width: double.infinity, height: 40, radius: 20),
+        SizedBox(height: 24),
+        _SkeletonItem(),
+        _SkeletonItem(),
+        _SkeletonItem(),
+        _SkeletonItem(),
+        _SkeletonItem(),
       ],
     );
   }
@@ -434,14 +498,6 @@ class _SkeletonItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget box(double w, double h) => Container(
-          width: w,
-          height: h,
-          decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(8)),
-        );
-
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -450,15 +506,15 @@ class _SkeletonItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFF1F5F9)),
       ),
-      child: Row(children: [
-        box(24, 24),
-        const SizedBox(width: 16),
+      child: const Row(children: [
+        ShimmerBox(width: 24, height: 24, radius: 6),
+        SizedBox(width: 16),
         Expanded(
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          box(150, 16),
-          const SizedBox(height: 8),
-          box(100, 12),
+          ShimmerBox(width: 180, height: 16),
+          SizedBox(height: 8),
+          ShimmerBox(width: 100, height: 12),
         ]))
       ]),
     );

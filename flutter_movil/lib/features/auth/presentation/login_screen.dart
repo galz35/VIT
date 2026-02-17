@@ -41,14 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
               flex: 5,
               child: Container(
                 decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Color(0xFF0F172A),
-                      Color(0xFF1E293B)
-                    ], // Slate 900 -> 800
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  gradient: MomentusTheme.heroGradient,
                 ),
                 child: Stack(
                   children: [

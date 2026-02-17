@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 /// ============================================
-/// MOMENTUS THEME - Verde Suave (Solo Claro)
+/// MOMENTUS THEME - Corporativo Rojo & Slate
 /// ============================================
-/// Diseño premium con tonos verdes frescos y suaves.
-/// Inspirado en el diseño React pero con tema verde.
+/// Diseño premium corporativo con rojo como acento principal
+/// y una paleta secundaria indigo para variedad visual.
 
 class MomentusTheme {
   MomentusTheme._(); // No instanciable
@@ -33,7 +33,12 @@ class MomentusTheme {
   /// Mantener verdes para estados de éxito (no usar como primarios)
   static const Color green50 = Color(0xFFF8FAFC); // Slate 50
   static const Color green100 = Color(0xFFF1F5F9); // Slate 100
-  static const Color success = Color(0xFF0F172A); // Slate 900 (Negro Intenso)
+  static const Color success = Color(0xFF10B981); // Emerald para éxito real
+
+  /// Acento Secundario (Indigo - para variedad visual sin clashing)
+  static const Color accent = Color(0xFF6366F1); // Indigo 500
+  static const Color accentLight = Color(0xFFE0E7FF); // Indigo 100
+  static const Color accentDark = Color(0xFF4338CA); // Indigo 700
 
   /// Neutrales (Slate) - Base del diseño profesional
   static const Color slate50 = Color(0xFFF8FAFC);
@@ -57,11 +62,18 @@ class MomentusTheme {
   // GRADIENTES
   // =============================================
 
-  /// Gradiente Corporativo (Rojo a Negro/Gris Oscuro)
+  /// Gradiente Corporativo (Slate oscuro → Rojo oscuro)
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [primary, Color(0xFFB71C1C)],
+    colors: [Color(0xFF1E293B), Color(0xFF7F1D1D)],
+  );
+
+  /// Gradiente Hero (para headers visuales)
+  static const LinearGradient heroGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF334155)],
   );
 
   /// Fondo limpio
@@ -227,19 +239,21 @@ class MomentusTheme {
       // Navigation Bar
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: Colors.white,
-        indicatorColor: red50, // Indicador sutil rojo
+        indicatorColor: red50, // Indicador rojo sutil coherente
+        elevation: 3,
+        shadowColor: slate900.withValues(alpha: 0.08),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: primary);
+            return const IconThemeData(color: primary, size: 26);
           }
-          return const IconThemeData(color: slate400);
+          return const IconThemeData(color: slate400, size: 24);
         }),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           return TextStyle(
             fontFamily: 'Inter',
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: states.contains(WidgetState.selected)
-                ? FontWeight.w600
+                ? FontWeight.w700
                 : FontWeight.w500,
             color: states.contains(WidgetState.selected) ? primary : slate500,
           );
@@ -423,6 +437,7 @@ extension MomentusContext on BuildContext {
 
   // Colores rápidos
   Color get primaryColor => MomentusTheme.primary;
+  Color get accentColor => MomentusTheme.accent;
   Color get backgroundColor => MomentusTheme.green50;
   Color get surfaceColor => Colors.white;
 
@@ -431,4 +446,74 @@ extension MomentusContext on BuildContext {
   Color get warningColor => MomentusTheme.warning;
   Color get errorColor => MomentusTheme.error;
   Color get infoColor => MomentusTheme.info;
+}
+
+// =============================================
+// SHIMMER SKELETON (ligero, no usa paquetes)
+// =============================================
+
+class ShimmerBox extends StatefulWidget {
+  final double width;
+  final double height;
+  final double radius;
+
+  const ShimmerBox({
+    super.key,
+    required this.width,
+    required this.height,
+    this.radius = 8,
+  });
+
+  @override
+  State<ShimmerBox> createState() => _ShimmerBoxState();
+}
+
+class _ShimmerBoxState extends State<ShimmerBox>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (_, __) {
+        return Container(
+          width: widget.width,
+          height: widget.height,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(widget.radius),
+            gradient: LinearGradient(
+              colors: const [
+                Color(0xFFEDF2F7),
+                Color(0xFFF7FAFC),
+                Color(0xFFEDF2F7),
+              ],
+              stops: [
+                (_controller.value - 0.3).clamp(0.0, 1.0),
+                _controller.value,
+                (_controller.value + 0.3).clamp(0.0, 1.0),
+              ],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+          ),
+        );
+      },
+    );
+  }
 }

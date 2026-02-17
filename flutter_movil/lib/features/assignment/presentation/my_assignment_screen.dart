@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import '../../../core/network/api_client.dart';
 import '../../common/data/offline_resource_service.dart';
 import '../../tasks/presentation/task_detail_sheet.dart';
+import '../../../core/theme/app_theme.dart';
 
 /// ============================================
 /// MI ASIGNACIÓN - Vista de Tareas Asignadas
@@ -156,7 +157,41 @@ class _MyAssignmentScreenState extends State<MyAssignmentScreen> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return ListView(
+              padding: const EdgeInsets.all(16),
+              children: const [
+                Row(
+                  children: [
+                    Expanded(
+                        child: ShimmerBox(
+                            width: double.infinity, height: 100, radius: 16)),
+                    SizedBox(width: 12),
+                    Expanded(
+                        child: ShimmerBox(
+                            width: double.infinity, height: 100, radius: 16)),
+                  ],
+                ),
+                SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                        child: ShimmerBox(
+                            width: double.infinity, height: 100, radius: 16)),
+                    SizedBox(height: 12),
+                    Expanded(
+                        child: ShimmerBox(
+                            width: double.infinity, height: 100, radius: 16)),
+                  ],
+                ),
+                SizedBox(height: 24),
+                ShimmerBox(width: double.infinity, height: 150, radius: 16),
+                SizedBox(height: 16),
+                ShimmerBox(width: double.infinity, height: 150, radius: 16),
+                SizedBox(height: 16),
+                ShimmerBox(width: double.infinity, height: 150, radius: 16),
+                SizedBox(height: 16),
+              ],
+            );
           }
 
           if (snapshot.hasError || !snapshot.hasData) {

@@ -7,6 +7,7 @@ import '../../../core/network/api_utils.dart';
 import '../../common/data/offline_resource_service.dart';
 import '../../home/presentation/home_shell.dart'; // MomentusAppBar
 import 'team_tracking_screen.dart';
+import '../../../core/theme/app_theme.dart';
 
 /// Módulo Equipos - Diseño Premium
 class TeamScreen extends StatefulWidget {
@@ -140,9 +141,14 @@ class _TeamScreenState extends State<TeamScreen> {
                   // Content
                   Expanded(
                     child: loading
-                        ? const Center(
-                            child: CircularProgressIndicator(
-                                color: Color(0xFF6366F1)))
+                        ? ListView.separated(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: 5,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 8),
+                            itemBuilder: (_, __) => const ShimmerBox(
+                                width: double.infinity, height: 72, radius: 12),
+                          )
                         : error.isNotEmpty
                             ? Center(
                                 child: Column(
@@ -338,8 +344,12 @@ class _TeamScreenState extends State<TeamScreen> {
               future: _future,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF6366F1)),
+                  return ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: 8,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (_, __) => const ShimmerBox(
+                        width: double.infinity, height: 80, radius: 12),
                   );
                 }
 

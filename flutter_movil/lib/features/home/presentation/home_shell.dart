@@ -50,9 +50,14 @@ class _HomeShellState extends State<HomeShell> {
       backgroundColor: const Color(0xFFF8FAFC),
       // Restauramos el Drawer para opciones extendidas
       drawer: _buildModernDrawer(context),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 200),
+        switchInCurve: Curves.easeOut,
+        switchOutCurve: Curves.easeIn,
+        child: KeyedSubtree(
+          key: ValueKey(_currentIndex),
+          child: _screens[_currentIndex],
+        ),
       ),
       bottomNavigationBar: _buildModernNavBar(context),
       floatingActionButton: _currentIndex == 1
@@ -85,25 +90,29 @@ class _HomeShellState extends State<HomeShell> {
       backgroundColor: Colors.white,
       child: Column(
         children: [
-          // Header con Gradiente
+          // Header con Gradiente Premium
           Container(
             padding: const EdgeInsets.fromLTRB(20, 60, 20, 30),
             width: double.infinity,
             decoration: const BoxDecoration(
-              gradient: MomentusTheme.primaryGradient,
+              gradient: MomentusTheme.heroGradient,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                   padding: const EdgeInsets.all(3),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.3),
+                      width: 2,
+                    ),
                   ),
                   child: CircleAvatar(
                     radius: 30,
-                    backgroundColor: MomentusTheme.green100,
+                    backgroundColor: MomentusTheme.red50,
                     child: Text(
                       user?.nombre.isNotEmpty == true ? user!.nombre[0] : 'U',
                       style: const TextStyle(
@@ -126,7 +135,7 @@ class _HomeShellState extends State<HomeShell> {
                 Text(
                   user?.correo ?? '',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
+                    color: Colors.white.withValues(alpha: 0.7),
                     fontSize: 13,
                   ),
                 ),
@@ -310,48 +319,66 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   Widget _buildModernNavBar(BuildContext context) {
-    return NavigationBar(
-      selectedIndex: _currentIndex,
-      onDestinationSelected: (index) {
-        HapticFeedback.selectionClick();
-        setState(() => _currentIndex = index);
-      },
-      backgroundColor: Colors.white,
-      surfaceTintColor: Colors.transparent,
-      indicatorColor: MomentusTheme.green100,
-      elevation: 2,
-      height: 72,
-      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-      destinations: const [
-        NavigationDestination(
-          icon: Icon(CupertinoIcons.calendar),
-          selectedIcon:
-              Icon(CupertinoIcons.calendar_today, color: MomentusTheme.primary),
-          label: 'Hoy',
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Subtle accent line on top of navbar
+        Container(
+          height: 2,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                MomentusTheme.primary.withValues(alpha: 0.0),
+                MomentusTheme.primary.withValues(alpha: 0.12),
+                MomentusTheme.primary.withValues(alpha: 0.0),
+              ],
+            ),
+          ),
         ),
-        NavigationDestination(
-          icon: Icon(CupertinoIcons.check_mark_circled),
-          selectedIcon: Icon(CupertinoIcons.check_mark_circled_solid,
-              color: MomentusTheme.primary),
-          label: 'Tareas',
-        ),
-        NavigationDestination(
-          icon: Icon(CupertinoIcons.folder),
-          selectedIcon:
-              Icon(CupertinoIcons.folder_solid, color: MomentusTheme.primary),
-          label: 'Proyectos',
-        ),
-        NavigationDestination(
-          icon: Icon(CupertinoIcons.group),
-          selectedIcon:
-              Icon(CupertinoIcons.group_solid, color: MomentusTheme.primary),
-          label: 'Equipo',
-        ),
-        NavigationDestination(
-          icon: Icon(CupertinoIcons.chart_bar),
-          selectedIcon:
-              Icon(CupertinoIcons.chart_bar_fill, color: MomentusTheme.primary),
-          label: 'Reportes',
+        NavigationBar(
+          selectedIndex: _currentIndex,
+          onDestinationSelected: (index) {
+            HapticFeedback.selectionClick();
+            setState(() => _currentIndex = index);
+          },
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+          indicatorColor: MomentusTheme.red50,
+          elevation: 0,
+          height: 72,
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(CupertinoIcons.calendar),
+              selectedIcon: Icon(CupertinoIcons.calendar_today,
+                  color: MomentusTheme.primary),
+              label: 'Hoy',
+            ),
+            NavigationDestination(
+              icon: Icon(CupertinoIcons.check_mark_circled),
+              selectedIcon: Icon(CupertinoIcons.check_mark_circled_solid,
+                  color: MomentusTheme.primary),
+              label: 'Tareas',
+            ),
+            NavigationDestination(
+              icon: Icon(CupertinoIcons.folder),
+              selectedIcon: Icon(CupertinoIcons.folder_solid,
+                  color: MomentusTheme.primary),
+              label: 'Proyectos',
+            ),
+            NavigationDestination(
+              icon: Icon(CupertinoIcons.group),
+              selectedIcon: Icon(CupertinoIcons.group_solid,
+                  color: MomentusTheme.primary),
+              label: 'Equipo',
+            ),
+            NavigationDestination(
+              icon: Icon(CupertinoIcons.chart_bar),
+              selectedIcon: Icon(CupertinoIcons.chart_bar_fill,
+                  color: MomentusTheme.primary),
+              label: 'Reportes',
+            ),
+          ],
         ),
       ],
     );

@@ -55,9 +55,21 @@ class _AgendaTabContent extends StatelessWidget {
         _DateNavigator(controller: controller),
         Expanded(
           child: controller.loading
-              ? const Center(
-                  child: CircularProgressIndicator(
-                      color: MomentusTheme.primary, strokeWidth: 2.5))
+              ? SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      const ShimmerBox(
+                          width: double.infinity, height: 100, radius: 12),
+                      const SizedBox(height: 16),
+                      for (int i = 0; i < 3; i++) ...[
+                        const ShimmerBox(
+                            width: double.infinity, height: 80, radius: 12),
+                        const SizedBox(height: 12),
+                      ],
+                    ],
+                  ),
+                )
               : controller.error != null
                   ? _ErrorState(
                       error: controller.error!,
