@@ -644,6 +644,11 @@ export const clarityService = {
         return response.data;
     },
 
+    getSupervision: async () => {
+        const { data: response } = await api.get<ApiResponse<{ usuariosSinTarea: any[], proyectosSinTarea: any[] }>>('/planning/supervision');
+        return response.data;
+    },
+
 };
 
 // Types for Foco

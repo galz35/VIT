@@ -760,14 +760,16 @@ export async function obtenerMiAsignacion(carnet: string, filtros?: { estado?: s
         LEFT JOIN p_Proyectos p ON t.idProyecto = p.idProyecto
         WHERE ta.carnet = @carnet
           AND t.activo = 1
+          AND t.estado <> 'Descartada'
           AND (p.idProyecto IS NULL OR p.estado = 'Activo')
     `;
 
     // Aplicar filtros en SQL para consistencia absoluta
-    if (filtros?.estado === 'pendientes') {
-        queryTareas += " AND t.estado NOT IN ('Hecha', 'Completada', 'Descartada', 'Eliminada', 'Archivada') ";
-    } else if (filtros?.estado && filtros.estado !== 'todas') {
-        queryTareas += ` AND t.estado = '${filtros.estado}' `; // Ojo: sanitizar si fuera input externo directo
+    const estadoFilter = filtros?.estado?.toLowerCase().trim();
+    if (estadoFilter === 'pendientes') {
+        queryTareas += " AND LTRIM(RTRIM(t.estado)) NOT IN ('Hecha', 'Completada', 'Descartada', 'Eliminada', 'Archivada') ";
+    } else if (estadoFilter && estadoFilter !== 'todas') {
+        queryTareas += ` AND LTRIM(RTRIM(t.estado)) = '${filtros?.estado}' `;
     }
 
     queryTareas += `
@@ -815,7 +817,69 @@ export async function obtenerMiAsignacion(carnet: string, filtros?: { estado?: s
             totalTareas: tareasFiltradas.length,
             tareasAtrasadas,
             tareasHoy,
-            tareasCompletadas: tareasFiltradas.filter((t: any) => t.estado === 'Hecha' || t.estado === 'Completada').length
+            tareasCompletadas: tareasFiltradas.filter((t: any) => {
+                const s = (t.estado || '').toString().trim();
+                return s === 'Hecha' || s === 'Completada';
+            }).length
         }
     };
+}
+
+// ==========================================
+// SUPERVISIÓN (ADMIN)
+// ==========================================
+export async function obtenerSupervision() {
+    // 1. Usuarios activos SIN tareas asignadas (pendientes o en curso)
+    // Se consideran usuarios activos que no estan en p_TareaAsignados de ninguna tarea activa no-finalizada
+    const usuariosSinTarea = await ejecutarQuery(`
+        SELECT u.idUsuario, u.nombre, u.carnet, u.gerencia, u.area, u.rolGlobal, u.correo
+        FROM p_Usuarios u
+        WHERE u.activo = 1
+          AND u.carnet IS NOT NULL
+          AND u.nombre NOT LIKE '%Admin%' -- Opcional: filtrar cuentas de sistema si se desea
+          AND NOT EXISTS (
+              SELECT 1 
+              FROM p_TareaAsignados ta
+              JOIN p_Tareas t ON ta.idTarea = t.idTarea
+              WHERE ta.carnet = u.carnet
+                AND t.activo = 1
+                AND t.estado NOT IN ('Hecha', 'Completada', 'Descartada', 'Eliminada', 'Cancelada', 'Archivada')
+          )
+        ORDER BY u.nombre ASC
+    `);
+
+    // 2. Proyectos Activos SIN tareas activas (vacíos o solo con tareas finalizadas/descartadas)
+    const proyectosSinTarea = await ejecutarQuery(`
+        SELECT p.idProyecto, p.nombre, p.tipo, p.gerencia, p.area, u.nombre as creador, p.fechaCreacion
+        FROM p_Proyectos p
+        LEFT JOIN p_Usuarios u ON p.idCreador = u.idUsuario
+        WHERE p.estado = 'Activo'
+          AND NOT EXISTS (
+              SELECT 1 
+              FROM p_Tareas t
+              WHERE t.idProyecto = p.idProyecto
+                AND t.activo = 1
+                AND t.estado NOT IN ('Hecha', 'Completada', 'Descartada', 'Eliminada', 'Cancelada', 'Archivada')
+          )
+        ORDER BY p.nombre ASC
+    `);
+
+    return { usuariosSinTarea, proyectosSinTarea };
+}
+
+export async function debugTasksByUser(name: string) {
+    const users = await ejecutarQuery<any>(`SELECT * FROM p_Usuarios WHERE nombre LIKE '%${name}%'`);
+    if (!users || users.length === 0) return { message: 'User not found' };
+
+    const user = users[0];
+    const tasks = await ejecutarQuery<any>(`
+        SELECT t.idTarea, t.titulo, t.descripcion, t.estado, t.activo, t.fechaObjetivo, t.idProyecto
+        FROM p_Tareas t
+        JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea
+        WHERE ta.carnet = '${user.carnet}'
+          AND t.activo = 1
+        ORDER BY t.fechaObjetivo DESC
+    `);
+
+    return { user, tasks };
 }

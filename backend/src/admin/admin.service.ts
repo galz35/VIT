@@ -162,4 +162,8 @@ export class AdminService {
             datos: `Usuario ${idUsuario} removido de Nodo ${idNodo}`
         });
     }
+
+    async getUsuariosInactivos(fecha?: string) {
+        return await adminRepo.obtenerUsuariosInactivos(fecha);
+    }
 }

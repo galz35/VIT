@@ -14,6 +14,7 @@ import '../../settings/presentation/settings_screen.dart';
 import '../../sync/presentation/sync_screen.dart';
 import '../../team/presentation/team_screen.dart';
 import '../../tasks/presentation/quick_create_task_sheet.dart';
+import '../../admin/screens/inactivity_report_screen.dart';
 import '../../../core/theme/app_theme.dart';
 
 /// ============================================
@@ -226,6 +227,24 @@ class _HomeShellState extends State<HomeShell> {
                     Navigator.pop(context);
                     Navigator.push(context,
                         MaterialPageRoute(builder: (_) => const SyncScreen()));
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const SyncScreen()));
+                  },
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Divider(height: 1),
+                ),
+                _drawerGroupHeader('ADMINISTRACIÓN'),
+                _drawerItem(
+                  icon: CupertinoIcons.eye_solid,
+                  label: 'Reporte Inactivos',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const InactivityReportScreen()));
                   },
                 ),
                 const Padding(

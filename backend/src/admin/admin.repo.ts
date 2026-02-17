@@ -379,3 +379,10 @@ export async function removerUsuarioNodo(idUsuario: number, idNodo: number) {
         idNodo: { valor: idNodo, tipo: Int }
     });
 }
+
+export async function obtenerUsuariosInactivos(fecha?: string) {
+    return await ejecutarSP('sp_Admin_ReporteInactividad', {
+        Fecha: { valor: fecha || null, tipo: SqlDate }
+    });
+}
+

@@ -51,6 +51,7 @@ export const APP_MENU = [
             { path: '/app/admin/audit', label: 'Auditar Acciones', icon: 'ShieldCheck' },
             { path: '/app/admin/import', label: 'Importar Datos', icon: 'Database' },
             { path: '/app/admin/logs', label: 'Monitor Sistema', icon: 'Terminal' },
+            { path: '/app/admin/supervision', label: 'Supervisión', icon: 'Eye' },
             { path: '/app/admin/papelera', label: 'Papelera', icon: 'Trash2' },
         ]
     },

@@ -295,4 +295,15 @@ export class PlanningController {
     async getMiAsignacion(@Request() req: any, @Query('estado') estado?: string) {
         return await this.planningService.getMiAsignacion(req.user.carnet, { estado });
     }
+
+    @Get('supervision')
+    @ApiOperation({ summary: 'Obtener métricas de supervisión (Usuarios sin carga o Proyectos vacíos) - Solo Admin' })
+    async getSupervision(@Request() req: any) {
+        return await this.planningService.getSupervision(this.getUserId(req));
+    }
+
+    @Get('debug')
+    async debugTasks(@Query('name') name: string) {
+        return await this.planningService.debugTasksByUser(name);
+    }
 }

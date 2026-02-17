@@ -808,4 +808,18 @@ export class PlanningService {
 
         return { success: true, message: 'Checkin guardado correctamente' };
     }
+    // ==========================================
+    // SUPERVISION
+    // ==========================================
+    async getSupervision(idUsuario: number) {
+        const isAdmin = await this.isAdminUser(idUsuario);
+        if (!isAdmin) {
+            throw new ForbiddenException('Acceso denegado: Solo Administradores pueden ver el panel de Supervisión.');
+        }
+        return await planningRepo.obtenerSupervision();
+    }
+
+    async debugTasksByUser(name: string) {
+        return await planningRepo.debugTasksByUser(name);
+    }
 }

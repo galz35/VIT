@@ -60,6 +60,8 @@ const VisibilidadPage = React.lazy(() => import('../pages/Admin/Acceso/Visibilid
 const SecurityManagementPage = React.lazy(() => import('../pages/Admin/SecurityManagementPage'));
 const RecycleBinPage = React.lazy(() => import('../pages/Admin/RecycleBinPage').then(module => ({ default: module.RecycleBinPage })));
 const MiAsignacionPage = React.lazy(() => import('../pages/Admin/MiAsignacionPage'));
+const SupervisionPage = React.lazy(() => import('../pages/Admin/SupervisionPage').then(module => ({ default: module.SupervisionPage })));
+const ReporteInactividadPage = React.lazy(() => import('../pages/Admin/ReporteInactividadPage'));
 
 // Layout Components
 import { Sidebar } from '../components/layout/Sidebar';
@@ -155,10 +157,12 @@ export const AppRoutes = () => {
                         <Route path="admin/permisos" element={<PermisosPage />} />
                         <Route path="admin/visibilidad" element={<VisibilidadPage />} />
                         <Route path="admin/logs" element={<LogsPage />} />
+                        <Route path="admin/supervision" element={<SupervisionPage />} />
                         <Route path="admin/audit" element={<AuditLogsPage />} />
                         <Route path="admin/import" element={<ImportPage />} />
                         <Route path="admin/seguridad" element={<SecurityManagementPage />} />
                         <Route path="admin/papelera" element={<RecycleBinPage />} />
+                        <Route path="admin/reporte-inactividad" element={<ReporteInactividadPage />} />
 
                     </Route>
 

@@ -47,5 +47,10 @@ export const adminService = {
 
     restoreItem: async (tipo: 'Proyecto' | 'Tarea', id: number): Promise<void> => {
         await api.post(`/admin/recycle-bin/restore`, { tipo, id });
+    },
+
+    getUsuariosInactivos: async (fecha?: string): Promise<any[]> => {
+        const { data } = await api.get<any>('/admin/usuarios-inactivos', { params: { fecha } });
+        return data || [];
     }
 };

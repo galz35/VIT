@@ -203,4 +203,9 @@ export class AdminController {
         const actorId = this.getUserId(req);
         return this.adminService.usuarioRemoverDeNodo(idUsuario, idNodo, actorId);
     }
+
+    @Get('usuarios-inactivos')
+    async getUsuariosInactivos(@Query('fecha') fecha: string) {
+        return this.adminService.getUsuariosInactivos(fecha);
+    }
 }
