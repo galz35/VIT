@@ -707,32 +707,82 @@ export class PlanningService {
             });
         }
 
-        const hoy = fecha ? new Date(fecha).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+        // 0. Auxiliar para fechas seguras (YYYY-MM-DD)
+        const toISODate = (d: any) => {
+            if (!d) return null;
+            const date = new Date(d);
+            if (isNaN(date.getTime())) return null;
+            // Usamos el offset para obtener la fecha local real si es objeto Date, 
+            // o simplemente toISOString si ya es UTC
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        };
 
-        // Mapear para asegurar campos que Flutter espera
-        const allTasks = tareas.map((t: any) => ({
-            ...t,
-            idTarea: t.idTarea || t.ID,
-            titulo: t.titulo || t.Nombre || t.nombre,
-            estado: t.estado || t.Estado,
-            prioridad: t.prioridad || t.Prioridad || 'Media',
-            proyectoNombre: t.proyectoNombre || t.Proyecto,
-            fechaObjetivo: t.fechaObjetivo || t.FechaFin
-        }));
+        const hoy = fecha ? toISODate(fecha) : toISODate(new Date());
+
+        // Mapear y DEDUPLICAR
+        const seen = new Set<number>();
+        const allTasks = tareas
+            .map((t: any) => ({
+                ...t,
+                idTarea: t.idTarea || t.ID || t.id,
+                titulo: t.titulo || t.Nombre || t.nombre,
+                estado: t.estado || t.Estado,
+                prioridad: t.prioridad || t.Prioridad || 'Media',
+                proyectoNombre: t.proyectoNombre || t.Proyecto,
+                fechaObjetivo: t.fechaObjetivo || t.FechaFin
+            }))
+            .filter(t => {
+                if (!t.idTarea || seen.has(t.idTarea)) return false;
+                seen.add(t.idTarea);
+                return true;
+            });
 
         const bloqueosActivos = allTasks.filter((t: any) => t.estado === 'Bloqueada');
 
+        // FIX 2026-02-17: Lógica mejorada para "Mi Día"
+        // Sugeridas (Inbox) incluye:
+        // 1. Tareas En Curso (Siempre)
+        // 2. Tareas para Hoy o Atrasadas (Overdue)
+        // 3. Tareas SIN FECHA (Bolsa de tareas por agendar)
         const tareasSugeridas = allTasks.filter((t: any) => {
             if (t.estado === 'Bloqueada' || t.estado === 'Hecha' || t.estado === 'Completada') return false;
+
+            // Prioridad a lo que ya se está trabajando
             if (t.estado === 'En Curso' || t.estado === 'En Proceso') return true;
-            const fObj = t.fechaObjetivo ? new Date(t.fechaObjetivo).toISOString().split('T')[0] : null;
-            if (fObj && fObj <= hoy) return true;
+
+            // Si no tiene fecha, es candidata para hoy (Inbox)
+            if (!t.fechaObjetivo) return true;
+
+            const fObj = toISODate(t.fechaObjetivo);
+            if (!fObj || !hoy) return false;
+
+            // Si es hoy o antes (atrasada), sugerirla
+            if (fObj <= hoy) return true;
+
+            // Si es futura, NO sugerir
             return false;
         });
 
+        // Backlog (Atrasadas explícitas no capturadas o sobrantes)
+        // En esta nueva lógica, 'tareasSugeridas' captura casi todo lo relevante para el día.
+        // 'backlog' quedaría para lo que NO está en sugeridas pero tampoco es Bloqueada/Hecha.
+        // Con la lógica de arriba, las FUTURAS caerían aquí si no filtramos.
+        // El usuario pidió NO ver futuras en "Pendiente".
         const backlog = allTasks.filter((t: any) => {
             if (t.estado === 'Bloqueada' || t.estado === 'Hecha' || t.estado === 'Completada') return false;
+
+            // Si ya está en sugeridas, no duplicar
             if (tareasSugeridas.some((s: any) => s.idTarea === t.idTarea)) return false;
+
+            // FIX: Excluir tareas FUTURAS del backlog diario
+            if (t.fechaObjetivo) {
+                const fObj = toISODate(t.fechaObjetivo);
+                if (fObj && hoy && fObj > hoy) return false;
+            }
+
             return true;
         });
 

@@ -17,9 +17,10 @@ interface Props {
     onClose: () => void;
     onUpdate: () => void;
     mode?: 'planning' | 'execution';
+    disableEdit?: boolean;
 }
 
-export const TaskDetailModalV2: React.FC<Props> = ({ task, onClose, onUpdate, mode = 'execution' }) => {
+export const TaskDetailModalV2: React.FC<Props> = ({ task, onClose, onUpdate, mode = 'execution', disableEdit = false }) => {
     // 1. Hook de Lógica (Controller)
     const { form, meta, actions } = useTaskController(task, onClose, onUpdate);
 
@@ -142,17 +143,19 @@ export const TaskDetailModalV2: React.FC<Props> = ({ task, onClose, onUpdate, mo
                             {/* 4. ACCIONES DE GESTIÓN (AL FONDO) */}
                             <div className="bg-slate-50/30 p-4 rounded-2xl border border-dashed border-slate-200 mt-4">
                                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 text-center">Acciones de Gestión</h4>
-                                <TaskManagementActions
-                                    onReportBlock={() => meta.setView('Block')}
-                                    onReassign={() => meta.setView('Reassign')}
-                                />
+                                {!disableEdit && (
+                                    <TaskManagementActions
+                                        onReportBlock={() => meta.setView('Block')}
+                                        onReassign={() => meta.setView('Reassign')}
+                                    />
+                                )}
                             </div>
                         </div>
                     )}
                 </div>
 
                 {/* BOTÓN GUARDAR FIJO EN EL FOOTER - ESTILO PREMIUM */}
-                {meta.view === 'Main' && (
+                {meta.view === 'Main' && !disableEdit && (
                     <div className="p-4 bg-slate-50 border-t flex justify-center items-center shrink-0 shadow-[0_-4px_12px_rgba(0,0,0,0.03)] selection:bg-none">
                         <button
                             onClick={actions.handleSaveProgress}

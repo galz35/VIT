@@ -730,72 +730,78 @@ export async function obtenerMiAsignacion(carnet: string, filtros?: { estado?: s
     `, { carnet: { valor: carnet, tipo: NVarChar } });
 
     // 2. Obtener mis tareas en esos proyectos
-    let queryTareas = `
-        SELECT 
-            t.idTarea,
-            t.idProyecto,
-            t.nombre AS titulo,
-            t.descripcion,
-            t.estado,
-            t.prioridad,
-            t.porcentaje AS progreso,
-            t.fechaObjetivo,
-            t.fechaInicioPlanificada,
-            t.fechaCreacion,
-            t.linkEvidencia,
-            CASE 
-                WHEN t.fechaObjetivo < CAST(GETDATE() AS DATE) 
-                     AND t.estado NOT IN ('Hecha', 'Completada', 'Descartada', 'Eliminada', 'Archivada')
-                THEN DATEDIFF(day, t.fechaObjetivo, GETDATE())
-                ELSE 0
-            END AS diasAtraso,
-            CASE 
-                WHEN t.fechaObjetivo < CAST(GETDATE() AS DATE) 
-                     AND t.estado NOT IN ('Hecha', 'Completada', 'Descartada', 'Eliminada', 'Archivada')
-                THEN 1 ELSE 0
-            END AS esAtrasada,
-            p.nombre AS proyectoNombre
-        FROM p_Tareas t
-        INNER JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea
-        LEFT JOIN p_Proyectos p ON t.idProyecto = p.idProyecto
-        WHERE ta.carnet = @carnet
-          AND t.activo = 1
-          AND t.estado <> 'Descartada'
-          AND (p.idProyecto IS NULL OR p.estado = 'Activo')
-    `;
+    // 2. Obtener mis tareas en esos proyectos (USANDO SP para Visibilidad Correcta)
+    // FIX 2026-02-17: Usar 'sp_Tareas_ObtenerPorUsuario' para incluir tareas de proyectos propios
+    const tareasRaw = await ejecutarSP<any>('sp_Tareas_ObtenerPorUsuario', {
+        carnet: { valor: carnet, tipo: NVarChar },
+        estado: { valor: filtros?.estado === 'pendientes' || filtros?.estado === 'todas' ? null : filtros?.estado, tipo: NVarChar }
+    });
 
-    // Aplicar filtros en SQL para consistencia absoluta
-    const estadoFilter = filtros?.estado?.toLowerCase().trim();
-    if (estadoFilter === 'pendientes') {
-        queryTareas += " AND LTRIM(RTRIM(t.estado)) NOT IN ('Hecha', 'Completada', 'Descartada', 'Eliminada', 'Archivada') ";
-    } else if (estadoFilter && estadoFilter !== 'todas') {
-        queryTareas += ` AND LTRIM(RTRIM(t.estado)) = '${filtros?.estado}' `;
+    // Filtro adicional en memoria si es necesario (el SP ya filtra por estado exacto si se pasa, pero 'pendientes' es especial)
+    let tareas = tareasRaw;
+    if (filtros?.estado === 'pendientes') {
+        tareas = tareas.filter((t: any) =>
+            !['Hecha', 'Completada', 'Descartada', 'Eliminada', 'Archivada'].includes(t.estado)
+        );
     }
 
-    queryTareas += `
-        ORDER BY 
-            CASE WHEN t.estado NOT IN ('Hecha', 'Completada') THEN 0 ELSE 1 END,
-            CASE WHEN t.fechaObjetivo < CAST(GETDATE() AS DATE) THEN 0 ELSE 1 END,
-            t.fechaObjetivo ASC
-    `;
+    // Mapeo para mantener compatibilidad con la estructura anterior y calcular diasAtraso
+    const toISODate = (d: any) => {
+        if (!d) return null;
+        const date = new Date(d);
+        if (isNaN(date.getTime())) return null;
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    };
 
-    const tareas = await ejecutarQuery<any>(queryTareas, { carnet: { valor: carnet, tipo: NVarChar } });
+    const hoyStr = toISODate(new Date());
 
-    // 3. Filtrar en memoria (Redundancia eliminada, ahora usamos SQL directo arriba)
-    const tareasFiltradas = tareas;
+    const tareasFiltradas = tareas.map((t: any) => {
+        const fObjStr = toISODate(t.fechaObjetivo);
+        const esAtrasada = fObjStr && hoyStr && fObjStr < hoyStr && !['Hecha', 'Completada', 'Descartada'].includes(t.estado);
+
+        return {
+            ...t,
+            diasAtraso: esAtrasada && t.fechaObjetivo ? Math.floor((new Date().getTime() - new Date(t.fechaObjetivo).getTime()) / (1000 * 3600 * 24)) : 0,
+            esAtrasada: esAtrasada ? 1 : 0
+        };
+    });
 
     // 4. Agrupar proyectos + Proyecto Virtual para tareas sin proyecto
-    const proyectosFinal = proyectos.map((p: any) => ({
-        ...p,
-        misTareas: tareasFiltradas.filter((t: any) => t.idProyecto === p.idProyecto)
-    })).filter((p: any) => p.misTareas.length > 0);
+    const proyectosMap = new Map();
+    proyectos.forEach((p: any) => proyectosMap.set(p.idProyecto, { ...p, misTareas: [] }));
+
+    const tareasSinProyecto: any[] = [];
+
+    tareasFiltradas.forEach((t: any) => {
+        if (t.idProyecto && proyectosMap.has(t.idProyecto)) {
+            proyectosMap.get(t.idProyecto).misTareas.push(t);
+        } else if (t.idProyecto) {
+            // Tarea de proyecto que no está en la lista de 'mis proyectos asignados'
+            // Esto pasa si soy Dueño del Proyecto pero no tengo tareas asignadas en él, 
+            // PERO el SP me devolvio la tarea porque soy el dueño.
+            // Debemos buscar info del proyecto o ponerlo en un grupo genérico?
+            // Simplificación: Lo agregamos a 'Sin Proyecto' o creamos entrada stub.
+            // Mejor: Agregarlo a Sin Proyecto con el nombre del proyecto como prefijo? 
+            // O simplemente dejarlo en Sin Proyecto.
+            // Opción ideal: El SP devuelve proyectoNombre.
+            // Podríamos agrupar dinámicamente.
+            tareasSinProyecto.push(t);
+        } else {
+            tareasSinProyecto.push(t);
+        }
+    });
+
+    const proyectosFinal = Array.from(proyectosMap.values()).filter((p: any) => p.misTareas.length > 0);
 
     // Agregar tareas SIN PROYECTO (General) if any
-    const tareasSinProyecto = tareasFiltradas.filter((t: any) => !t.idProyecto);
+    // Agregar tareas SIN PROYECTO o DE PROYECTOS NO ASIGNADOS (pero visibles)
     if (tareasSinProyecto.length > 0) {
         proyectosFinal.push({
             idProyecto: 0, // ID virtual
-            nombre: 'General / Sin Proyecto',
+            nombre: 'General / Otros Proyectos',
             progresoProyecto: 0,
             misTareas: tareasSinProyecto
         });
