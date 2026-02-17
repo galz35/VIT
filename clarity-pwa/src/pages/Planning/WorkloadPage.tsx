@@ -28,6 +28,7 @@ export const WorkloadPage: React.FC = () => {
     const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 })); // Lunes
     const [tasks, setTasks] = useState<Tarea[]>([]);
     const [team, setTeam] = useState<WorkloadUser[]>([]);
+    const [agenda, setAgenda] = useState<{ idTarea: number, fecha: string, usuarioCarnet: string }[]>([]);
     const [loading, setLoading] = useState(true);
 
     const [selectedTask, setSelectedTask] = useState<Tarea | null>(null);
@@ -41,10 +42,14 @@ export const WorkloadPage: React.FC = () => {
         const loadData = async () => {
             setLoading(true);
             try {
-                const data = await clarityService.getWorkload();
+                const data = await clarityService.getWorkload(
+                    weekStart.toISOString(),
+                    endOfWeek(weekStart, { weekStartsOn: 1 }).toISOString()
+                );
                 if (data) {
                     setTeam(data.users || []);
                     setTasks(data.tasks || []);
+                    setAgenda(data.agenda || []);
                 }
             } catch (e) {
                 console.error('[WorkloadPage] Error:', e);
@@ -63,8 +68,18 @@ export const WorkloadPage: React.FC = () => {
             const isAssigned = (t as any).usuarioCarnet === userCarnet;
             if (!isAssigned) return false;
 
-            // Filtro de vista (Proyecto vs Operativo)
+            // PRIORITY: Si está en la agenda de hoy, lo mostramos SIEMPRE
+            const onAgenda = agenda.some(a =>
+                a.idTarea === t.idTarea &&
+                a.usuarioCarnet === userCarnet &&
+                isSameDay(new Date(a.fecha), date)
+            );
+
+            if (onAgenda) return true;
+
+            // Filtro de vista (Proyecto vs Operativo) - Solo aplica si NO está en agenda explícita
             if (viewType === 'project' && !t.idProyecto) return false;
+            // Para vista operativa, a veces queremos ver todo lo que no es proyecto, O lo que está en agenda
             if (viewType === 'operative' && t.idProyecto) return false;
 
             const start = t.fechaInicioPlanificada ? new Date(t.fechaInicioPlanificada) : null;

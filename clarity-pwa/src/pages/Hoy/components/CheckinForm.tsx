@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import type { Tarea, CheckinUpsertDto, Bloqueo, Proyecto } from '../../../types/modelos';
-import { Plus, CheckCircle2, Circle, MessageSquare, Send, Trash2, Save } from 'lucide-react';
+import { Plus, CheckCircle2, Circle, MessageSquare, Send, Trash2, Save, Settings, X, Eye, EyeOff } from 'lucide-react';
 import { TaskDetailModalV2 } from '../../../components/task-detail-v2/TaskDetailModalV2';
 import { TaskSelectorOverlay } from './TaskSelectorOverlay';
 import { useToast } from '../../../context/ToastContext';
+import { clarityService } from '../../../services/clarity.service';
 
 interface Props {
     disponibles: Tarea[];
@@ -22,16 +23,17 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
     // Form State
     const { showToast } = useToast();
 
-    // Note: 'entregableTexto' is now derived from the selected tasks in Column 1, so we don't strictly need a state for it, 
-    // but the API requires it. We will generate it on submit.
-
+    // User Config State
+    const [config, setConfig] = useState({ showGestion: true, showRapida: true });
+    const [showConfigModal, setShowConfigModal] = useState(false);
 
     // Slots State (Dynamic Arrays)
-    // Unified List: "Mi Plan del Día"
-    const [entregoIds, setEntregoIds] = useState<(number | null)[]>([null]);
+    const [entregoIds, setEntregoIds] = useState<(number | null)[]>([null]); // Principal
+    const [gestionIds, setGestionIds] = useState<(number | null)[]>([null]); // Avanzo (Gestión)
+    const [rapidaIds, setRapidaIds] = useState<(number | null)[]>([null]);   // Extra (Rápida)
 
     // UI State
-    const [selectingFor, setSelectingFor] = useState<{ type: 'Entrego', index: number } | null>(null);
+    const [selectingFor, setSelectingFor] = useState<{ type: 'Entrego' | 'Avanzo' | 'Extra', index: number } | null>(null);
     const [submitting, setSubmitting] = useState(false);
     const [editingTask, setEditingTask] = useState<Tarea | null>(null);
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -46,32 +48,49 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
     // Initialize arrays from initialData
     const [projects, setProjects] = useState<Proyecto[]>([]);
 
+    // Fetch Projects & Config
     useEffect(() => {
-        const loadP = async () => {
+        const loadInit = async () => {
             try {
-                const { clarityService } = await import('../../../services/clarity.service');
-                const p = await clarityService.getProyectos();
+                const [p, c] = await Promise.all([
+                    clarityService.getProyectos(),
+                    clarityService.getConfig()
+                ]);
                 setProjects((p as any).items || p || []);
+                if (c && c.agendaConfig) {
+                    setConfig(c.agendaConfig);
+                }
             } catch { } // Silent fail
         };
-        loadP();
+        loadInit();
     }, []);
 
     useEffect(() => {
         if (initialData) {
-            const combined = [
-                ...(initialData.entrego || []),
-                ...(initialData.avanzo || []),
-                ...(initialData.extras || [])
-            ];
-
-            if (combined.length > 0) {
-                // Ensure at least one slot
-                const newArr = [...combined];
-                setEntregoIds(newArr);
+            // Principal
+            if (initialData.entrego && initialData.entrego.length > 0) {
+                setEntregoIds([...initialData.entrego]);
+            }
+            // Gestión (Avanzo)
+            if (initialData.avanzo && initialData.avanzo.length > 0) {
+                setGestionIds([...initialData.avanzo]);
+            }
+            // Rápida (Extras)
+            if (initialData.extras && initialData.extras.length > 0) {
+                setRapidaIds([...initialData.extras]);
             }
         }
     }, [initialData]);
+
+    const saveConfig = async (newConfig: typeof config) => {
+        setConfig(newConfig);
+        try {
+            await clarityService.setConfig({ agendaConfig: newConfig });
+            showToast('Configuración guardada', 'success');
+        } catch {
+            showToast('Error al guardar configuración', 'error');
+        }
+    };
 
     // Helpers
     const getTask = (id: number | null | string) => {
@@ -83,17 +102,19 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
     };
     const isSelected = (id: number | string) => {
         const numId = Number(id);
-        return entregoIds.some(i => Number(i) === numId);
+        return [...entregoIds, ...gestionIds, ...rapidaIds].some(i => Number(i) === numId);
     };
 
     // List Management Helpers
-    const addSlot = () => {
-        setEntregoIds(p => [...p, null]);
+    const addSlot = (type: 'Entrego' | 'Avanzo' | 'Extra') => {
+        if (type === 'Entrego') setEntregoIds(p => [...p, null]);
+        if (type === 'Avanzo') setGestionIds(p => [...p, null]);
+        if (type === 'Extra') setRapidaIds(p => [...p, null]);
     };
 
-    const removeSlot = (e: React.MouseEvent, index: number) => {
+    const removeSlot = (e: React.MouseEvent, type: 'Entrego' | 'Avanzo' | 'Extra', index: number) => {
         e.stopPropagation();
-        setEntregoIds(prev => {
+        const update = (prev: (number | null)[]) => {
             const newVal = [...prev];
             if (newVal[index] !== null) {
                 newVal[index] = null;
@@ -101,7 +122,11 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
                 if (newVal.length > 1) newVal.splice(index, 1);
             }
             return newVal;
-        });
+        };
+
+        if (type === 'Entrego') setEntregoIds(update);
+        if (type === 'Avanzo') setGestionIds(update);
+        if (type === 'Extra') setRapidaIds(update);
     };
 
     // UI Helpers
@@ -109,10 +134,19 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
 
     const handleSelectTask = (task: Tarea) => {
         if (!selectingFor) return;
-        const { index } = selectingFor;
+        const { type, index } = selectingFor;
 
-        setEntregoIds(prev => prev.map(id => (id !== null && Number(id) === Number(task.idTarea)) ? null : id));
-        setEntregoIds(prev => { const n = [...prev]; n[index] = task.idTarea; return n; });
+        // Clear previous selection if exists anywhere
+        const clear = (prev: (number | null)[]) => prev.map(id => (id !== null && Number(id) === Number(task.idTarea)) ? null : id);
+        setEntregoIds(clear);
+        setGestionIds(clear);
+        setRapidaIds(clear);
+
+        // Assign to new slot
+        const assign = (prev: (number | null)[]) => { const n = [...prev]; n[index] = task.idTarea; return n; };
+        if (type === 'Entrego') setEntregoIds(assign);
+        if (type === 'Avanzo') setGestionIds(assign);
+        if (type === 'Extra') setRapidaIds(assign);
 
         setSelectingFor(null);
     };
@@ -124,7 +158,6 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
         setLastCreationProjectId(projectId !== undefined ? projectId : '');
 
         try {
-            const { clarityService } = await import('../../../services/clarity.service');
             const prioridad = 'Alta';
             const esfuerzo = 'M';
 
@@ -153,11 +186,11 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
     };
 
     const validate = () => {
-        // We no longer strictly block the user, but we ensure we have at least SOME info for the API
         const validEntrego = entregoIds.filter(id => id !== null);
-
+        // We require at least one MAIN task
         if (validEntrego.length === 0) {
-            showToast('Tu plan está vacío. Agrega al menos una tarea.', 'error');
+            setErrors({ entrego: 'Required' });
+            showToast('Tu plan principal está vacío. Agrega al menos una tarea.', 'error');
             return false;
         }
         return true;
@@ -170,6 +203,8 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
         setErrors({});
 
         const validEntregoIds = entregoIds.filter((id): id is number => id !== null);
+        const validGestionIds = gestionIds.filter((id): id is number => id !== null);
+        const validRapidaIds = rapidaIds.filter((id): id is number => id !== null);
 
         // Derive Priorities from Task Titles (Carnet-First Strategy)
         const getTitle = (id: number | undefined) => id ? getTask(id)?.titulo || '' : '';
@@ -179,8 +214,6 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
 
         // Auto-generate goal text
         let generatedGoalText = validEntregoIds.map(id => getTask(id)?.titulo || '').filter(Boolean).join(' + ');
-
-        // Fallback if no specific task is in Column 1
         if (!generatedGoalText) {
             generatedGoalText = initialData?.entregableTexto || 'Plan de Trabajo';
         }
@@ -189,13 +222,13 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
         try {
             await onSubmit({
                 idUsuario: userId,
-                usuarioCarnet: userCarnet, // NEW
+                usuarioCarnet: userCarnet,
                 fecha,
                 entregableTexto: generatedGoalText,
                 entrego: validEntregoIds,
-                avanzo: [], // Unified
-                extras: [], // Unified
-                prioridad1, // NEW
+                avanzo: validGestionIds, // Mapped to Gestion
+                extras: validRapidaIds,   // Mapped to Rapida
+                prioridad1,
                 prioridad2,
                 prioridad3,
                 linkEvidencia: initialData?.linkEvidencia
@@ -209,7 +242,6 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
         e.stopPropagation();
         const newState = task.estado === 'Hecha' ? 'EnCurso' : 'Hecha';
         try {
-            const { clarityService } = await import('../../../services/clarity.service');
             await clarityService.actualizarTarea(task.idTarea, { estado: newState });
             if (onTaskCreated) await onTaskCreated();
         } catch (err) { showToast('Error al actualizar', 'error'); }
@@ -220,7 +252,6 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
         e.stopPropagation();
         if (!quickLogText.trim()) return;
         try {
-            const { clarityService } = await import('../../../services/clarity.service');
             await clarityService.postAvance(taskId, { idUsuario: userId, progreso: 0, comentario: quickLogText });
             setQuickLogId(null);
             setQuickLogText('');
@@ -228,31 +259,34 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
         } catch (err) { showToast('Error guardando bitácora', 'error'); }
     };
 
-    const handleSlotClick = (index: number, currentId: number | null) => {
+    const handleSlotClick = (type: 'Entrego' | 'Avanzo' | 'Extra', index: number, currentId: number | null) => {
         if (!currentId) {
-            setSelectingFor({ type: 'Entrego', index });
+            setSelectingFor({ type, index });
         } else {
             const task = getTask(currentId);
             if (task) setEditingTask(task);
         }
     };
 
-    const renderCard = (id: number | null, idx: number) => {
+    const renderCard = (type: 'Entrego' | 'Avanzo' | 'Extra', id: number | null, idx: number) => {
         const task = getTask(id);
         const isQuickLogging = id !== null && quickLogId === id;
 
+        // Custom Styles based on Type
         let activeBorder = 'border-l-4 border-l-rose-500';
+        if (type === 'Avanzo') activeBorder = 'border-l-4 border-l-blue-500';
+        if (type === 'Extra') activeBorder = 'border-l-4 border-l-amber-500';
+
         let bgClass = 'bg-white';
         let emptyText = 'Agregar Tarea';
-
         if (id && isQuickLogging) { bgClass = 'bg-indigo-50 shadow-md ring-1 ring-indigo-200'; }
 
         return (
-            <div key={`entrego-${idx}`}
+            <div key={`${type}-${idx}`}
                 onClick={(e) => {
                     if (isQuickLogging) return;
                     if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('input')) return;
-                    handleSlotClick(idx, id);
+                    handleSlotClick(type, idx, id);
                 }}
                 className={`group relative p-3 rounded-lg border border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all cursor-pointer animate-fade-in
                 ${id ? `shadow-sm ${activeBorder} ${bgClass}` : 'border-dashed border-slate-200 text-slate-400 hover:border-indigo-300 hover:text-indigo-600'}`}
@@ -294,7 +328,7 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
                                     <MessageSquare size={14} />
                                 </button>
                                 <button
-                                    onClick={(e) => removeSlot(e, idx)}
+                                    onClick={(e) => removeSlot(e, type, idx)}
                                     className="p-1 hover:bg-rose-50 rounded text-rose-300 hover:text-rose-500"
                                     title="Quitar"
                                 >
@@ -340,6 +374,19 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
                 />
             )}
 
+            {/* HEADER: TITLE + SETTINGS */}
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <h2 className="text-lg font-black text-slate-800 tracking-tight">Mi Plan del Día</h2>
+                <button
+                    type="button"
+                    onClick={() => setShowConfigModal(true)}
+                    className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all"
+                    title="Configurar Vistas"
+                >
+                    <Settings size={20} />
+                </button>
+            </div>
+
             {/* ROW 1: UTILS BAR (Blockers + Submit) */}
             <div className="flex flex-col md:flex-row items-center gap-4">
 
@@ -376,27 +423,108 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
                 </div>
             </div>
 
-            {/* MAIN GRID: Simplified to Single Column */}
-            <div className="grid grid-cols-1 gap-6 flex-1 items-start">
+            {/* MAIN GRID: CONFIGURABLE COLUMNS */}
+            <div className={`grid gap-6 flex-1 items-start transition-all ${(config.showGestion && config.showRapida) ? 'grid-cols-1 md:grid-cols-3' :
+                    (config.showGestion || config.showRapida) ? 'grid-cols-1 md:grid-cols-2' :
+                        'grid-cols-1'
+                }`}>
 
-                {/* COL 1: MI PLAN DEL DÍA */}
+                {/* COL 1: PRINCIPAL (ALWAYS ON) */}
                 <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex flex-col gap-4 min-h-[15rem]">
                     <div className="flex items-center gap-3 pb-3 border-b border-slate-50">
                         <div className="w-6 h-6 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-xs ring-4 ring-rose-50">1</div>
-                        <h4 className="font-bold text-slate-800 text-sm">Mis Tareas</h4>
+                        <h4 className="font-bold text-slate-800 text-sm">Principal</h4>
                     </div>
                     <div className="space-y-2 flex-1">
-                        {entregoIds.map((id, idx) => renderCard(id, idx))}
+                        {entregoIds.map((id, idx) => renderCard('Entrego', id, idx))}
                         <p className="text-[11px] text-slate-400 leading-tight px-1 italic mt-2">
-                            Define tus tareas para hoy.
+                            Foco principal (Prioritario).
                         </p>
                         {errors.entrego && <p className="text-rose-500 text-[10px] font-bold px-1 animate-pulse">⚠️ Este campo es obligatorio</p>}
                     </div>
-                    <button type="button" onClick={() => { addSlot(); setErrors({}); }} className="text-xs font-bold text-rose-500 hover:text-rose-700 flex justify-center py-2 opacity-60 hover:opacity-100 transition-opacity">
+                    <button type="button" onClick={() => { addSlot('Entrego'); setErrors({}); }} className="text-xs font-bold text-rose-500 hover:text-rose-700 flex justify-center py-2 opacity-60 hover:opacity-100 transition-opacity">
                         + Agregar Tarea
                     </button>
                 </div>
+
+                {/* COL 2: GESTIÓN (OPTIONAL) */}
+                {config.showGestion && (
+                    <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex flex-col gap-4 min-h-[15rem]">
+                        <div className="flex items-center gap-3 pb-3 border-b border-slate-50">
+                            <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs ring-4 ring-blue-50">2</div>
+                            <h4 className="font-bold text-slate-800 text-sm">Gestión / Avance</h4>
+                        </div>
+                        <div className="space-y-2 flex-1">
+                            {gestionIds.map((id, idx) => renderCard('Avanzo', id, idx))}
+                            <p className="text-[11px] text-slate-400 leading-tight px-1 italic mt-2">
+                                Tareas secundarias o seguimiento.
+                            </p>
+                        </div>
+                        <button type="button" onClick={() => addSlot('Avanzo')} className="text-xs font-bold text-blue-500 hover:text-blue-700 flex justify-center py-2 opacity-60 hover:opacity-100 transition-opacity">
+                            + Agregar Tarea
+                        </button>
+                    </div>
+                )}
+
+                {/* COL 3: RÁPIDA (OPTIONAL) */}
+                {config.showRapida && (
+                    <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex flex-col gap-4 min-h-[15rem]">
+                        <div className="flex items-center gap-3 pb-3 border-b border-slate-50">
+                            <div className="w-6 h-6 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-xs ring-4 ring-amber-50">3</div>
+                            <h4 className="font-bold text-slate-800 text-sm">Rápida / Extra</h4>
+                        </div>
+                        <div className="space-y-2 flex-1">
+                            {rapidaIds.map((id, idx) => renderCard('Extra', id, idx))}
+                            <p className="text-[11px] text-slate-400 leading-tight px-1 italic mt-2">
+                                Tareas pequeñas o adicionales.
+                            </p>
+                        </div>
+                        <button type="button" onClick={() => addSlot('Extra')} className="text-xs font-bold text-amber-500 hover:text-amber-700 flex justify-center py-2 opacity-60 hover:opacity-100 transition-opacity">
+                            + Agregar Tarea
+                        </button>
+                    </div>
+                )}
+
             </div>
+
+            {/* SETTINGS MODAL */}
+            {showConfigModal && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowConfigModal(false)}>
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-bold text-slate-800">Configuración de Vista</h3>
+                            <button onClick={() => setShowConfigModal(false)}><X size={20} className="text-slate-400 hover:text-slate-600" /></button>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                                <span className="text-sm font-semibold text-slate-700">Principal</span>
+                                <span className="text-xs font-bold text-emerald-500 bg-emerald-50 px-2 py-1 rounded">SIEMPRE ACTIVO</span>
+                            </div>
+
+                            <button
+                                onClick={() => saveConfig({ ...config, showGestion: !config.showGestion })}
+                                className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all ${config.showGestion ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-white border-slate-200 text-slate-400'}`}
+                            >
+                                <span className="text-sm font-semibold text-left">Gestión / Avance</span>
+                                {config.showGestion ? <Eye size={18} /> : <EyeOff size={18} />}
+                            </button>
+
+                            <button
+                                onClick={() => saveConfig({ ...config, showRapida: !config.showRapida })}
+                                className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all ${config.showRapida ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-white border-slate-200 text-slate-400'}`}
+                            >
+                                <span className="text-sm font-semibold text-left">Rápida / Extra</span>
+                                {config.showRapida ? <Eye size={18} /> : <EyeOff size={18} />}
+                            </button>
+                        </div>
+
+                        <div className="mt-6 text-xs text-slate-400 text-center">
+                            Personaliza qué columnas quieres ver en tu agenda.
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* BLOCKERS MODAL */}
             {viewBlockers && bloqueos.length > 0 && (

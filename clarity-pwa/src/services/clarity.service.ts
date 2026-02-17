@@ -317,11 +317,12 @@ export const clarityService = {
     },
 
     // Config
-    getUserConfig: async () => {
-        const { data: response } = await api.get<ApiResponse>('/config');
+    getConfig: async () => {
+        const { data: response } = await api.get<ApiResponse<{ vistaPreferida?: string, rutinas?: string, agendaConfig?: { showGestion: boolean, showRapida: boolean } }>>('/config');
         return response.data;
     },
-    setUserConfig: async (dto: { vistaPreferida?: string, rutinas?: string }) => {
+
+    setConfig: async (dto: { vistaPreferida?: string, rutinas?: string, agendaConfig?: { showGestion: boolean, showRapida: boolean } }) => {
         const { data: response } = await api.post<ApiResponse>('/config', dto);
         return response.data;
     },
@@ -515,8 +516,8 @@ export const clarityService = {
         link.remove();
     },
 
-    getWorkload: async () => {
-        const { data: response } = await api.get<ApiResponse<{ users: Usuario[], tasks: Tarea[] }>>('/planning/workload');
+    getWorkload: async (startDate?: string, endDate?: string) => {
+        const { data: response } = await api.get<ApiResponse<{ users: Usuario[], tasks: Tarea[], agenda: { idTarea: number, fecha: string, usuarioCarnet: string }[] }>>('/planning/workload', { params: { startDate, endDate } });
         return response.data;
     },
 
