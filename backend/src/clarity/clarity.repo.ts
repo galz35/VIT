@@ -408,6 +408,25 @@ export async function obtenerTareasMultiplesUsuarios(carnets: string[]) {
     });
 }
 
+export async function obtenerAgendaEquipo(carnets: string[], startDate: Date, endDate: Date) {
+    if (carnets.length === 0) return [];
+    const sqlQuery = `
+        SELECT 
+            ct.idTarea, 
+            c.fecha, 
+            c.usuarioCarnet
+        FROM p_Checkins c
+        JOIN p_CheckinTareas ct ON c.idCheckin = ct.idCheckin
+        WHERE c.usuarioCarnet IN (SELECT value FROM STRING_SPLIT(@carnets, ','))
+          AND c.fecha >= @startDate AND c.fecha <= @endDate
+    `;
+    return await ejecutarQuery(sqlQuery, {
+        carnets: { valor: carnets.join(','), tipo: NVarChar },
+        startDate: { valor: startDate, tipo: SqlDate },
+        endDate: { valor: endDate, tipo: SqlDate }
+    });
+}
+
 export async function obtenerBacklog(carnet: string) {
     const sqlQuery = `
         SELECT 
@@ -454,3 +473,38 @@ export async function obtenerBacklog(carnet: string) {
     return await ejecutarQuery(sqlQuery, { carnet: { valor: carnet, tipo: NVarChar } });
 }
 
+
+export async function getAgendaConfig(idUsuario: number) {
+    const res = await ejecutarQuery<{ agendaConfig: string }>(`
+        SELECT agendaConfig 
+        FROM p_UsuariosConfig 
+        WHERE idUsuario = @id
+    `, { id: { valor: idUsuario, tipo: Int } });
+
+    return res[0]?.agendaConfig ? JSON.parse(res[0].agendaConfig) : { showGestion: true, showRapida: true };
+}
+
+export async function setAgendaConfig(idUsuario: number, config: any) {
+    // Ensure column exists (quick fix for dev)
+    await ejecutarQuery(`
+        IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[p_UsuariosConfig]') AND name = 'agendaConfig')
+        BEGIN
+            ALTER TABLE [dbo].[p_UsuariosConfig] ADD [agendaConfig] NVARCHAR(MAX) NULL;
+        END
+    `);
+
+    // Merge/Upsert
+    await ejecutarQuery(`
+        MERGE p_UsuariosConfig AS target
+        USING (SELECT @idUsuario AS idUsuario) AS source
+        ON (target.idUsuario = source.idUsuario)
+        WHEN MATCHED THEN
+            UPDATE SET agendaConfig = @config, fechaActualizacion = GETDATE()
+        WHEN NOT MATCHED THEN
+            INSERT (idUsuario, agendaConfig, fechaActualizacion)
+            VALUES (@idUsuario, @config, GETDATE());
+    `, {
+        idUsuario: { valor: idUsuario, tipo: Int },
+        config: { valor: JSON.stringify(config), tipo: NVarChar }
+    });
+}

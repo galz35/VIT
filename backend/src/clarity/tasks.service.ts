@@ -463,17 +463,23 @@ export class TasksService {
      * Recalcula progreso y estado del padre basado en sus hijos de forma recursiva.
      */
     // Método privado recalcularJerarquia eliminado en favor de lógica en BD (tasksRepo.recalcularJerarquia)
-    async getWorkload(carnet: string) {
+    async getWorkload(carnet: string, startDate?: string, endDate?: string) {
         try {
             // 2. Obtener TODOS los empleados que este usuario tiene permiso de ver
             const allUsersList = await this.visibilidadService.obtenerEmpleadosVisibles(carnet);
             const allCarnets = allUsersList.map(u => u.carnet).filter(Boolean);
-            if (allCarnets.length === 0) return { users: [], tasks: [] };
+            if (allCarnets.length === 0) return { users: [], tasks: [], agenda: [] };
 
             // 4. Obtener tareas usando CARNETS
             const allTasks = await clarityRepo.obtenerTareasMultiplesUsuarios(allCarnets);
 
-            // 5. Formatear usuarios para la vista de Workload
+            // 5. Obtener Agenda del Equipo (Checkins)
+            const today = new Date();
+            const start = startDate ? new Date(startDate) : new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
+            const end = endDate ? new Date(endDate) : new Date(today.getFullYear(), today.getMonth(), today.getDate() + 7);
+            const agenda = await clarityRepo.obtenerAgendaEquipo(allCarnets, start, end);
+
+            // 6. Formatear usuarios para la vista de Workload
             const formattedUsers = allUsersList.map((u: any) => ({
                 idUsuario: u.idUsuario,
                 nombre: u.nombre || u.nombreCompleto || 'Sin Nombre',
@@ -492,11 +498,12 @@ export class TasksService {
 
             return {
                 users: formattedUsers,
-                tasks: allTasks
+                tasks: allTasks,
+                agenda // Add this property
             };
         } catch (error) {
             console.error('[TasksService] Error getting workload:', error);
-            return { users: [], tasks: [] };
+            return { users: [], tasks: [], agenda: [] };
         }
     }
 
