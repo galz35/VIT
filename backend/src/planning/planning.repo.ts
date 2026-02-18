@@ -701,33 +701,9 @@ export async function obtenerTareasCriticas(carnets: string[]) {
 
 export async function obtenerMiAsignacion(carnet: string, filtros?: { estado?: string }) {
     // 1. Obtener proyectos donde tengo tareas asignadas
-    const proyectos = await ejecutarQuery<any>(`
-        SELECT DISTINCT
-            p.idProyecto,
-            p.nombre,
-            p.estado,
-            p.tipo,
-            p.gerencia,
-            p.subgerencia,
-            p.area,
-            p.fechaInicio,
-            p.fechaFin,
-            ISNULL((
-                SELECT AVG(CAST(CASE WHEN t2.estado = 'Hecha' THEN 100 ELSE ISNULL(t2.porcentaje, 0) END AS FLOAT))
-                FROM p_Tareas t2
-                WHERE t2.idProyecto = p.idProyecto 
-                  AND t2.activo = 1 
-                  AND t2.idTareaPadre IS NULL
-                  AND t2.estado NOT IN ('Descartada', 'Eliminada')
-            ), 0) AS progresoProyecto
-        FROM p_Proyectos p
-        INNER JOIN p_Tareas t ON p.idProyecto = t.idProyecto
-        INNER JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea
-        WHERE ta.carnet = @carnet
-          AND t.activo = 1
-          AND p.estado = 'Activo'
-        ORDER BY p.fechaFin ASC
-    `, { carnet: { valor: carnet, tipo: NVarChar } });
+    const proyectos = await ejecutarSP<any>('sp_Planning_ObtenerProyectosAsignados', {
+        carnet: { valor: carnet, tipo: NVarChar }
+    });
 
     // 2. Obtener mis tareas en esos proyectos
     // 2. Obtener mis tareas en esos proyectos (USANDO SP para Visibilidad Correcta)

@@ -8,6 +8,7 @@ import { RecurrenciaService } from './recurrencia.service';
 import { FocoService } from './foco.service';
 import { ReportsService } from './reports.service';
 import { AuditService } from '../common/audit.service';
+import * as clarityRepo from './clarity.repo';
 import {
     TareaCrearRapidaDto, CheckinUpsertDto, FechaQueryDto, TareaActualizarDto,
     ProyectoCrearDto, ProyectoFilterDto, TareaRevalidarDto, BloqueoCrearDto,
@@ -31,13 +32,18 @@ export class ClarityController {
     @Get('config')
     @ApiOperation({ summary: 'Obtener configuración usuario (Mock)' })
     async getConfig(@Request() req) {
-        // TODO: Implementar persistencia real si se requiere
-        return { vistaPreferida: 'Cards', rutinas: '[]' };
+        // Mock anterior + nueva config real
+        // TODO: Migrar todo a tabla config
+        const agendaConfig = await clarityRepo.getAgendaConfig(req.user.userId);
+        return { vistaPreferida: 'Cards', rutinas: '[]', agendaConfig };
     }
 
     @Post('config')
-    @ApiOperation({ summary: 'Actualizar configuración usuario (Mock)' })
+    @ApiOperation({ summary: 'Actualizar configuración usuario' })
     async setConfig(@Request() req, @Body() body: any) {
+        if (body.agendaConfig) {
+            await clarityRepo.setAgendaConfig(req.user.userId, body.agendaConfig);
+        }
         return { success: true };
     }
 
@@ -156,9 +162,9 @@ export class ClarityController {
 
     @Get('planning/workload')
     @ApiOperation({ summary: 'Obtener carga de trabajo del equipo' })
-    async getWorkload(@Request() req) {
+    async getWorkload(@Request() req, @Query('startDate') startDate?: string, @Query('endDate') endDate?: string) {
         const carnet = req.user.carnet || await this.tasksService.resolveCarnet(req.user.userId);
-        return this.tasksService.getWorkload(carnet);
+        return this.tasksService.getWorkload(carnet, startDate, endDate);
     }
 
     @Get('audit-logs/task/:idTarea')
