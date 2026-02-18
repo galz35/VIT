@@ -1,0 +1,7 @@
+[dotenv@17.2.3] injecting env (10) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+(node:27684) [DEP0123] DeprecationWarning: Setting the TLS ServerName to an IP address is not permitted by RFC 6066. This will be ignored in a future version.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+=== EJECUTANDO sp_Tareas_ObtenerMultiplesUsuarios PARA 1008269 ===
+Total de tareas devueltas por el SP: 10
+Estadísticas por estado: { Pendiente: 5, Hecha: 4, EnCurso: 1 }

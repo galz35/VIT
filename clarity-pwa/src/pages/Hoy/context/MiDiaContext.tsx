@@ -52,6 +52,29 @@ export const MiDiaProvider: React.FC<{ children: React.ReactNode; userId: number
         return unique;
     }, [disponibles, backlog, arrastrados]);
 
+    // ✅ Configuración de Agenda (Cargada una vez)
+    const [agendaConfig, setLocalAgendaConfig] = useState({ showGestion: true, showRapida: true });
+
+    const loadConfig = async () => {
+        try {
+            const res = await clarityService.getConfig();
+            if (res && res.agendaConfig) {
+                setLocalAgendaConfig(res.agendaConfig);
+            }
+        } catch { }
+    };
+
+    useMemo(() => {
+        loadConfig();
+    }, []);
+
+    const setAgendaConfig = async (newConfig: { showGestion: boolean, showRapida: boolean }) => {
+        setLocalAgendaConfig(newConfig);
+        try {
+            await clarityService.setConfig({ agendaConfig: newConfig });
+        } catch { }
+    };
+
     const value = useMemo<MiDiaContextType>(
         () => ({
             loading: isLoading,
@@ -70,7 +93,9 @@ export const MiDiaProvider: React.FC<{ children: React.ReactNode; userId: number
             toggleTarea,
             isMutating,
             mutatingTaskId,
-            isSupervisorMode: false
+            isSupervisorMode: false,
+            agendaConfig,
+            setAgendaConfig
         }),
         [
             isLoading,
@@ -88,6 +113,7 @@ export const MiDiaProvider: React.FC<{ children: React.ReactNode; userId: number
             toggleTarea,
             isMutating,
             mutatingTaskId,
+            agendaConfig
         ]
     );
 

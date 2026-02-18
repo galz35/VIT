@@ -227,8 +227,6 @@ class _HomeShellState extends State<HomeShell> {
                     Navigator.pop(context);
                     Navigator.push(context,
                         MaterialPageRoute(builder: (_) => const SyncScreen()));
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (_) => const SyncScreen()));
                   },
                 ),
                 const Padding(

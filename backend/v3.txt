@@ -1,0 +1,8 @@
+[dotenv@17.2.3] injecting env (10) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+
+=== TAREAS EN p_Tareas CON carnet/idUsuario RELACIONADO ===
+Total como Creador (Activas): 26
+Total como Asignado (Activas): 10
+Tareas creadas por ella pero NO asignadas a ella (Activas): 20
+Total tareas en sus Checkins (Histórico): 27
+Total tareas activas en sus Checkins: 3

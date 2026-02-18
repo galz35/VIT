@@ -1,0 +1,469 @@
+﻿--- SLOW QUERIES REPORT FOR 2026-02-17 ---
+Found 37 slow queries on 2026-02-17:
+
+--------------------------------------------------
+[2026-02-17T22:33:47.343Z] Origen: legacy | Duraci├│n: 26094ms | Tipo: QUERY
+SQL: 
+        SELECT a.*, u.nombre as nombreUsuario, u.correo as correoUsuario
+        FROM p_Auditoria a
+        LEFT JOIN p_Usuarios u ON a.idUsuario = u.idUsuario
+        WHERE 1=1
+        ORDER BY a.fecha DESC
+        OFFSET 0 ROWS FETCH NEXT 200 ROWS ONLY
+    
+PARAMS: {}
+--------------------------------------------------
+[2026-02-17T22:04:36.463Z] Origen: unknown | Duraci├│n: 25705ms | Tipo: SP
+SQL: EXEC sp_Organizacion_ObtenerCatalogo
+PARAMS: null
+--------------------------------------------------
+[2026-02-17T22:04:36.463Z] Origen: unknown | Duraci├│n: 25543ms | Tipo: SP
+SQL: EXEC sp_Organizacion_ObtenerCatalogo
+PARAMS: null
+--------------------------------------------------
+[2026-02-17T22:28:23.400Z] Origen: legacy | Duraci├│n: 14639ms | Tipo: QUERY
+SQL: 
+            SELECT idTarea, nombre as titulo, estado, prioridad, porcentaje as progreso
+            FROM p_Tareas
+            WHERE idTareaPadre = @id
+            ORDER BY orden ASC, fechaObjetivo ASC
+        
+PARAMS: {"id":1146}
+--------------------------------------------------
+[2026-02-17T22:23:48.717Z] Origen: legacy | Duraci├│n: 13844ms | Tipo: QUERY
+SQL: 
+        SELECT DISTINCT
+            p.idProyecto,
+            p.nombre,
+            p.estado,
+            p.tipo,
+            p.gerencia,
+            p.subgerencia,
+            p.area,
+            p.fechaInicio,
+            p.fechaFin,
+            ISNULL((
+                SELECT AVG(CAST(CASE WHEN t2.estado = 'Hecha' THEN 100 ELSE ISNULL(t2.porcentaje, 0) END AS FLOAT))
+                FROM p_Tareas t2
+                WHERE t2.idProyecto = p.idProyecto 
+                  AND t2.activo = 1 
+                  AND t2.idTareaPadre IS NULL
+                  AND t2.estado NOT IN ('Descartada', 'Eliminada')
+            ), 0) AS progresoProyecto
+        FROM p_Proyectos p
+        INNER JOIN p_Tareas t ON p.idProyecto = t.idProyecto
+        INNER JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea
+        WHERE ta.carnet = @carnet
+          AND t.activo = 1
+          AND p.estado = 'Activo'
+        ORDER BY p.fechaFin ASC
+    
+PARAMS: {"carnet":"500708"}
+--------------------------------------------------
+[2026-02-17T22:26:48.357Z] Origen: legacy | Duraci├│n: 10053ms | Tipo: QUERY
+SQL: 
+                IF OBJECT_ID(N'dbo.p_TareaAvances', N'U') IS NOT NULL
+                SELECT idLog, idTarea, idUsuario, progreso, comentario, fecha
+                FROM p_TareaAvances
+                WHERE idTarea = @id
+                ORDER BY fecha DESC
+            
+PARAMS: {"id":1146}
+--------------------------------------------------
+[2026-02-17T22:27:28.390Z] Origen: legacy | Duraci├│n: 10039ms | Tipo: QUERY
+SQL: 
+                IF OBJECT_ID(N'dbo.p_TareaAvances', N'U') IS NOT NULL
+                SELECT idLog, idTarea, idUsuario, progreso, comentario, fecha
+                FROM p_TareaAvances
+                WHERE idTarea = @id
+                ORDER BY fecha DESC
+            
+PARAMS: {"id":1146}
+--------------------------------------------------
+[2026-02-17T22:28:33.417Z] Origen: legacy | Duraci├│n: 10016ms | Tipo: QUERY
+SQL: 
+                IF OBJECT_ID(N'dbo.p_TareaAvances', N'U') IS NOT NULL
+                SELECT idLog, idTarea, idUsuario, progreso, comentario, fecha
+                FROM p_TareaAvances
+                WHERE idTarea = @id
+                ORDER BY fecha DESC
+            
+PARAMS: {"id":1146}
+--------------------------------------------------
+[2026-02-17T22:28:08.400Z] Origen: legacy | Duraci├│n: 10006ms | Tipo: QUERY
+SQL: 
+                IF OBJECT_ID(N'dbo.p_TareaAvances', N'U') IS NOT NULL
+                SELECT idLog, idTarea, idUsuario, progreso, comentario, fecha
+                FROM p_TareaAvances
+                WHERE idTarea = @id
+                ORDER BY fecha DESC
+            
+PARAMS: {"id":1146}
+--------------------------------------------------
+[2026-02-17T22:27:58.397Z] Origen: legacy | Duraci├│n: 10003ms | Tipo: QUERY
+SQL: 
+                IF OBJECT_ID(N'dbo.p_TareaAvances', N'U') IS NOT NULL
+                SELECT idLog, idTarea, idUsuario, progreso, comentario, fecha
+                FROM p_TareaAvances
+                WHERE idTarea = @id
+                ORDER BY fecha DESC
+            
+PARAMS: {"id":1146}
+--------------------------------------------------
+[2026-02-17T22:27:18.387Z] Origen: legacy | Duraci├│n: 10003ms | Tipo: QUERY
+SQL: 
+                IF OBJECT_ID(N'dbo.p_TareaAvances', N'U') IS NOT NULL
+                SELECT idLog, idTarea, idUsuario, progreso, comentario, fecha
+                FROM p_TareaAvances
+                WHERE idTarea = @id
+                ORDER BY fecha DESC
+            
+PARAMS: {"id":1146}
+--------------------------------------------------
+[2026-02-17T22:27:08.353Z] Origen: legacy | Duraci├│n: 10002ms | Tipo: QUERY
+SQL: 
+                IF OBJECT_ID(N'dbo.p_TareaAvances', N'U') IS NOT NULL
+                SELECT idLog, idTarea, idUsuario, progreso, comentario, fecha
+                FROM p_TareaAvances
+                WHERE idTarea = @id
+                ORDER BY fecha DESC
+            
+PARAMS: {"id":1146}
+--------------------------------------------------
+[2026-02-17T22:27:38.393Z] Origen: legacy | Duraci├│n: 10002ms | Tipo: QUERY
+SQL: 
+                IF OBJECT_ID(N'dbo.p_TareaAvances', N'U') IS NOT NULL
+                SELECT idLog, idTarea, idUsuario, progreso, comentario, fecha
+                FROM p_TareaAvances
+                WHERE idTarea = @id
+                ORDER BY fecha DESC
+            
+PARAMS: {"id":1146}
+--------------------------------------------------
+[2026-02-17T22:27:48.397Z] Origen: legacy | Duraci├│n: 10001ms | Tipo: QUERY
+SQL: 
+                IF OBJECT_ID(N'dbo.p_TareaAvances', N'U') IS NOT NULL
+                SELECT idLog, idTarea, idUsuario, progreso, comentario, fecha
+                FROM p_TareaAvances
+                WHERE idTarea = @id
+                ORDER BY fecha DESC
+            
+PARAMS: {"id":1146}
+--------------------------------------------------
+[2026-02-17T22:26:58.397Z] Origen: legacy | Duraci├│n: 9996ms | Tipo: QUERY
+SQL: 
+        SELECT 
+            t.idTarea,
+            t.idProyecto,
+            t.nombre AS titulo,
+            t.descripcion,
+            t.estado,
+            t.prioridad,
+            t.porcentaje AS progreso,
+            t.fechaObjetivo,
+            t.fechaInicioPlanificada,
+            t.fechaCreacion,
+            t.linkEvidencia,
+            CASE 
+                WHEN t.fechaObjetivo < CAST(GETDATE() AS DATE) 
+                     AND t.estado NOT IN ('Hecha', 'Completada', 'Descartada', 'Eliminada', 'Archivada')
+                THEN DATEDIFF(day, t.fechaObjetivo, GETDATE())
+                ELSE 0
+            END AS diasAtraso,
+            CASE 
+                WHEN t.fechaObjetivo < CAST(GETDATE() AS DATE) 
+                     AND t.estado NOT IN ('Hecha', 'Completada', 'Descartada', 'Eliminada', 'Archivada')
+                THEN 1 ELSE 0
+            END AS esAtrasada,
+            p.nombre AS proyectoNombre
+        FROM p_Tareas t
+        INNER JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea
+        LEFT JOIN p_Proyectos p ON t.idProyecto = p.idProyecto
+        WHERE ta.carnet = @carnet
+          AND t.activo = 1
+          AND t.estado <> 'Descartada'
+          AND (p.idProyecto IS NULL OR p.estado = 'Activo')
+     AND LTRIM(RTRIM(t.estado)) NOT IN ('Hecha', 'Completada', 'Descartada', 'Eliminada', 'Archivada') 
+        ORDER BY 
+            CASE WHEN t.estado NOT IN ('Hecha', 'Completada') THEN 0 ELSE 1 END,
+            CASE WHEN t.fechaObjetivo < CAST(GETDATE() AS DATE) THEN 0 ELSE 1 END,
+            t.fechaObjetivo ASC
+    
+PARAMS: {"carnet":"500708"}
+--------------------------------------------------
+[2026-02-17T22:24:18.353Z] Origen: legacy | Duraci├│n: 9969ms | Tipo: QUERY
+SQL: 
+        SELECT 
+            t.idTarea,
+            t.idProyecto,
+            t.nombre AS titulo,
+            t.descripcion,
+            t.estado,
+            t.prioridad,
+            t.porcentaje AS progreso,
+            t.fechaObjetivo,
+            t.fechaInicioPlanificada,
+            t.fechaCreacion,
+            t.linkEvidencia,
+            CASE 
+                WHEN t.fechaObjetivo < CAST(GETDATE() AS DATE) 
+                     AND t.estado NOT IN ('Hecha', 'Completada', 'Descartada', 'Eliminada', 'Archivada')
+                THEN DATEDIFF(day, t.fechaObjetivo, GETDATE())
+                ELSE 0
+            END AS diasAtraso,
+            CASE 
+                WHEN t.fechaObjetivo < CAST(GETDATE() AS DATE) 
+                     AND t.estado NOT IN ('Hecha', 'Completada', 'Descartada', 'Eliminada', 'Archivada')
+                THEN 1 ELSE 0
+            END AS esAtrasada,
+            p.nombre AS proyectoNombre
+        FROM p_Tareas t
+        INNER JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea
+        LEFT JOIN p_Proyectos p ON t.idProyecto = p.idProyecto
+        WHERE ta.carnet = @carnet
+          AND t.activo = 1
+          AND t.estado <> 'Descartada'
+          AND (p.idProyecto IS NULL OR p.estado = 'Activo')
+    
+        ORDER BY 
+            CASE WHEN t.estado NOT IN ('Hecha', 'Completada') THEN 0 ELSE 1 END,
+            CASE WHEN t.fechaObjetivo < CAST(GETDATE() AS DATE) THEN 0 ELSE 1 END,
+            t.fechaObjetivo ASC
+    
+PARAMS: {"carnet":"500708"}
+--------------------------------------------------
+[2026-02-17T22:27:28.390Z] Origen: legacy | Duraci├│n: 9929ms | Tipo: QUERY
+SQL: 
+            SELECT idTarea, nombre as titulo, estado, prioridad, porcentaje as progreso
+            FROM p_Tareas
+            WHERE idTareaPadre = @id
+            ORDER BY orden ASC, fechaObjetivo ASC
+        
+PARAMS: {"id":1146}
+--------------------------------------------------
+[2026-02-17T22:24:28.383Z] Origen: unknown | Duraci├│n: 9893ms | Tipo: SP
+SQL: EXEC sp_Proyectos_Listar
+PARAMS: {"nombre":null,"estado":null,"gerencia":null,"subgerencia":null,"area":null,"tipo":null,"pageNumber":1,"pageSize":2000}
+--------------------------------------------------
+[2026-02-17T22:27:58.397Z] Origen: legacy | Duraci├│n: 9883ms | Tipo: QUERY
+SQL: 
+            SELECT idTarea, nombre as titulo, estado, prioridad, porcentaje as progreso
+            FROM p_Tareas
+            WHERE idTareaPadre = @id
+            ORDER BY orden ASC, fechaObjetivo ASC
+        
+PARAMS: {"id":1146}
+--------------------------------------------------
+[2026-02-17T22:26:58.397Z] Origen: legacy | Duraci├│n: 9838ms | Tipo: QUERY
+SQL: 
+            SELECT idTarea, nombre as titulo, estado, prioridad, porcentaje as progreso
+            FROM p_Tareas
+            WHERE idTareaPadre = @id
+            ORDER BY orden ASC, fechaObjetivo ASC
+        
+PARAMS: {"id":1146}
+--------------------------------------------------
+[2026-02-17T22:23:58.380Z] Origen: legacy | Duraci├│n: 9816ms | Tipo: QUERY
+SQL: 
+        SELECT 
+            t.idTarea,
+            t.idProyecto,
+            t.nombre AS titulo,
+            t.descripcion,
+            t.estado,
+            t.prioridad,
+            t.porcentaje AS progreso,
+            t.fechaObjetivo,
+            t.fechaInicioPlanificada,
+            t.fechaCreacion,
+            t.linkEvidencia,
+            CASE 
+                WHEN t.fechaObjetivo < CAST(GETDATE() AS DATE) 
+                     AND t.estado NOT IN ('Hecha', 'Completada', 'Descartada', 'Eliminada', 'Archivada')
+                THEN DATEDIFF(day, t.fechaObjetivo, GETDATE())
+                ELSE 0
+            END AS diasAtraso,
+            CASE 
+                WHEN t.fechaObjetivo < CAST(GETDATE() AS DATE) 
+                     AND t.estado NOT IN ('Hecha', 'Completada', 'Descartada', 'Eliminada', 'Archivada')
+                THEN 1 ELSE 0
+            END AS esAtrasada,
+            p.nombre AS proyectoNombre
+        FROM p_Tareas t
+        INNER JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea
+        LEFT JOIN p_Proyectos p ON t.idProyecto = p.idProyecto
+        WHERE ta.carnet = @carnet
+          AND t.activo = 1
+          AND t.estado <> 'Descartada'
+          AND (p.idProyecto IS NULL OR p.estado = 'Activo')
+    
+        ORDER BY 
+            CASE WHEN t.estado NOT IN ('Hecha', 'Completada') THEN 0 ELSE 1 END,
+            CASE WHEN t.fechaObjetivo < CAST(GETDATE() AS DATE) THEN 0 ELSE 1 END,
+            t.fechaObjetivo ASC
+    
+PARAMS: {"carnet":"500708"}
+--------------------------------------------------
+[2026-02-17T22:24:08.363Z] Origen: legacy | Duraci├│n: 9804ms | Tipo: QUERY
+SQL: 
+        SELECT DISTINCT
+            p.idProyecto,
+            p.nombre,
+            p.estado,
+            p.tipo,
+            p.gerencia,
+            p.subgerencia,
+            p.area,
+            p.fechaInicio,
+            p.fechaFin,
+            ISNULL((
+                SELECT AVG(CAST(CASE WHEN t2.estado = 'Hecha' THEN 100 ELSE ISNULL(t2.porcentaje, 0) END AS FLOAT))
+                FROM p_Tareas t2
+                WHERE t2.idProyecto = p.idProyecto 
+                  AND t2.activo = 1 
+                  AND t2.idTareaPadre IS NULL
+                  AND t2.estado NOT IN ('Descartada', 'Eliminada')
+            ), 0) AS progresoProyecto
+        FROM p_Proyectos p
+        INNER JOIN p_Tareas t ON p.idProyecto = t.idProyecto
+        INNER JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea
+        WHERE ta.carnet = @carnet
+          AND t.activo = 1
+          AND p.estado = 'Activo'
+        ORDER BY p.fechaFin ASC
+    
+PARAMS: {"carnet":"500708"}
+--------------------------------------------------
+[2026-02-17T22:27:48.397Z] Origen: legacy | Duraci├│n: 9580ms | Tipo: QUERY
+SQL: 
+            SELECT idTarea, nombre as titulo, estado, prioridad, porcentaje as progreso
+            FROM p_Tareas
+            WHERE idTareaPadre = @id
+            ORDER BY orden ASC, fechaObjetivo ASC
+        
+PARAMS: {"id":1146}
+--------------------------------------------------
+[2026-02-17T22:27:18.387Z] Origen: legacy | Duraci├│n: 9505ms | Tipo: QUERY
+SQL: 
+            SELECT idTarea, nombre as titulo, estado, prioridad, porcentaje as progreso
+            FROM p_Tareas
+            WHERE idTareaPadre = @id
+            ORDER BY orden ASC, fechaObjetivo ASC
+        
+PARAMS: {"id":1146}
+--------------------------------------------------
+[2026-02-17T22:26:38.773Z] Origen: legacy | Duraci├│n: 8024ms | Tipo: QUERY
+SQL: 
+            SELECT idTarea, nombre as titulo, estado, prioridad, porcentaje as progreso
+            FROM p_Tareas
+            WHERE idTareaPadre = @id
+            ORDER BY orden ASC, fechaObjetivo ASC
+        
+PARAMS: {"id":1146}
+--------------------------------------------------
+[2026-02-17T22:27:08.353Z] Origen: legacy | Duraci├│n: 7683ms | Tipo: QUERY
+SQL: 
+            SELECT idTarea, nombre as titulo, estado, prioridad, porcentaje as progreso
+            FROM p_Tareas
+            WHERE idTareaPadre = @id
+            ORDER BY orden ASC, fechaObjetivo ASC
+        
+PARAMS: {"id":1146}
+--------------------------------------------------
+[2026-02-17T22:27:38.393Z] Origen: legacy | Duraci├│n: 6694ms | Tipo: QUERY
+SQL: 
+            SELECT idTarea, nombre as titulo, estado, prioridad, porcentaje as progreso
+            FROM p_Tareas
+            WHERE idTareaPadre = @id
+            ORDER BY orden ASC, fechaObjetivo ASC
+        
+PARAMS: {"id":1146}
+--------------------------------------------------
+[2026-02-17T22:26:48.357Z] Origen: legacy | Duraci├│n: 5263ms | Tipo: QUERY
+SQL: 
+        SELECT DISTINCT
+            p.idProyecto,
+            p.nombre,
+            p.estado,
+            p.tipo,
+            p.gerencia,
+            p.subgerencia,
+            p.area,
+            p.fechaInicio,
+            p.fechaFin,
+            ISNULL((
+                SELECT AVG(CAST(CASE WHEN t2.estado = 'Hecha' THEN 100 ELSE ISNULL(t2.porcentaje, 0) END AS FLOAT))
+                FROM p_Tareas t2
+                WHERE t2.idProyecto = p.idProyecto 
+                  AND t2.activo = 1 
+                  AND t2.idTareaPadre IS NULL
+                  AND t2.estado NOT IN ('Descartada', 'Eliminada')
+            ), 0) AS progresoProyecto
+        FROM p_Proyectos p
+        INNER JOIN p_Tareas t ON p.idProyecto = t.idProyecto
+        INNER JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea
+        WHERE ta.carnet = @carnet
+          AND t.activo = 1
+          AND p.estado = 'Activo'
+        ORDER BY p.fechaFin ASC
+    
+PARAMS: {"carnet":"500708"}
+--------------------------------------------------
+[2026-02-17T06:17:13.447Z] Origen: legacy | Duraci├│n: 2511ms | Tipo: QUERY
+SQL: SELECT * FROM p_Usuarios WHERE nombre LIKE '%isleny%'
+PARAMS: null
+--------------------------------------------------
+[2026-02-17T06:15:10.950Z] Origen: legacy | Duraci├│n: 2097ms | Tipo: QUERY
+SQL: SELECT * FROM p_Usuarios WHERE nombre LIKE '%isleny%'
+PARAMS: null
+--------------------------------------------------
+[2026-02-17T06:14:03.370Z] Origen: legacy | Duraci├│n: 1739ms | Tipo: QUERY
+SQL: SELECT * FROM p_Usuarios WHERE nombre LIKE '%isleny%'
+PARAMS: null
+--------------------------------------------------
+[2026-02-17T06:25:09.600Z] Origen: legacy | Duraci├│n: 1569ms | Tipo: QUERY
+SQL: 
+        SELECT TABLE_NAME, COLUMN_NAME 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_NAME IN ('p_Tareas', 'p_TareaAsignados')
+        ORDER BY TABLE_NAME, COLUMN_NAME
+    
+PARAMS: null
+--------------------------------------------------
+[2026-02-17T06:24:13.260Z] Origen: legacy | Duraci├│n: 1501ms | Tipo: QUERY
+SQL: SELECT * FROM p_Usuarios WHERE nombre LIKE '%isleny%'
+PARAMS: null
+--------------------------------------------------
+[2026-02-17T06:20:51.207Z] Origen: legacy | Duraci├│n: 1422ms | Tipo: QUERY
+SQL: SELECT * FROM p_Usuarios WHERE nombre LIKE '%isleny%'
+PARAMS: null
+--------------------------------------------------
+[2026-02-17T06:22:17.263Z] Origen: legacy | Duraci├│n: 1264ms | Tipo: QUERY
+SQL: SELECT * FROM p_Usuarios WHERE nombre LIKE '%isleny%'
+PARAMS: null
+--------------------------------------------------
+[2026-02-17T18:48:27.450Z] Origen: legacy | Duraci├│n: 1057ms | Tipo: QUERY
+SQL: 
+        SELECT 
+            t.idTarea, t.nombre as titulo, t.descripcion, t.estado, t.prioridad, t.fechaCreacion, t.fechaObjetivo, t.fechaCompletado, t.porcentaje, t.idPadre, t.orden, t.esHito, t.idAsignado, t.idPlan,
+            t.linkEvidencia, t.tipo, t.esfuerzo, t.comportamiento, t.fechaInicioPlanificada,
+            t.porcentaje as progreso,
+            p.tipo as proyectoTipo, 
+            p.requiereAprobacion as proyectoRequiereAprobacion,
+            uc.nombre as creadorNombre,
+            uc.correo as creadorCorreo,
+            ua.idUsuario as idResponsable,
+            ua.nombreCompleto as responsableNombre,
+            ta.carnet as responsableCarnet
+        FROM p_Tareas t
+        LEFT JOIN p_Proyectos p ON t.idProyecto = p.idProyecto
+        LEFT JOIN p_Usuarios uc ON t.idCreador = uc.idUsuario
+        LEFT JOIN p_TareaAsignados ta ON t.idTarea = ta.idTarea AND ta.tipo = 'Responsable'
+        LEFT JOIN p_Usuarios ua ON ta.idUsuario = ua.idUsuario
+        WHERE t.idTarea = @idTarea
+    
+PARAMS: {"idTarea":1191}
+--------------------------------------------------
+[2026-02-17T15:05:08.173Z] Origen: unknown | Duraci├│n: 1028ms | Tipo: SP
+SQL: EXEC sp_Visibilidad_ObtenerMiEquipo
+PARAMS: {"carnet":"400543"}

@@ -1,0 +1,16 @@
+[dotenv@17.2.3] injecting env (10) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+(node:29660) [DEP0123] DeprecationWarning: Setting the TLS ServerName to an IP address is not permitted by RFC 6066. This will be ignored in a future version.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+=== EJECUTANDO sp_Equipo_ObtenerInforme PARA 1008269 CON FECHA 2026-02-17 ===
+[
+  {
+    carnet: '1008269',
+    retrasadas: 0,
+    planificadas: 6,
+    hechas: 0,
+    enCurso: 1,
+    bloqueadas: 0,
+    descartadas: 0
+  }
+]

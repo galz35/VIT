@@ -19,6 +19,8 @@ export interface MiDiaContextType {
     isMutating: boolean;
     mutatingTaskId?: number | null;
     isSupervisorMode?: boolean;
+    agendaConfig: { showGestion: boolean, showRapida: boolean };
+    setAgendaConfig: (config: { showGestion: boolean, showRapida: boolean }) => Promise<void>;
 }
 
 export const MiDiaContext = createContext<MiDiaContextType | undefined>(undefined);

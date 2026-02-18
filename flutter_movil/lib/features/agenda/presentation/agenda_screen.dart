@@ -10,7 +10,7 @@ import '../../auth/presentation/auth_controller.dart';
 import '../../../core/theme/app_theme.dart';
 
 // ============================================================
-// AGENDA SCREEN - Diseño Corporativo (Slate + Red)
+// AGENDA SCREEN - Diseño Corporativo Premium
 // Inspirado en ActivePlanView.tsx de React
 // ============================================================
 
@@ -52,6 +52,33 @@ class _AgendaTabContent extends StatelessWidget {
 
     return Column(
       children: [
+        // Offline banner
+        if (!controller.loading &&
+            controller.isOffline &&
+            controller.data != null)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+            color: const Color(0xFFFFF7ED),
+            child: const Row(
+              children: [
+                Icon(Icons.wifi_off_rounded,
+                    size: 18, color: Color(0xFFEA580C)),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Modo offline — mostrando datos guardados',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF9A3412),
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Inter',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         _DateNavigator(controller: controller),
         Expanded(
           child: controller.loading
@@ -70,7 +97,7 @@ class _AgendaTabContent extends StatelessWidget {
                     ],
                   ),
                 )
-              : controller.error != null
+              : controller.error != null && controller.data == null
                   ? _ErrorState(
                       error: controller.error!,
                       onRetry: () => controller.loadAgenda())
@@ -468,17 +495,24 @@ class _PlanningViewState extends State<_PlanningView>
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFFFFF5F5), Color(0xFFFFEBEE)],
+                colors: [Color(0xFFEEF2FF), Color(0xFFE0E7FF)],
               ),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFFFCDD2)),
+              border: Border.all(color: const Color(0xFFC7D2FE)),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.check_circle_rounded,
-                    color: Color(0xFFE53935), size: 20),
-                SizedBox(width: 10),
-                Expanded(
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.track_changes_rounded,
+                      color: Color(0xFF4F46E5), size: 20),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -488,7 +522,7 @@ class _PlanningViewState extends State<_PlanningView>
                           fontFamily: 'Inter',
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFFC62828),
+                          color: Color(0xFF3730A3),
                         ),
                       ),
                       SizedBox(height: 2),
@@ -496,7 +530,7 @@ class _PlanningViewState extends State<_PlanningView>
                         'Lo que haré hoy',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Color(0xFFEF5350),
+                          color: Color(0xFF6366F1),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -549,14 +583,14 @@ class _PlanningViewState extends State<_PlanningView>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF5F5),
+                  color: const Color(0xFFFFF7ED),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFFFCDD2)),
+                  border: Border.all(color: const Color(0xFFFED7AA)),
                 ),
                 child: Row(
                   children: [
                     const Icon(Icons.access_time_filled_rounded,
-                        color: Color(0xFFE53935), size: 20),
+                        color: Color(0xFFEA580C), size: 20),
                     const SizedBox(width: 12),
                     Expanded(
                       child: RichText(
@@ -564,7 +598,7 @@ class _PlanningViewState extends State<_PlanningView>
                           style: const TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 13,
-                              color: Color(0xFFB91C1C)),
+                              color: Color(0xFF9A3412)),
                           children: [
                             const TextSpan(text: 'Tienes '),
                             TextSpan(
@@ -578,7 +612,7 @@ class _PlanningViewState extends State<_PlanningView>
                       ),
                     ),
                     const Icon(Icons.arrow_forward_rounded,
-                        color: Color(0xFFEF5350), size: 16),
+                        color: Color(0xFFF97316), size: 16),
                   ],
                 ),
               ),

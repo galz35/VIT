@@ -1,9 +1,10 @@
-import React, { useMemo, useCallback, useRef } from 'react';
+import React, { useMemo, useCallback, useRef, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { MiDiaProvider, useMiDiaContext } from './context/MiDiaContext';
 import { TopBar } from '../../components/layout/TopBar';
-import { List, Calendar, BarChart3, ChevronLeft, ChevronRight, CalendarDays, BookOpen } from 'lucide-react';
+import { List, Calendar, BarChart3, ChevronLeft, ChevronRight, CalendarDays, BookOpen, Settings } from 'lucide-react';
+import { UserSettingsModal } from '../../components/layout/UserSettingsModal';
 
 // ✅ Fecha local segura (evita bug UTC)
 const fechaLocalYYYYMMDD = (d: Date) => {
@@ -15,6 +16,7 @@ const fechaLocalYYYYMMDD = (d: Date) => {
 
 const MiDiaContent: React.FC = () => {
     const { allDisponibles, today, setToday } = useMiDiaContext();
+    const [showSettings, setShowSettings] = useState(false);
     const dateInputRef = useRef<HTMLInputElement>(null);
 
     const handleDateClick = () => {
@@ -132,6 +134,14 @@ const MiDiaContent: React.FC = () => {
                                 <p className="text-[9px] uppercase font-bold text-slate-400">Hechas</p>
                             </div>
                         </div>
+
+                        <button
+                            onClick={() => setShowSettings(true)}
+                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-slate-700 rounded-full transition-all"
+                            title="Ajustes de Usuario"
+                        >
+                            <Settings size={20} />
+                        </button>
                     </div>
                 </div>
 
@@ -139,6 +149,11 @@ const MiDiaContent: React.FC = () => {
                     <Outlet />
                 </div>
             </main>
+
+            <UserSettingsModal
+                isOpen={showSettings}
+                onClose={() => setShowSettings(false)}
+            />
         </div>
     );
 };

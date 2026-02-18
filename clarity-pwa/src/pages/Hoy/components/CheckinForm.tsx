@@ -5,6 +5,7 @@ import { TaskDetailModalV2 } from '../../../components/task-detail-v2/TaskDetail
 import { TaskSelectorOverlay } from './TaskSelectorOverlay';
 import { useToast } from '../../../context/ToastContext';
 import { clarityService } from '../../../services/clarity.service';
+import { useMiDiaContext } from '../context/MiDiaContext';
 
 interface Props {
     disponibles: Tarea[];
@@ -22,9 +23,9 @@ interface Props {
 export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], onSubmit, userId, userCarnet, fecha, initialData, onTaskCreated, bloqueos = [] }) => {
     // Form State
     const { showToast } = useToast();
+    const { agendaConfig: config, setAgendaConfig: saveConfig } = useMiDiaContext();
 
     // User Config State
-    const [config, setConfig] = useState({ showGestion: true, showRapida: true });
     const [showConfigModal, setShowConfigModal] = useState(false);
 
     // Slots State (Dynamic Arrays)
@@ -48,18 +49,12 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
     // Initialize arrays from initialData
     const [projects, setProjects] = useState<Proyecto[]>([]);
 
-    // Fetch Projects & Config
+    // Fetch Projects
     useEffect(() => {
         const loadInit = async () => {
             try {
-                const [p, c] = await Promise.all([
-                    clarityService.getProyectos(),
-                    clarityService.getConfig()
-                ]);
+                const p = await clarityService.getProyectos();
                 setProjects((p as any).items || p || []);
-                if (c && c.agendaConfig) {
-                    setConfig(c.agendaConfig);
-                }
             } catch { } // Silent fail
         };
         loadInit();
@@ -82,10 +77,9 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
         }
     }, [initialData]);
 
-    const saveConfig = async (newConfig: typeof config) => {
-        setConfig(newConfig);
+    const handleSaveConfig = async (newConfig: typeof config) => {
         try {
-            await clarityService.setConfig({ agendaConfig: newConfig });
+            await saveConfig(newConfig);
             showToast('Configuración guardada', 'success');
         } catch {
             showToast('Error al guardar configuración', 'error');
@@ -425,8 +419,8 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
 
             {/* MAIN GRID: CONFIGURABLE COLUMNS */}
             <div className={`grid gap-6 flex-1 items-start transition-all ${(config.showGestion && config.showRapida) ? 'grid-cols-1 md:grid-cols-3' :
-                    (config.showGestion || config.showRapida) ? 'grid-cols-1 md:grid-cols-2' :
-                        'grid-cols-1'
+                (config.showGestion || config.showRapida) ? 'grid-cols-1 md:grid-cols-2' :
+                    'grid-cols-1'
                 }`}>
 
                 {/* COL 1: PRINCIPAL (ALWAYS ON) */}
@@ -440,7 +434,7 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
                         <p className="text-[11px] text-slate-400 leading-tight px-1 italic mt-2">
                             Foco principal (Prioritario).
                         </p>
-                        {errors.entrego && <p className="text-rose-500 text-[10px] font-bold px-1 animate-pulse">⚠️ Este campo es obligatorio</p>}
+                        {/* {errors.entrego && <p className="text-rose-500 text-[10px] font-bold px-1 animate-pulse">⚠️ Este campo es obligatorio</p>} */}
                     </div>
                     <button type="button" onClick={() => { addSlot('Entrego'); setErrors({}); }} className="text-xs font-bold text-rose-500 hover:text-rose-700 flex justify-center py-2 opacity-60 hover:opacity-100 transition-opacity">
                         + Agregar Tarea
@@ -503,7 +497,7 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
                             </div>
 
                             <button
-                                onClick={() => saveConfig({ ...config, showGestion: !config.showGestion })}
+                                onClick={() => handleSaveConfig({ ...config, showGestion: !config.showGestion })}
                                 className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all ${config.showGestion ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-white border-slate-200 text-slate-400'}`}
                             >
                                 <span className="text-sm font-semibold text-left">Gestión / Avance</span>
@@ -511,7 +505,7 @@ export const CheckinForm: React.FC<Props> = ({ disponibles, checkinTasks = [], o
                             </button>
 
                             <button
-                                onClick={() => saveConfig({ ...config, showRapida: !config.showRapida })}
+                                onClick={() => handleSaveConfig({ ...config, showRapida: !config.showRapida })}
                                 className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all ${config.showRapida ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-white border-slate-200 text-slate-400'}`}
                             >
                                 <span className="text-sm font-semibold text-left">Rápida / Extra</span>

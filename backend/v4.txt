@@ -1,0 +1,9 @@
+[dotenv@17.2.3] injecting env (10) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+--- BUSCANDO idUsuario ---
+idUsuario: 7
+
+--- TAREAS EN p_Tareas CON idAsignado (LEGACY) ---
+Total con idAsignado (Activas): 0
+
+--- VERIFICANDO SI ta.carnet TIENE DUPLICADOS POR TAREA (Múltiples Roles) ---
+Tareas con múltiples asignaciones (ej: Responsable + Ejecutor): 0

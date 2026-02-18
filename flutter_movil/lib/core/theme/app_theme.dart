@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 /// ============================================
-/// MOMENTUS THEME - Corporativo Rojo & Slate
+/// MOMENTUS THEME - Corporativo Premium
 /// ============================================
-/// Diseño premium corporativo con rojo como acento principal
-/// y una paleta secundaria indigo para variedad visual.
+/// Diseño premium corporativo con crimson cálido como acento
+/// y paleta slate + indigo para variedad visual armoniosa.
 
 class MomentusTheme {
   MomentusTheme._(); // No instanciable
@@ -13,10 +13,12 @@ class MomentusTheme {
   // PALETA DE COLORES - CORPORATE RED
   // =============================================
 
-  /// Rojo Corporativo - Planner EF
-  static const Color primary = Color(0xFFD32F2F); // Rojo principal
-  static const Color primaryLight = Color(0xFFEF5350);
-  static const Color primaryDark = Color(0xFFB71C1C); // Rojo oscuro empresarial
+  /// Crimson Corporativo - Planner EF
+  static const Color primary =
+      Color(0xFFBE2D2D); // Crimson cálido (no puro rojo)
+  static const Color primaryLight = Color(0xFFE25555);
+  static const Color primaryDark =
+      Color(0xFF8B1A1A); // Crimson oscuro empresarial
 
   /// Escala de Rojos
   static const Color red50 = Color(0xFFFFEBEE);
@@ -30,10 +32,15 @@ class MomentusTheme {
   static const Color red800 = Color(0xFFC62828);
   static const Color red900 = Color(0xFFB71C1C);
 
-  /// Mantener verdes para estados de éxito (no usar como primarios)
-  static const Color green50 = Color(0xFFF8FAFC); // Slate 50
-  static const Color green100 = Color(0xFFF1F5F9); // Slate 100
-  static const Color success = Color(0xFF10B981); // Emerald para éxito real
+  /// Superficie neutra (nombrado correcto, sin confusión con verde)
+  static const Color surface50 = Color(0xFFF8FAFC); // Fondo claro
+  static const Color surface100 = Color(0xFFF1F5F9); // Fondo secundario
+  static const Color success =
+      Color(0xFF0D9668); // Teal para éxito (no choca con crimson)
+
+  // Aliases legacy para compatibilidad
+  static const Color green50 = surface50;
+  static const Color green100 = surface100;
 
   /// Acento Secundario (Indigo - para variedad visual sin clashing)
   static const Color accent = Color(0xFF6366F1); // Indigo 500
@@ -62,18 +69,18 @@ class MomentusTheme {
   // GRADIENTES
   // =============================================
 
-  /// Gradiente Corporativo (Slate oscuro → Rojo oscuro)
+  /// Gradiente Corporativo (Slate elegante → Crimson profundo)
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF1E293B), Color(0xFF7F1D1D)],
+    colors: [Color(0xFF1E293B), Color(0xFF4A1C1C)],
   );
 
   /// Gradiente Hero (para headers visuales)
   static const LinearGradient heroGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF334155)],
+    colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF2D3A4F)],
   );
 
   /// Fondo limpio

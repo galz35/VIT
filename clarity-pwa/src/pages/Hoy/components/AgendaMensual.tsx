@@ -72,13 +72,20 @@ export const AgendaMensual: React.FC<Props> = ({ onSelectTask }) => {
 
             tasks.forEach((t: Tarea) => {
                 const targetDate = t.fechaObjetivo || t.fechaHecha || t.fechaCreacion;
+                let dateStr: string;
+
                 if (targetDate) {
-                    const dateStr = typeof targetDate === 'string' ? targetDate.substring(0, 10) : (targetDate as any).toISOString().split('T')[0];
-                    const idx = days.findIndex(d => d.date === dateStr);
-                    if (idx >= 0) {
-                        if (!days[idx].tasks.some(existing => existing.idTarea === t.idTarea)) {
-                            days[idx].tasks.push(t);
-                        }
+                    dateStr = typeof targetDate === 'string' ? targetDate.substring(0, 10) : (targetDate as any).toISOString().split('T')[0];
+                } else {
+                    // ✅ Tareas sin fechas (operativas): asignar al día actual
+                    if (t.estado === 'Hecha' || t.estado === 'Descartada') return;
+                    dateStr = todayStr;
+                }
+
+                const idx = days.findIndex(d => d.date === dateStr);
+                if (idx >= 0) {
+                    if (!days[idx].tasks.some(existing => existing.idTarea === t.idTarea)) {
+                        days[idx].tasks.push(t);
                     }
                 }
             });

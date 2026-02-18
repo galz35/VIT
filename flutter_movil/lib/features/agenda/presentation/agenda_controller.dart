@@ -11,6 +11,7 @@ class AgendaController extends ChangeNotifier {
   bool loading = false;
   String? error;
   AgendaResponse? data;
+  bool isOffline = false;
 
   // Fecha seleccionada
   DateTime currentDate = DateTime.now();
@@ -25,12 +26,17 @@ class AgendaController extends ChangeNotifier {
 
     loading = true;
     error = null;
+    isOffline = false;
     notifyListeners();
 
     try {
       data = await _repository.getMiDia(fechaStr);
+      // Si llegamos aquí sin error pero el repo usó cache,
+      // el repo no lanza excepción — verificamos conectividad indirectamente.
+      // La lógica de offline está en el repository (fallback a cache).
     } catch (e) {
       error = 'Error al cargar agenda: $e';
+      isOffline = true;
       data = null;
     } finally {
       loading = false;

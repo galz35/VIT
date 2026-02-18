@@ -1,4 +1,4 @@
-// Last Modified: 2026-01-24 20:38:55
+// Last Modified: 2026-02-18
 import React, { useCallback, useMemo, useState } from 'react';
 import type { Checkin, Tarea } from '../../../types/modelos';
 import {
@@ -15,6 +15,7 @@ import { TaskDetailModalV2 } from '../../../components/task-detail-v2/TaskDetail
 import { StatusBadge } from '../../../components/ui/StatusBadge';
 import { EvidenceModal } from '../../../components/ui/EvidenceModal';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMiDiaContext } from '../context/MiDiaContext';
 
 interface Props {
     checkin: Checkin;
@@ -40,7 +41,6 @@ const VARIANT_CLASSES: Record<Variant, {
         circle: 'text-rose-300 hover:text-emerald-500',
     },
     Normal: {
-        // 👇 reemplaza "blue" por slate (más neutro)
         container: 'bg-white border border-slate-200 hover:shadow-sm',
         circle: 'text-slate-300 hover:text-emerald-500',
     },
@@ -51,6 +51,7 @@ const VARIANT_CLASSES: Record<Variant, {
 };
 
 export const ActivePlanView: React.FC<Props> = ({ checkin, onEdit, toggleTarea, isMutating, mutatingTaskId }) => {
+    const { agendaConfig: config } = useMiDiaContext();
     const { showToast } = useToast();
     const queryClient = useQueryClient();
 
@@ -59,13 +60,10 @@ export const ActivePlanView: React.FC<Props> = ({ checkin, onEdit, toggleTarea, 
     const [editingTask, setEditingTask] = useState<Tarea | null>(null);
     const [goalDone, setGoalDone] = useState(false);
 
-    // ✅ Invalidate centralizado (si no pasaron onUpdate desde arriba)
     const invalidateMiDia = useCallback(() => {
-        // ✅ Invalida todos los datos bajo 'mi-dia'
         queryClient.invalidateQueries({ queryKey: ['mi-dia'] });
     }, [queryClient]);
 
-    // ✅ MUTATION: Quick Log (bitácora/avance)
     const quickLogMutation = useMutation({
         mutationFn: async (params: { taskId: number; comentario: string }) => {
             await clarityService.postAvance(params.taskId, {
@@ -77,29 +75,23 @@ export const ActivePlanView: React.FC<Props> = ({ checkin, onEdit, toggleTarea, 
         onSuccess: () => {
             setQuickLogId(null);
             setQuickLogText('');
-            // showToast('Bitácora actualizada 📝', 'success');
-            invalidateMiDia(); // si tu API afecta la vista (opcional)
+            invalidateMiDia();
         },
         onError: () => {
             showToast('Error al registrar avance', 'error');
         },
     });
 
-    // ✅ Data derivada con memo
-    const { focusTasks, allTasks } = useMemo(() => {
+    const { focusTasks, advanceTasks, extraTasks, allTasks } = useMemo(() => {
         const tareas = checkin.tareas || [];
         const focus = tareas.filter(t => t.tipo === 'Entrego').map(t => t.tarea!).filter(Boolean);
-        // const adv = ... (unused)
-        // const ext = ... (unused)
-        // Keep calculation for allTasks if needed for progress, but wait, allTasks logic used adv/ext.
-        // Let's keep logic inside but only return what is used.
         const adv = tareas.filter(t => t.tipo === 'Avanzo').map(t => t.tarea!).filter(Boolean);
         const ext = tareas.filter(t => t.tipo === 'Extra').map(t => t.tarea!).filter(Boolean);
-        return { focusTasks: focus, allTasks: [...focus, ...adv, ...ext] };
+        return { focusTasks: focus, advanceTasks: adv, extraTasks: ext, allTasks: [...focus, ...adv, ...ext] };
     }, [checkin.tareas]);
 
     const { total, done, progressPercent } = useMemo(() => {
-        const totalTasks = allTasks.length + (focusTasks.length === 0 ? 1 : 0); // + objetivo si no hay foco
+        const totalTasks = allTasks.length + (focusTasks.length === 0 ? 1 : 0);
         const doneTasksCount = allTasks.filter(t => t.estado === 'Hecha').length;
         const doneTotal = doneTasksCount + (focusTasks.length === 0 && goalDone ? 1 : 0);
         const pct = totalTasks > 0 ? Math.round((doneTotal / totalTasks) * 100) : 0;
@@ -121,14 +113,12 @@ export const ActivePlanView: React.FC<Props> = ({ checkin, onEdit, toggleTarea, 
         const comentario = quickLogText.trim();
         if (!comentario) return;
         if (quickLogMutation.isPending) return;
-
         quickLogMutation.mutate({ taskId: quickLogId, comentario });
     }, [quickLogId, quickLogText, quickLogMutation]);
 
     const openTaskModal = useCallback((task: Tarea) => setEditingTask(task), []);
     const closeTaskModal = useCallback(() => setEditingTask(null), []);
 
-    // ✅ TaskRow SIN tailwind dinámico
     const TaskRow = useCallback(
         ({ task, variant }: { task: Tarea; variant: Variant }) => {
             const isDone = task.estado === 'Hecha';
@@ -158,7 +148,6 @@ export const ActivePlanView: React.FC<Props> = ({ checkin, onEdit, toggleTarea, 
                         }}
                         className={`shrink-0 hover:scale-110 transition-transform ${isTaskBusy ? 'animate-pulse opacity-50 cursor-wait' : ''}`}
                         disabled={isTaskBusy}
-                        aria-label={isDone ? 'Marcar como pendiente' : 'Marcar como hecha'}
                     >
                         {isDone ? (
                             <CheckCircle2 size={18} className="text-emerald-500 fill-emerald-50" />
@@ -306,9 +295,12 @@ export const ActivePlanView: React.FC<Props> = ({ checkin, onEdit, toggleTarea, 
                 </div>
             )}
 
-            <div className="flex flex-col gap-6 animate-fade-in">
+            <div className={`grid gap-6 animate-fade-in items-start transition-all ${(config.showGestion && config.showRapida) ? 'grid-cols-1 md:grid-cols-3' :
+                (config.showGestion || config.showRapida) ? 'grid-cols-1 md:grid-cols-2' :
+                    'grid-cols-1'
+                }`}>
                 {/* Focus */}
-                <div className="bg-white rounded-xl border border-rose-100 shadow-sm overflow-hidden flex flex-col">
+                <div className="bg-white rounded-xl border border-rose-100 shadow-sm overflow-hidden flex flex-col min-h-[10rem]">
                     <div className="px-4 py-3 bg-rose-50 border-b border-rose-100 flex justify-between items-center">
                         <h4 className="font-bold text-rose-700 text-xs uppercase tracking-widest flex items-center gap-2">🎯 Tarea Principal (Foco)</h4>
                         <span className="text-[10px] font-black text-rose-600 bg-rose-100 px-2 py-0.5 rounded-full">
@@ -322,31 +314,39 @@ export const ActivePlanView: React.FC<Props> = ({ checkin, onEdit, toggleTarea, 
                     </div>
                 </div>
 
-                {/* Others (Avanzo + Extra) - OCULTO POR SIMPLIFICACIÓN */}
-                {/* 
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                    <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-                        <h4 className="font-bold text-slate-700 text-xs uppercase tracking-widest flex items-center gap-2">📋 Otras Tareas (Gestión)</h4>
-                        <span className="text-[10px] font-black text-slate-700 bg-slate-200 px-2 py-0.5 rounded-full">
-                            {advanceTasks.length + extraTasks.length}
-                        </span>
+                {/* Gestión (Avanzo) */}
+                {config.showGestion && (
+                    <div className="bg-white rounded-xl border border-blue-100 shadow-sm overflow-hidden flex flex-col min-h-[10rem]">
+                        <div className="px-4 py-3 bg-blue-50 border-b border-blue-100 flex justify-between items-center">
+                            <h4 className="font-bold text-blue-700 text-xs uppercase tracking-widest flex items-center gap-2">📋 Gestión / Avance</h4>
+                            <span className="text-[10px] font-black text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
+                                {advanceTasks.length}
+                            </span>
+                        </div>
+                        <div className="p-3 space-y-2 flex-1">
+                            {advanceTasks.length > 0
+                                ? advanceTasks.map(t => <TaskRow key={t.idTarea} task={t} variant="Normal" />)
+                                : <p className="text-slate-400 text-[10px] italic p-4 text-center">Sin tareas en gestión.</p>}
+                        </div>
                     </div>
-                    <div className="p-3 space-y-2 flex-1 overflow-y-auto max-h-[500px]">
-                        {advanceTasks.length > 0
-                            ? advanceTasks.map(t => <TaskRow key={t.idTarea} task={t} variant="Normal" />)
-                            : advanceTasks.length === 0 && extraTasks.length === 0 && <p className="text-slate-400 text-xs italic p-4 text-center">Sin tareas pendientes.</p>}
+                )}
 
-                        {extraTasks.length > 0 && (
-                            <div className="pt-4 mt-2 border-t border-slate-100">
-                                <p className="text-[9px] font-bold text-slate-400 uppercase mb-3 tracking-widest px-1">Tareas Rápidas</p>
-                                <div className="space-y-2">
-                                    {extraTasks.map(t => <TaskRow key={t.idTarea} task={t} variant="Extra" />)}
-                                </div>
-                            </div>
-                        )}
+                {/* Rápida (Extra) */}
+                {config.showRapida && (
+                    <div className="bg-white rounded-xl border border-amber-100 shadow-sm overflow-hidden flex flex-col min-h-[10rem]">
+                        <div className="px-4 py-3 bg-amber-50 border-b border-amber-100 flex justify-between items-center">
+                            <h4 className="font-bold text-amber-700 text-xs uppercase tracking-widest flex items-center gap-2">⚡ Rápida / Extra</h4>
+                            <span className="text-[10px] font-black text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">
+                                {extraTasks.length}
+                            </span>
+                        </div>
+                        <div className="p-3 space-y-2 flex-1">
+                            {extraTasks.length > 0
+                                ? extraTasks.map(t => <TaskRow key={t.idTarea} task={t} variant="Extra" />)
+                                : <p className="text-slate-400 text-[10px] italic p-4 text-center">Sin tareas rápidas.</p>}
+                        </div>
                     </div>
-                </div>
-                */}
+                )}
             </div>
             {evidenceTask && (
                 <EvidenceModal
@@ -354,12 +354,6 @@ export const ActivePlanView: React.FC<Props> = ({ checkin, onEdit, toggleTarea, 
                     onClose={() => setEvidenceTask(null)}
                     onCompleted={async () => {
                         setEvidenceTask(null);
-                        // Force refresh needed? The modal marks it as done.
-                        // Ideally we should invalidate queries or optimistically update.
-                        // ActivePlanView parent does query invalidation on mutation success? 
-                        // The parent ExecutionView does query invalidation on Checkin update but maybe not on Task update if using 'toggleTarea' mutation from context (implied?). 
-                        // Actually 'toggleTarea' passed here updates React Query cache via useMiDiaContext logic usually. 
-                        // But EvidenceModal calls clarityService directly. We need to sync.
                         await queryClient.invalidateQueries({ queryKey: ['mi-dia'] });
                     }}
                 />

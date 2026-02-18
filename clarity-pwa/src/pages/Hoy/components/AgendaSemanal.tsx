@@ -79,8 +79,13 @@ export const AgendaSemanal: React.FC = () => {
                 return isSameDay(date, doneDate);
             }
 
-            // If no dates, skip (unless handled by checkin below)
-            if (!start && !end) return false;
+            // ✅ Tareas SIN fechas (operativas): mostrar en el día actual si están pendientes
+            if (!start && !end) {
+                if (t.estado !== 'Hecha') {
+                    return isSameDay(date, new Date());
+                }
+                return false;
+            }
 
             // Check range or single date
             if (start && end) {
@@ -91,6 +96,7 @@ export const AgendaSemanal: React.FC = () => {
             }
 
             if (end) return isSameDay(date, end);
+            if (start) return isSameDay(date, start);
             return false;
         });
 
@@ -226,9 +232,13 @@ export const AgendaSemanal: React.FC = () => {
                                                 </h4>
 
                                                 <div className="flex items-center gap-2">
-                                                    {t.idProyecto && (
+                                                    {t.idProyecto ? (
                                                         <span className="flex items-center gap-1 text-[8px] font-bold uppercase tracking-wider text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded-md">
                                                             <Briefcase size={8} /> Proy
+                                                        </span>
+                                                    ) : (
+                                                        <span className="flex items-center gap-1 text-[8px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-md">
+                                                            ⚡ Operativa
                                                         </span>
                                                     )}
                                                     {t.estado === 'Hecha' && (

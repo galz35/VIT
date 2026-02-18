@@ -73,7 +73,18 @@ export const TaskSelectorOverlay: React.FC<Props> = ({
         return Math.max(0, Math.floor(diff / (1000 * 3600 * 24)));
     };
 
-    // ✅ Compacto: filtrado memoizado (y evita recalcular en render)
+    // ✅ Mapa de colores para tipo de tarea
+    const TIPO_COLORS: Record<string, { bg: string; text: string }> = {
+        Estrategica: { bg: 'bg-violet-100', text: 'text-violet-700' },
+        Administrativa: { bg: 'bg-sky-100', text: 'text-sky-700' },
+        Logistica: { bg: 'bg-teal-100', text: 'text-teal-700' },
+        AMX: { bg: 'bg-orange-100', text: 'text-orange-700' },
+        Operativo: { bg: 'bg-emerald-100', text: 'text-emerald-700' },
+        CENAM: { bg: 'bg-cyan-100', text: 'text-cyan-700' },
+        Otros: { bg: 'bg-slate-100', text: 'text-slate-500' },
+    };
+
+    // ✅ Filtrado + orden alfabético memoizado
     const disponiblesFiltradas = useMemo(() => {
         const q = quickVal.trim().toLowerCase();
         return disponibles
@@ -82,9 +93,11 @@ export const TaskSelectorOverlay: React.FC<Props> = ({
                 if (!q) return true;
                 return (
                     (t.titulo || '').toLowerCase().includes(q) ||
-                    ((t.proyecto?.nombre || '').toLowerCase().includes(q))
+                    ((t.proyecto?.nombre || '').toLowerCase().includes(q)) ||
+                    ((t.tipo || '').toLowerCase().includes(q))
                 );
-            });
+            })
+            .sort((a, b) => (a.titulo || '').localeCompare(b.titulo || '', 'es', { sensitivity: 'base' }));
     }, [disponibles, isSelected, quickVal]);
 
     return ReactDOM.createPortal(
@@ -195,6 +208,12 @@ export const TaskSelectorOverlay: React.FC<Props> = ({
                                         <span className="text-[9px] font-black bg-white border border-slate-200 text-slate-500 px-2 py-0.5 rounded uppercase tracking-wider">
                                             {t.proyectoNombre || t.proyecto?.nombre || 'Inbox'}
                                         </span>
+
+                                        {t.tipo && (
+                                            <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-tighter ${TIPO_COLORS[t.tipo]?.bg || 'bg-slate-100'} ${TIPO_COLORS[t.tipo]?.text || 'text-slate-500'}`}>
+                                                {t.tipo}
+                                            </span>
+                                        )}
 
                                         {t.prioridad === 'Alta' && (
                                             <span className="text-[9px] bg-rose-500 text-white px-2 py-0.5 rounded font-black uppercase tracking-tighter">

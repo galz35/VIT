@@ -1,0 +1,4 @@
+﻿--- BENCHMARKING SELECT QUERIES ---
+[PASS] Catalogo Organizacion: 1279ms (7 rows)
+[PASS] Proyectos Visibles (Carnet 500708): 409ms (3 rows)
+[PASS] Tarea Avances (idTarea 1146): 408ms (0 rows)

@@ -1,0 +1,3 @@
+[dotenv@17.2.3] injecting env (10) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+
+=== EJECUTANDO sp_Equipo_ObtenerInforme PARA 1008269 CON FECHA 2026-02-17 ===

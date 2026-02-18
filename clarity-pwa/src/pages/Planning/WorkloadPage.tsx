@@ -64,7 +64,7 @@ export const WorkloadPage: React.FC = () => {
         const userCarnet = usuario.carnet;
 
         return tasks.filter(t => {
-            // Filtrado por Carnet asignado (desde la nueva lógica de backend)
+            // Filtrado por Carnet asignado
             const isAssigned = (t as any).usuarioCarnet === userCarnet;
             if (!isAssigned) return false;
 
@@ -77,19 +77,27 @@ export const WorkloadPage: React.FC = () => {
 
             if (onAgenda) return true;
 
-            // Filtro de vista (Proyecto vs Operativo) - Solo aplica si NO está en agenda explícita
+            // Filtro de vista (Proyecto vs Operativo)
             if (viewType === 'project' && !t.idProyecto) return false;
-            // Para vista operativa, a veces queremos ver todo lo que no es proyecto, O lo que está en agenda
             if (viewType === 'operative' && t.idProyecto) return false;
 
             const start = t.fechaInicioPlanificada ? new Date(t.fechaInicioPlanificada) : null;
             const end = t.fechaObjetivo ? new Date(t.fechaObjetivo) : null;
-            if (!start) return false;
-            if (!end) return isSameDay(date, start);
+
+            // ✅ Tareas operativas SIN fechas: mostrar en el día actual
+            if (!start && !end) {
+                if (viewType === 'operative' && t.estado !== 'Hecha' && t.estado !== 'Descartada') {
+                    return isSameDay(date, new Date());
+                }
+                return false;
+            }
+
+            if (!start && end) return isSameDay(date, end);
+            if (start && !end) return isSameDay(date, start);
 
             const checkDate = new Date(date).setHours(0, 0, 0, 0);
-            const startDate = new Date(start).setHours(0, 0, 0, 0);
-            const endDate = new Date(end).setHours(0, 0, 0, 0);
+            const startDate = new Date(start!).setHours(0, 0, 0, 0);
+            const endDate = new Date(end!).setHours(0, 0, 0, 0);
             return checkDate >= startDate && checkDate <= endDate;
         });
     };

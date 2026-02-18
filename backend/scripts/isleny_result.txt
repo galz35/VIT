@@ -1,0 +1,16 @@
+=== USUARIO ===
+{"idUsuario":7,"nombre":"ISLENY PATRICIA HERNANDEZ GONZALEZ","carnet":"1008269"}
+
+=== TAREAS ACTIVAS ===
+
+=== RESUMEN ===
+
+=== SP OUTPUT ===
+Total rows: 10
+Columns: idTarea, titulo, descripcion, estado, prioridad, fechaInicioPlanificada, fechaObjetivo, porcentaje, idProyecto, usuarioCarnet
+ConProyecto: 8 | SinProyecto(Operativas): 2
+  SP-> ID:77 Proy:63 Titulo:Auditoria Interna 2026
+  SP-> ID:80 Proy:NULL Titulo:Listado nuevos auditores internos 2026
+  SP-> ID:81 Proy:69 Titulo:Actualización de matrices IPER procesos estratégic
+  SP-> ID:82 Proy:69 Titulo:Actualización de matrices IPER procesos clave
+  SP-> ID:83 Proy:69 Titulo:Actualización de matrices IPER procesos de apoyo
