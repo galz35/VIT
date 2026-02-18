@@ -116,6 +116,8 @@ class _AgendaTabContent extends StatelessWidget {
         checkin: controller.data!.checkinHoy!,
         controller: controller,
         backlog: controller.data!.backlog,
+        showGestion: controller.showGestion,
+        showRapida: controller.showRapida,
       );
     }
 
@@ -124,6 +126,8 @@ class _AgendaTabContent extends StatelessWidget {
       backlog: controller.data!.backlog,
       controller: controller,
       userId: authController.user?.id ?? 0,
+      showGestion: controller.showGestion,
+      showRapida: controller.showRapida,
     );
   }
 }
@@ -268,12 +272,16 @@ class _PlanningView extends StatefulWidget {
   final List<Tarea> backlog;
   final AgendaController controller;
   final int userId;
+  final bool showGestion;
+  final bool showRapida;
 
   const _PlanningView({
     required this.sugeridas,
     required this.backlog,
     required this.controller,
     required this.userId,
+    required this.showGestion,
+    required this.showRapida,
   });
 
   @override
@@ -316,8 +324,12 @@ class _PlanningViewState extends State<_PlanningView>
   List<Tarea> get _overdueTasks => _allTasks.where(_isOverdue).toList();
 
   // Abrir selector de tareas (buzón)
-  void _openTaskSelector() {
-    final alreadySelected = widget.controller.selectedMainTaskIds;
+  void _openTaskSelector([String category = 'MAIN']) {
+    final alreadySelected = <int>{
+      ...widget.controller.selectedMainIds,
+      ...widget.controller.selectedGestionIds,
+      ...widget.controller.selectedRapidaIds,
+    };
 
     showModalBottomSheet(
       context: context,
@@ -329,16 +341,70 @@ class _PlanningViewState extends State<_PlanningView>
             .toList(),
         onSelect: (tarea) {
           Navigator.pop(ctx);
-          widget.controller.toggleTask(tarea.idTarea);
+          widget.controller.toggleTask(tarea.idTarea, category);
         },
-        onQuickCreate: null, // Deshabilitado: Tarea Rápida oculta por config
+        onQuickCreate: null,
+      ),
+    );
+  }
+
+  // Modal de configuración de vista
+  void _showViewSettings() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Configuración de Agenda',
+                  style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800)),
+              const SizedBox(height: 4),
+              const Text('Elige qué secciones ver en tu plan diario',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8))),
+              const SizedBox(height: 16),
+              SwitchListTile(
+                title: const Text('Gestión / Avance',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('Tareas secundarias o seguimiento'),
+                value: widget.showGestion,
+                activeColor: const Color(0xFF0284C7),
+                onChanged: (v) {
+                  Navigator.pop(ctx);
+                  widget.controller.updateConfig(gestion: v);
+                },
+              ),
+              SwitchListTile(
+                title: const Text('Rápida / Extra',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('Pequeñas acciones del día'),
+                value: widget.showRapida,
+                activeColor: const Color(0xFFD97706),
+                onChanged: (v) {
+                  Navigator.pop(ctx);
+                  widget.controller.updateConfig(rapida: v);
+                },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final selectedCount = widget.controller.selectedMainTaskIds.length;
+    final selectedCount = widget.controller.selectedMainIds.length +
+        widget.controller.selectedGestionIds.length +
+        widget.controller.selectedRapidaIds.length;
     final overdueCount = _overdueTasks.length;
 
     return Stack(
@@ -390,7 +456,7 @@ class _PlanningViewState extends State<_PlanningView>
                         const Icon(Icons.track_changes_outlined, size: 18),
                         const SizedBox(width: 4),
                         Text(
-                            'Tareas (${widget.controller.selectedMainTaskIds.length})'),
+                            'Tareas (${widget.controller.selectedMainIds.length})'),
                       ],
                     ),
                   ),
@@ -479,7 +545,7 @@ class _PlanningViewState extends State<_PlanningView>
 
   // ── TAB 1: MIS TAREAS ──
   Widget _buildFocoTab() {
-    final mainIds = widget.controller.selectedMainTaskIds;
+    final mainIds = widget.controller.selectedMainIds;
     final mainTasks =
         _allTasks.where((t) => mainIds.contains(t.idTarea)).toList();
 
@@ -537,9 +603,23 @@ class _PlanningViewState extends State<_PlanningView>
                     ],
                   ),
                 ),
+                // Botón de configuración de vista
+                GestureDetector(
+                  onTap: () => _showViewSettings(),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.tune_rounded,
+                        color: Color(0xFF4F46E5), size: 18),
+                  ),
+                ),
               ],
             ),
           ),
+
           const SizedBox(height: 16),
 
           // Slots principales
@@ -549,7 +629,8 @@ class _PlanningViewState extends State<_PlanningView>
                   child: _SlotCard(
                     task: t,
                     accentColor: MomentusTheme.primary,
-                    onRemove: () => widget.controller.toggleTask(t.idTarea),
+                    onRemove: () =>
+                        widget.controller.toggleTask(t.idTarea, 'MAIN'),
                   ),
                 )),
           ],
@@ -564,13 +645,13 @@ class _PlanningViewState extends State<_PlanningView>
                 : 'Define tu día completo',
             accentColor: MomentusTheme.primary,
             icon: Icons.add_circle_outline_rounded,
-            onTap: () => _openTaskSelector(),
+            onTap: () => _openTaskSelector('MAIN'),
           ),
 
           // ALERTA DE VENCIDAS (Link a Tab 2)
           if (_overdueTasks
-              .where((t) =>
-                  !widget.controller.selectedMainTaskIds.contains(t.idTarea))
+              .where(
+                  (t) => !widget.controller.selectedMainIds.contains(t.idTarea))
               .isNotEmpty) ...[
             const SizedBox(height: 16),
             InkWell(
@@ -603,7 +684,7 @@ class _PlanningViewState extends State<_PlanningView>
                             const TextSpan(text: 'Tienes '),
                             TextSpan(
                               text:
-                                  '${_overdueTasks.where((t) => !widget.controller.selectedMainTaskIds.contains(t.idTarea)).length} tareas atrasadas',
+                                  '${_overdueTasks.where((t) => !widget.controller.selectedMainIds.contains(t.idTarea)).length} tareas atrasadas',
                               style:
                                   const TextStyle(fontWeight: FontWeight.w700),
                             ),
@@ -649,9 +730,145 @@ class _PlanningViewState extends State<_PlanningView>
                       task: t,
                       onTap: () {
                         HapticFeedback.selectionClick();
-                        widget.controller.toggleTask(t.idTarea);
+                        widget.controller.toggleTask(t.idTarea, 'MAIN');
                       },
                     )),
+          ],
+
+          // ── SECCIÓN GESTIÓN (Condicional) ──
+          if (widget.showGestion) ...[
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                    colors: [Color(0xFFF0F9FF), Color(0xFFE0F2FE)]),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFBAE6FD)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0284C7).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.sync_alt_rounded,
+                        color: Color(0xFF0284C7), size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Gestión / Avance',
+                            style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF075985))),
+                        SizedBox(height: 2),
+                        Text('Tareas secundarias o seguimiento',
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF0284C7),
+                                fontWeight: FontWeight.w500)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...widget.controller.selectedGestionIds.map((id) {
+              final t = _allTasks.where((t) => t.idTarea == id).firstOrNull;
+              if (t == null) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: _SlotCard(
+                  task: t,
+                  accentColor: const Color(0xFF0284C7),
+                  onRemove: () =>
+                      widget.controller.toggleTask(t.idTarea, 'GESTION'),
+                ),
+              );
+            }),
+            _EmptySlot(
+              label: 'Agregar tarea de gestión',
+              hint: 'Tareas de seguimiento o apoyo',
+              accentColor: const Color(0xFF0284C7),
+              icon: Icons.add_circle_outline_rounded,
+              onTap: () => _openTaskSelector('GESTION'),
+            ),
+          ],
+
+          // ── SECCIÓN RÁPIDA (Condicional) ──
+          if (widget.showRapida) ...[
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                    colors: [Color(0xFFFFFBEB), Color(0xFFFEF3C7)]),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFFDE68A)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD97706).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.flash_on_rounded,
+                        color: Color(0xFFD97706), size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Rápida / Extra',
+                            style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF92400E))),
+                        SizedBox(height: 2),
+                        Text('Pequeñas acciones del día',
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFFD97706),
+                                fontWeight: FontWeight.w500)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...widget.controller.selectedRapidaIds.map((id) {
+              final t = _allTasks.where((t) => t.idTarea == id).firstOrNull;
+              if (t == null) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: _SlotCard(
+                  task: t,
+                  accentColor: const Color(0xFFD97706),
+                  onRemove: () =>
+                      widget.controller.toggleTask(t.idTarea, 'RAPIDA'),
+                ),
+              );
+            }),
+            _EmptySlot(
+              label: 'Agregar tarea rápida',
+              hint: 'Acciones pequeñas o adicionales',
+              accentColor: const Color(0xFFD97706),
+              icon: Icons.add_circle_outline_rounded,
+              onTap: () => _openTaskSelector('RAPIDA'),
+            ),
           ],
         ],
       ),
@@ -746,7 +963,7 @@ class _PlanningViewState extends State<_PlanningView>
             // Lista de tareas atrasadas
             ...overdueList.map((t) {
               final isSelected =
-                  widget.controller.selectedMainTaskIds.contains(t.idTarea);
+                  widget.controller.selectedMainIds.contains(t.idTarea);
               final fechaStr = t.fechaObjetivo?.split('T')[0] ?? '';
 
               return Padding(
@@ -801,7 +1018,7 @@ class _PlanningViewState extends State<_PlanningView>
                         child: GestureDetector(
                           onTap: () {
                             HapticFeedback.selectionClick();
-                            widget.controller.toggleTask(t.idTarea);
+                            widget.controller.toggleTask(t.idTarea, 'MAIN');
                           },
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1410,11 +1627,15 @@ class _ExecutionView extends StatefulWidget {
   final Checkin checkin;
   final List<Tarea> backlog;
   final AgendaController controller;
+  final bool showGestion;
+  final bool showRapida;
 
   const _ExecutionView({
     required this.checkin,
     required this.backlog,
     required this.controller,
+    required this.showGestion,
+    required this.showRapida,
   });
 
   @override

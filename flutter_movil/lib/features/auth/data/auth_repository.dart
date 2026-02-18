@@ -82,6 +82,16 @@ class AuthRepository {
     return user;
   }
 
+  Future<Map<String, dynamic>> getUserConfig() async {
+    final response = await _dio.get('auth/config');
+    final rawData = response.data as Map<String, dynamic>;
+    return (rawData['data'] ?? rawData) as Map<String, dynamic>;
+  }
+
+  Future<void> updateUserConfig(Map<String, dynamic> config) async {
+    await _dio.post('auth/config', data: config);
+  }
+
   Future<void> logout() async {
     await _storage.delete(key: _keyAccess);
     await _storage.delete(key: _keyRefresh);
